@@ -20,8 +20,10 @@ scenes.cam = {
   // Where the status strip goes. On a low landscape screen it moves up into the top bar, so the feeds get the height;
   // on big screens it grows with the screen.
   strip() {
-    const low = wide() && V.h <= 520, k = low ? 1 : clamp(V.h / 720, 1, 1.6);   // same limit as the slim top bar in the stylesheet
-    return low ? { k, x: 64, y: 4, w: V.w - 182, top: 60 } : { k, x: 0, y: 62, w: V.w, top: 62 + 50 * k };
+    // `low` uses the same limit as the slim top bar in the stylesheet; the scale follows the narrower of width and height,
+    // so the time bar keeps its length on tall phones; the offsets follow the overlay (side safe-area insets).
+    const low = wide() && V.h <= 520, k = low ? 1 : clamp(Math.min(V.w / 400, V.h / 720), 1, 1.6), r = ui.getBoundingClientRect();
+    return low ? { k, x: r.left + 64, y: 4, w: r.width - 182, top: 60 } : { k, x: 0, y: 62, w: V.w, top: 62 + 50 * k };
   },
   rect(i) {
     const n = this.P.feeds, cols = n === 4 ? 2 : n === 9 ? 3 : wide() ? 3 : 2, rows = n / cols, top = this.strip().top, pad = 8;

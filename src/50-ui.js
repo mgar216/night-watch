@@ -1,5 +1,5 @@
 // ---------- Shared screens: owl dialog, home, hub (Night menu), badge ceremony ----------
-const wide = () => V.w > V.h * 1.15;
+const wide = () => V.w >= V.h * 1.15;   // the same limit as `min-aspect-ratio: 23/20` in the stylesheet
 const treeArea = () => wide() ? fitTree(0, V.h * .04, V.w * .5, V.h * .94) : fitTree(0, V.h * .09, V.w, V.h * (V.h < 700 ? .55 : .6));
 const playerName = () => S.name || t('nameDef');
 
@@ -25,7 +25,7 @@ function owlSay(text, o = {}) {
     };
   }
   const el = $('canvas.owl', v), d = Math.min(window.devicePixelRatio || 1, 2);
-  el.width = 108 * d; el.height = 100 * d;   // wide enough for raised wings; the flashlight beam is left out here
+  el.width = 108 * d; el.height = 100 * d;   // the owl is drawn at a scale where raised wings fit; the flashlight beam is left out
   portrait = { el, c: el.getContext('2d'), d, mood: o.mood || 'talk', t0: V.t };
   say(text);
   if (!o.quiet) sfx.hoot();
@@ -37,7 +37,7 @@ function drawPortrait() {
   if (!portrait.el.isConnected) { portrait = null; return; }
   const { c, d } = portrait;
   c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, 108, 100);
-  owl(c, 52, 97, .9, V.t, portrait.mood === 'talk' && V.t - portrait.t0 > 2.2 ? 'idle' : portrait.mood, false);
+  owl(c, 54, 97, .78, V.t, portrait.mood === 'talk' && V.t - portrait.t0 > 2.2 ? 'idle' : portrait.mood, false);
 }
 const picsHtml = names => `<div class="pics">${names.map(n => ic(n, 40)).join('')}</div>`;
 

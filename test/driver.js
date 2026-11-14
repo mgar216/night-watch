@@ -138,7 +138,7 @@
       await note(`night ${n} played: stars ${S.stars}, moonbeams ${S.beams}, jars in nest ${S.nest}`);
     }
     check(rank() === 3, 'chief rank after night 7');
-    go('badge'); sim(2); check(scene.party, 'chief party on badge screen');
+    go('badge'); sim(2); check(scene.party && $('#fin').textContent.includes(playerName()), 'chief party on the badge screen greets the player by name');
   }
 
   async function audit() {
@@ -186,6 +186,12 @@
         scene.stolen = 3; scene.finish(false); await sleep(750); look(`cam soft fail n${n}`); clickDlg(0);
         go('cam'); clickDlg(); stationWin('cam', 3, 3); look(`station win n${n}`); clickDlg();
         go('gate'); look(`gate intro n${n}`); clickDlg(); sim(1.2); look(`gate n${n}`);
+        // the password bubble is drawn on the canvas: no part of the overlay may cover it
+        scene.draw();
+        for (const el of document.querySelectorAll('#ui .ref, #ui .hud > *:not(.sp)')) {
+          const r = el.getBoundingClientRect(), [bx, by, bw, bh] = scene.bubble;
+          if (Math.min(r.right, bx + bw) - Math.max(r.left, bx) > 2 && Math.min(r.bottom, by + bh) - Math.max(r.top, by) > 2) flag(`gate n${n}`, el, 'covers the visitor\'s password bubble');
+        }
         toast(t('gateOops')); look(`gate toast n${n}`);
         stationFail('gate', t('soft') + ' ' + t('gateTip')); look(`gate soft fail n${n}`); clickDlg(0);
         go('forge'); look(`forge intro n${n}`); clickDlg();
@@ -227,7 +233,7 @@
     ptr('pointerdown', pr.left + 10, pr.top + 10, pb); ptr('pointermove', ...at(4), window); sim(.1); ptr('pointerup', ...at(4), window);
     check(S.items.some(i => i.t === 'lamp' && i.m === 4), 'a real drag from the palette places the lantern');
     ptr('pointerdown', ...at(4)); ptr('pointermove', ...at(8), window); ptr('pointercancel', ...at(8), window);
-    check(!scene.hand && worth() === w0, `a cancelled drag loses no moonbeams (${w0} -> ${worth()}, hand ${scene.hand})`);
+    check(!scene.hand && worth() === w0 && !S.items.some(i => i.t === 'lamp'), `a cancelled drag puts the item back in the palette and loses no moonbeams (${w0} -> ${worth()}, hand ${scene.hand})`);
     where = 'keyboard-only placing in the Tinker Treehouse'; reset(2); go('tinker'); sim(.2);
     const cb = $('.pal[data-k="cam"]'); cb.focus(); key('Enter', cb);
     key('ArrowRight', document.activeElement); key('ArrowRight', document.activeElement);

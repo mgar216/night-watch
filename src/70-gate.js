@@ -141,6 +141,7 @@ scenes.gate = {
     else { ctx.setLineDash([5, 5]); ctx.lineWidth = 3; ctx.strokeStyle = '#8a7a5a'; ctx.beginPath(); ctx.arc(bx, by, bs * .4, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
     const isz = clamp(V.w * .1, 34, 30 * s), fs = clamp(isz * .32, 11, 15), n = v.pass.length, col = isz + 24, bw = n * col + 8, bh = isz + fs + 18, top = gy - 96 * s - bh;
     const lx = clamp(x - bw / 2, 6, V.w - bw - 6);
+    this.bubble = [lx, top, bw, bh];   // read by the layout audit: the overlay must not cover it
     rr(ctx, lx, top, bw, bh, 14); ctx.fillStyle = '#fff6da'; ctx.fill(); poly(ctx, [x - 8, top + bh - 1, x + 8, top + bh - 1, x + 2, top + bh + 12], '#fff6da');
     ctx.font = `800 ${fs}px ui-rounded, "Segoe UI", Roboto, sans-serif`; ctx.textAlign = 'center'; ctx.fillStyle = '#2a1c05';
     v.pass.forEach((p, j) => { const px = lx + 4 + j * col + col / 2; drawIcon(ctx, p, px, top + 8 + isz / 2, isz); ctx.fillText(t(p), px, top + isz + fs + 8, col - 4); });   // each word keeps its own column

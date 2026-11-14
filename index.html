@@ -66,7 +66,6 @@ button { font: inherit; color: inherit; }
 .bubble { position: relative; flex: 1; padding: .6em .8em; border-radius: 1.1em; background: var(--cream); color: #2a1c05; font-size: 1.1em; font-weight: 800; }
 .bubble::before { content: ""; position: absolute; left: -12px; top: 50%; margin-top: -9px; border: 9px solid transparent; border-left: 0; border-right: 13px solid var(--cream); }
 .pics { display: flex; gap: .4em; align-items: center; justify-content: center; flex-wrap: wrap; margin: .5em 0 0; }
-.pics .lab { display: inline-flex; flex-direction: column; align-items: center; font-size: max(11px, .7em); font-weight: 700; }
 .acts { display: flex; gap: .6em; justify-content: center; flex-wrap: wrap; margin-top: .7em; }
 .stars { display: flex; gap: .2em; justify-content: center; margin: .3em 0; }
 .stars canvas { animation: pop .45s cubic-bezier(.3, 1.6, .5, 1) both; }
@@ -163,6 +162,10 @@ input.name { font: inherit; font-weight: 800; text-align: center; width: min(14e
   .hud.slim .extra, .hud.slim #pStars, .hud.slim #pBeams { display: none; }
   .palette { left: auto; top: 4.6em; width: 10.6em; align-content: flex-start; border-top: 0; border-left: 2px solid var(--line); overflow-y: auto; }
   .pal { flex: 1 0 40%; min-height: 52px; }
+  /* the gate reference card stands as a narrow column at the right edge, clear of the visitor's speech bubble */
+  .ref { flex-direction: column; gap: .15em; padding: .3em .4em; }
+  .ref .sep { width: auto; height: 2px; }
+  .ref canvas.ic { width: 26px !important; height: 26px !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
@@ -301,7 +304,7 @@ let lang = 0;
 function t(key, vars) {
   const row = L[key];
   let s = row ? row[lang] : key;
-  if (vars) for (const k in vars) s = s.replace('{' + k + '}', vars[k]);
+  if (vars) for (const k in vars) s = s.replace('{' + k + '}', () => vars[k]);   // a function, so a name like "$&" is inserted as typed
   return s;
 }
 // "3 days", "5 дней": Intl.PluralRules picks the form (one / few / many).
@@ -930,7 +933,7 @@ function fireflies(c, t, n = 16) {
   }
 }
 // ---------- Shared screens: owl dialog, home, hub (Night menu), badge ceremony ----------
-const wide = () => V.w > V.h * 1.15;
+const wide = () => V.w >= V.h * 1.15;   // the same limit as `min-aspect-ratio: 23/20` in the stylesheet
 const treeArea = () => wide() ? fitTree(0, V.h * .04, V.w * .5, V.h * .94) : fitTree(0, V.h * .09, V.w, V.h * (V.h < 700 ? .55 : .6));
 const playerName = () => S.name || t('nameDef');
 
@@ -956,7 +959,7 @@ function owlSay(text, o = {}) {
     };
   }
   const el = $('canvas.owl', v), d = Math.min(window.devicePixelRatio || 1, 2);
-  el.width = 108 * d; el.height = 100 * d;   // wide enough for raised wings; the flashlight beam is left out here
+  el.width = 108 * d; el.height = 100 * d;   // the owl is drawn at a scale where raised wings fit; the flashlight beam is left out
   portrait = { el, c: el.getContext('2d'), d, mood: o.mood || 'talk', t0: V.t };
   say(text);
   if (!o.quiet) sfx.hoot();
@@ -968,7 +971,7 @@ function drawPortrait() {
   if (!portrait.el.isConnected) { portrait = null; return; }
   const { c, d } = portrait;
   c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, 108, 100);
-  owl(c, 52, 97, .9, V.t, portrait.mood === 'talk' && V.t - portrait.t0 > 2.2 ? 'idle' : portrait.mood, false);
+  owl(c, 54, 97, .78, V.t, portrait.mood === 'talk' && V.t - portrait.t0 > 2.2 ? 'idle' : portrait.mood, false);
 }
 const picsHtml = names => `<div class="pics">${names.map(n => ic(n, 40)).join('')}</div>`;
 
@@ -1154,8 +1157,10 @@ scenes.cam = {
   // Where the status strip goes. On a low landscape screen it moves up into the top bar, so the feeds get the height;
   // on big screens it grows with the screen.
   strip() {
-    const low = wide() && V.h <= 520, k = low ? 1 : clamp(V.h / 720, 1, 1.6);   // same limit as the slim top bar in the stylesheet
-    return low ? { k, x: 64, y: 4, w: V.w - 182, top: 60 } : { k, x: 0, y: 62, w: V.w, top: 62 + 50 * k };
+    // `low` uses the same limit as the slim top bar in the stylesheet; the scale follows the narrower of width and height,
+    // so the time bar keeps its length on tall phones; the offsets follow the overlay (side safe-area insets).
+    const low = wide() && V.h <= 520, k = low ? 1 : clamp(Math.min(V.w / 400, V.h / 720), 1, 1.6), r = ui.getBoundingClientRect();
+    return low ? { k, x: r.left + 64, y: 4, w: r.width - 182, top: 60 } : { k, x: 0, y: 62, w: V.w, top: 62 + 50 * k };
   },
   rect(i) {
     const n = this.P.feeds, cols = n === 4 ? 2 : n === 9 ? 3 : wide() ? 3 : 2, rows = n / cols, top = this.strip().top, pad = 8;
@@ -1450,6 +1455,7 @@ scenes.gate = {
     else { ctx.setLineDash([5, 5]); ctx.lineWidth = 3; ctx.strokeStyle = '#8a7a5a'; ctx.beginPath(); ctx.arc(bx, by, bs * .4, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
     const isz = clamp(V.w * .1, 34, 30 * s), fs = clamp(isz * .32, 11, 15), n = v.pass.length, col = isz + 24, bw = n * col + 8, bh = isz + fs + 18, top = gy - 96 * s - bh;
     const lx = clamp(x - bw / 2, 6, V.w - bw - 6);
+    this.bubble = [lx, top, bw, bh];   // read by the layout audit: the overlay must not cover it
     rr(ctx, lx, top, bw, bh, 14); ctx.fillStyle = '#fff6da'; ctx.fill(); poly(ctx, [x - 8, top + bh - 1, x + 8, top + bh - 1, x + 2, top + bh + 12], '#fff6da');
     ctx.font = `800 ${fs}px ui-rounded, "Segoe UI", Roboto, sans-serif`; ctx.textAlign = 'center'; ctx.fillStyle = '#2a1c05';
     v.pass.forEach((p, j) => { const px = lx + 4 + j * col + col / 2; drawIcon(ctx, p, px, top + 8 + isz / 2, isz); ctx.fillText(t(p), px, top + isz + fs + 8, col - 4); });   // each word keeps its own column

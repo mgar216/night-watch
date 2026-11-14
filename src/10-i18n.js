@@ -122,7 +122,7 @@ let lang = 0;
 function t(key, vars) {
   const row = L[key];
   let s = row ? row[lang] : key;
-  if (vars) for (const k in vars) s = s.replace('{' + k + '}', vars[k]);
+  if (vars) for (const k in vars) s = s.replace('{' + k + '}', () => vars[k]);   // a function, so a name like "$&" is inserted as typed
   return s;
 }
 // "3 days", "5 дней": Intl.PluralRules picks the form (one / few / many).
