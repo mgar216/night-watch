@@ -1,5 +1,28 @@
 // ---------- Characters. All are drawn with feet at (x, y); `s` scales, `t` animates ----------
 const still = () => calm.matches;
+// What the owl and Zip wear comes from the save; the wardrobe sets `tryOn` to show a thing before it is bought.
+let tryOn = null;
+function wearOn(c, id, x, y, k, rot = 0) { c.save(); c.translate(x, y); c.rotate(rot); c.scale(k, k); WEAR[id].draw(c); c.restore(); }
+// Hats and scarves, shared by everyone who can wear them: each character places and scales a thing for itself.
+// A hat is drawn with the middle of its brim at (0, 0) and half a brim equal to 1; a scarf with the neck at (0, 0).
+const scarf = (c, band, paint) => {
+  rr(c, .32, -.05, .44, 1.15, .1); c.fillStyle = band; c.fill();
+  c.save(); c.clip(); paint(1); c.restore();
+  c.beginPath(); c.ellipse(0, 0, 1, .3, 0, 0, TAU); c.fillStyle = band; c.fill();
+  c.save(); c.clip(); paint(0); c.restore();
+};
+const WEAR = {
+  party: { hat: true, cost: 15, draw(c) { poly(c, [-.9, 0, .9, 0, 0, -2.3], '#ff8a7a'); for (const y of [-.5, -1.2]) line(c, [-.9 - y * .39, y, .9 + y * .39, y], '#fff3c4', .2); ell(c, 0, 0, 1, .2, '#ffd24a'); circ(c, 0, -2.3, .34, '#fff'); } },
+  knit: { hat: true, cost: 20, draw(c) { c.beginPath(); c.arc(0, -.1, 1, Math.PI, 0); c.closePath(); c.fillStyle = '#58a6ff'; c.fill(); line(c, [-.8, -.55, -.4, -.8, 0, -.55, .4, -.8, .8, -.55], '#fff', .12); rr(c, -1.08, -.34, 2.16, .46, .2); c.fillStyle = '#eef3ff'; c.fill(); circ(c, 0, -1.2, .36, '#fff'); } },
+  chef: { hat: true, cost: 25, draw(c) { for (const [x, y, r] of [[-.62, -1.25, .58], [.62, -1.25, .58], [0, -1.5, .66]]) circ(c, x, y, r, '#fff'); rr(c, -.82, -1.2, 1.64, 1.2, .1); c.fillStyle = '#fff'; c.fill(); rr(c, -.86, -.3, 1.72, .34, .1); c.fillStyle = '#dfe6f5'; c.fill(); } },
+  wizard: { hat: true, cost: 35, draw(c) { poly(c, [-.95, -.05, .95, -.05, .3, -2.6], '#6a4bd0'); ell(c, 0, 0, 1.4, .3, '#5a3fc0'); c.lineWidth = .08; c.strokeStyle = 'rgba(220,210,255,.9)'; c.stroke(); for (const [x, y, r] of [[-.25, -.6, .3], [.3, -1.3, .22], [.05, -1.95, .16]]) { starPath(c, x, y, r, r * .42, 5); c.fillStyle = '#ffd24a'; c.fill(); } } },
+  crown: { hat: true, cost: 50, draw(c) { poly(c, [-1, 0, -1, -1.05, -.5, -.5, 0, -1.25, .5, -.5, 1, -1.05, 1, 0], '#ffcf4a'); c.lineWidth = .09; c.strokeStyle = '#b07a00'; c.lineJoin = 'round'; c.stroke(); circ(c, 0, -.32, .17, '#e8503a'); circ(c, -.6, -.28, .12, '#58a6ff'); circ(c, .6, -.28, .12, '#6fdc95'); for (const x of [-1, 0, 1]) circ(c, x, x ? -1.05 : -1.25, .13, '#fff3c4'); } },
+  stripe: { hat: false, cost: 12, draw(c) { scarf(c, '#e8503a', tail => { for (let i = -4; i < 8; i++) tail ? line(c, [.2, i * .3 + .1, .9, i * .3 + .1], '#fff', .1) : line(c, [i * .4, -.4, i * .4 - .15, .4], '#fff', .1); }); } },
+  dots: { hat: false, cost: 16, draw(c) { scarf(c, '#2ec4a6', tail => { for (let i = 0; i < 8; i++) tail ? circ(c, .43 + (i % 2) * .22, .2 + i * .13, .07, '#fff') : circ(c, -.8 + i * .23, (i % 2) * .16 - .06, .07, '#fff'); }); } },
+  rainbow: { hat: false, cost: 22, draw(c) { scarf(c, '#ffd24a', tail => { ['#e8503a', '#ff9a3a', '#ffd24a', '#6fdc95', '#58a6ff', '#a47be8'].forEach((col, i) => { c.fillStyle = col; tail ? c.fillRect(.3, -.05 + i * .2, .5, .2) : c.fillRect(-1 + i * .34, -.4, .34, .8); }); }); } },
+  bowtie: { hat: false, cost: 15, draw(c) { poly(c, [-.8, -.42, 0, 0, -.8, .42], '#e8436a'); poly(c, [.8, -.42, 0, 0, .8, .42], '#e8436a'); for (const x of [-.52, .52]) circ(c, x, 0, .09, '#fff'); circ(c, 0, 0, .2, '#b82a4e'); } },
+};
+const WEARS = Object.keys(WEAR);
 
 // The owl: sleepy, kind, guard's cap, flashlight. mood: idle | talk | no | cheer | sleep. `beam` draws the light cone.
 function owl(c, x, y, s, t, mood = 'idle', beam = true) {
@@ -12,6 +35,8 @@ function owl(c, x, y, s, t, mood = 'idle', beam = true) {
   ell(c, 0, -42, 36, 42, '#9a6a3c');
   ell(c, 0, -30, 24, 27, '#e8c89a');
   for (let i = 0; i < 5; i++) line(c, [-12 + (i % 3) * 12 - (i > 2 ? -6 : 0), -34 + (i > 2 ? 12 : 0), -8 + (i % 3) * 12 - (i > 2 ? -6 : 0), -30 + (i > 2 ? 12 : 0), -4 + (i % 3) * 12 - (i > 2 ? -6 : 0), -34 + (i > 2 ? 12 : 0)], '#c9a06a', 1.6);
+  const W = tryOn || S;
+  if (W.scarf) wearOn(c, W.scarf, 0, -37, 26);
   // flashlight wing
   c.save(); c.translate(32, -52); c.rotate(-.2 + up);
   ell(c, 0, 16, 12, 26, '#7a4e28');
@@ -25,9 +50,12 @@ function owl(c, x, y, s, t, mood = 'idle', beam = true) {
   }
   poly(c, [-5, -52, 5, -52, 0, -43], '#ffb02e');
   if (mood === 'talk' && Math.sin(t * 12) > 0) poly(c, [-4, -44, 4, -44, 0, -38], '#e08a1a');
-  // guard's cap
-  ell(c, 0, -78, 30, 8, '#16224f'); rr(c, -22, -96, 44, 18, 7); c.fillStyle = '#22306e'; c.fill();
-  ell(c, 6, -76, 22, 5, '#0d1638'); starPath(c, 0, -87, 6, 2.6, 5); c.fillStyle = '#ffd24a'; c.fill();
+  // guard's cap, or the hat from the wardrobe
+  if (W.hat) wearOn(c, W.hat, 0, -79, 21);
+  else {
+    ell(c, 0, -78, 30, 8, '#16224f'); rr(c, -22, -96, 44, 18, 7); c.fillStyle = '#22306e'; c.fill();
+    ell(c, 6, -76, 22, 5, '#0d1638'); starPath(c, 0, -87, 6, 2.6, 5); c.fillStyle = '#ffd24a'; c.fill();
+  }
   if (mood === 'sleep' && !still()) for (let i = 0; i < 3; i++) { const k = (t * .5 + i / 3) % 1; c.globalAlpha = 1 - k; circ(c, 30 + k * 18, -84 - k * 30, 2 + k * 4, '#dff0ff'); c.globalAlpha = 1; }
   if (mood === 'no' && still()) { circ(c, 36, -88, 11, '#e0553f'); drawIcon(c, 'no', 36, -88, 13); }   // with motion reduced the head cannot shake: show a small cross instead
   c.restore();
@@ -53,6 +81,7 @@ function magpie(c, x, y, s, t, o = {}) {
     ell(c, 6, -23, 15, 12, '#f4f4f0');
     if (o.disguise === 3) { line(c, [-4, -28, 16, -28], '#ff9ecb', 3); line(c, [-6, -22, 19, -22], '#ffd24a', 3); line(c, [-3, -16, 16, -16], '#6fdc95', 3); }
     ell(c, -6, -33, 16, 10, '#27408f', -.2); ell(c, -2, -39, 7, 4, '#f4f4f0', -.2);
+    if (o.baron) { poly(c, [7, -31, 15, -31, 11, -23], '#e8503a'); circ(c, 11, -20, 5, '#ffd24a'); starPath(c, 11, -20, 3, 1.3, 5); c.fillStyle = '#b07a00'; c.fill(); }   // the Baron's medal
   }
   c.rotate(-lean * (pose === 'sulk' ? -.6 : .8));
   const hx = 20, hy = pose === 'sulk' ? -44 : -52;
@@ -63,6 +92,7 @@ function magpie(c, x, y, s, t, o = {}) {
     const ex = hx + 5, ey = hy - 3, big = face === 'shock' || face === 'puppy' || face === 'worry' || face === 'sweat';
     if (face === 'sleep') line(c, [ex - 5, ey, ex, ey + 3, ex + 5, ey], '#fff', 2);
     else if (pose === 'dizzy') line(c, [ex - 4, ey - 4, ex + 4, ey + 4, ex, ey, ex + 4, ey - 4, ex - 4, ey + 4], '#fff', 2);
+    else if (face === 'joy') line(c, [ex - 5, ey + 2, ex, ey - 3, ex + 5, ey + 2], '#fff', 2.4);   // a laughing eye
     else {
       circ(c, ex, ey, big ? 8 : 5.5, '#fff');
       circ(c, ex + (face === 'sad' ? -1 : 1.5), ey + (face === 'sad' || face === 'puppy' ? 1.5 : 0), face === 'puppy' ? 5 : face === 'shock' ? 2 : 2.8, '#111');
@@ -78,6 +108,13 @@ function magpie(c, x, y, s, t, o = {}) {
       c.save(); c.translate(hx + 2, hy - 9); c.rotate(.18); c.scale(1.3, 1.3);
       ell(c, 0, 2, 22, 6, '#2b3f8f'); rr(c, -16, -14, 32, 16, 6); c.fillStyle = '#3a52ad'; c.fill(); c.lineWidth = 1.5; c.strokeStyle = 'rgba(190,210,255,.9)'; c.stroke();
       ell(c, 8, 4, 16, 4, '#1b2a6b'); starPath(c, 0, -6, 5, 2.2, 5); c.fillStyle = '#ffd24a'; c.fill(); c.restore();
+    }
+    if (o.baron) {   // Baron von Shiny: a tall hat with a gold band, a monocle on a chain and a curly moustache
+      rr(c, hx - 11, hy - 38, 22, 27, 3); c.fillStyle = '#4a3470'; c.fill(); c.lineWidth = 1.5; c.strokeStyle = 'rgba(210,200,255,.85)'; c.stroke();
+      ell(c, hx, hy - 12, 19, 4.5, '#4a3470'); rr(c, hx - 11, hy - 20, 22, 5, 1); c.fillStyle = '#ffd24a'; c.fill();
+      c.lineWidth = 2; c.strokeStyle = '#ffd24a'; c.beginPath(); c.arc(hx + 5, hy - 3, 8.5, 0, TAU); c.stroke();
+      line(c, [hx + 1, hy + 5, hx - 3, hy + 14, hx - 9, hy + 19], '#ffd24a', 1.2);
+      for (const d of [-1, 1]) { c.beginPath(); c.moveTo(hx + 15, hy + 8); c.quadraticCurveTo(hx + 15 + d * 9, hy + 15, hx + 15 + d * 12, hy + 5); c.lineWidth = 2.8; c.strokeStyle = '#e4e4ee'; c.stroke(); }
     }
     if (o.hat) {
       ell(c, hx, hy - 12, 17, 4, '#3a2a4a'); c.beginPath(); c.arc(hx, hy - 13, 11, Math.PI, 0); c.fillStyle = '#4a3660'; c.fill();
@@ -99,6 +136,9 @@ function zip(c, x, y, s, t, dir = 1) {
   ell(c, 0, 0, 11, 7, '#2ec4a6', -.25); ell(c, 4, 2, 6, 4, '#e8436a', -.25);
   circ(c, 10, -5, 6, '#2ec4a6'); line(c, [15, -5, 30, -7], '#33333d', 1.4);
   circ(c, 12, -6, 1.6, '#111'); circ(c, 12.6, -6.6, .6, '#fff');
+  const W = tryOn || S;
+  if (W.zscarf) wearOn(c, W.zscarf, 5.5, -1, 6.5, -.3);
+  if (W.zhat) wearOn(c, W.zhat, 9.5, -10, 5.2, .12);
   c.restore();
 }
 

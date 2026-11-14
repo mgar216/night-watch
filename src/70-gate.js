@@ -91,7 +91,11 @@ scenes.gate = {
   update() {
     if (!this.run) return;
     const dt = V.t - this.at;
-    if (this.state === 'in' && dt > .7) { this.state = 'ask'; this.at = V.t; sfx.pop(); }
+    if (this.state === 'in' && dt > .7) {
+      this.state = 'ask'; this.at = V.t; sfx.pop();
+      const v = this.q[this.i];
+      if (!v.badge || v.puppy) later(() => speak(t(v.badge ? 'please' : 'lost'), 'pie'), 250);   // a magpie's own words are only chatter
+    }
     else if (this.state === 'out' && dt > (this.cut ? 3 : 1.2)) this.next();
   },
   draw() {

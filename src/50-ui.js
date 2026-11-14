@@ -28,8 +28,20 @@ function owlSay(text, o = {}) {
   el.width = 108 * d; el.height = 100 * d;   // the owl is drawn at a scale where raised wings fit; the flashlight beam is left out
   portrait = { el, c: el.getContext('2d'), d, mood: o.mood || 'talk', t0: V.t };
   say(text);
-  if (!o.quiet) sfx.hoot();
+  if (S.voice && !S.mute) speak(text); else if (!o.quiet) sfx.hoot();   // the owl says it, or at least hoots
   ($('.btn.go', acts) || acts.firstChild).focus({ preventScroll: true });   // Enter continues; it never restarts or leaves by surprise
+  return v;
+}
+// A plain modal panel with the same manners as the owl's dialog: the rest is inert, and focus goes back when it closes.
+function modal(inner, label, cls = '') {
+  if (closeDlg) closeDlg();
+  const before = document.activeElement, others = [...ui.children];
+  const v = add(`<div class="veil"><div class="dlg pop ${cls}" role="dialog" aria-modal="true" aria-label="${esc(label)}">${inner}</div></div>`);
+  others.forEach(el => { el.inert = true; });
+  closeDlg = () => {
+    v.remove(); closeDlg = null; others.forEach(el => { el.inert = false; });
+    if (before && before.isConnected && before !== document.body) before.focus({ preventScroll: true });
+  };
   return v;
 }
 function drawPortrait() {
@@ -57,9 +69,15 @@ function refreshHud() {
 
 // Station results. Stars and moonbeams are paid for improvement, so replaying is always worth a try.
 // The win is saved the moment it happens (the player may leave during the celebration); the owl's dialog follows.
+// From Night 2 each Night also offers one extra station; the three take turns and share one star slot.
+const EXTRAS = ['flies', 'mail', 'code'];
+const extraOf = night => night >= 2 ? EXTRAS[(night - 2) % EXTRAS.length] : null;
+// The first win of a station in a Night also brings a sticker for the album.
+let newStk = '';
 function award(id, stars) {
-  const gain = Math.max(0, stars - S.st[id]);
-  S.st[id] = Math.max(S.st[id], stars); S.stars += gain; S.beams += gain * 5; save();
+  const k = EXTRAS.includes(id) ? 'extra' : id, gain = Math.max(0, stars - S.st[k]);
+  newStk = stars && !S.st[k] ? stickAny() : '';
+  S.st[k] = Math.max(S.st[k], stars); S.stars += gain; S.beams += gain * 5; save();
   refreshHud();
   return gain;
 }
@@ -67,8 +85,9 @@ function stationWin(id, stars, gain, text, html = '') {
   sfx.win();
   burst(V.w / 2, V.h * .35, 40, { colors: ['#ffd86b', '#fff', '#ff9ecb', '#7fd0ff'], speed: 320, life: 1.4, kind: 'star', size: 9 });
   owlSay(text || t('win'), { title: t('s_' + id), stars, mood: 'cheer', quiet: true,
-    html: html + (gain ? `<div class="pics"><span class="pill pop">${ic('beam', 22)}<b>+${gain * 5}</b></span></div>` : ''),
+    html: html + (gain || newStk ? `<div class="pics">${gain ? `<span class="pill pop">${ic('beam', 22)}<b>+${gain * 5}</b></span>` : ''}${stickerPill(newStk)}</div>` : ''),
     acts: [{ label: t('retry'), icon: 'retry', fn: () => go(id) }, { label: t('ok'), cls: 'go', icon: 'yes', fn: () => go('hub') }] });
+  newStk = '';
 }
 function stationFail(id, text, retry) {
   sfx.oops();
@@ -81,29 +100,46 @@ function askName(then) {
 }
 
 // ----- Home -----
+// Secrets on the menu screens: tap the moon, tap a room, swipe or shake the fireflies; after a quiet while the owl dozes off.
+const dozing = () => V.t - lastTouch > 25;
+function snore(sc) { if (dozing() && V.t > (sc.snoreT || 0)) { sc.snoreT = V.t + 3.6; sfx.snore(); } }
+// After the last story the magpies have joined the Night Watch: one of them stands guard by the ladder, in a cap that is far too big.
+function helper(T, t0) { if (rank() === 3) magpie(ctx, T.ox + 745 * T.k, T.oy + 930 * T.k, Math.max(.42, T.k * .95), t0, { dir: -1, disguise: 4, face: 'joy' }); }
 scenes.home = {
+  sky: true,
   enter() {
     this.cheer = 0;
+    const fresh = STK_SETS.flat().some(id => S.stk[id] === 1);
     const n = add(`<div class="home"><h1 class="title">${esc(t('title'))}</h1><div class="mid"></div>
       <div class="row"><button class="btn gold big pulse" id="bPlay">${ic('play', 30)}${esc(t('play'))}</button></div>
+      <div class="row shelf"><button class="btn round" id="bAlbum" aria-label="${esc(t('album'))}">${ic('album', 30)}${fresh ? '<i class="dot"></i>' : ''}</button>
+      <button class="btn round" id="bWear" aria-label="${esc(t('wardrobe'))}">${ic('hanger', 30)}</button>
+      <button class="btn round" id="bPie" aria-label="${esc(t('s_pie'))}">${ic('pie', 32)}</button>
+      <a class="btn round" id="bFish" href="fishing/index.html" aria-label="${esc(t('fishing'))}">${ic('fish', 30)}</a>
+      <button class="btn round" id="bBadge" aria-label="${esc(t('badgeTitle'))}">${ic('rank:' + rank(), 34)}</button></div>
       <div class="row"><div class="langs" role="group" aria-label="${esc(t('lang'))}">${LANGS.map((l, i) => `<button class="btn" data-l="${i}" aria-label="${esc(L.langName[i])}" aria-pressed="${i === lang}">${ic('bird:' + i, 30)}${l.toUpperCase()}</button>`).join('')}</div>
       <button class="btn round" id="bSnd" aria-label="${esc(t('sound'))}" aria-pressed="${!S.mute}">${ic('snd:' + (S.mute ? 0 : 1), 28)}</button>
-      <button class="btn round" id="bBadge" aria-label="${esc(t('badgeTitle'))}">${ic('rank:' + rank(), 34)}</button></div>
+      <button class="btn round" id="bVoice" aria-label="${esc(t('voice'))}" aria-pressed="${S.voice}">${ic('talk:' + (S.voice ? 1 : 0), 28)}</button></div>
       <p class="foot">${esc(t('foot'))}</p></div>`);
     $('#bPlay', n).onclick = () => { sfx.pop(); S.name || S.night > 1 || S.briefed ? go('hub') : askName(() => go('hub')); };
     $('#bSnd', n).onclick = () => { setMute(!S.mute); sfx.click(); go('home'); };
+    $('#bVoice', n).onclick = () => { S.voice = !S.voice; save(); sfx.click(); go('home'); if (S.voice) speak(t('win')); };
     $('#bBadge', n).onclick = () => { sfx.click(); go('badge', { from: 'home' }); };
+    for (const [id, sc] of [['#bAlbum', 'album'], ['#bWear', 'wear'], ['#bPie', 'pie']]) $(id, n).onclick = () => { sfx.pop(); go(sc, { from: 'home' }); };
     n.querySelectorAll('[data-l]').forEach(b => b.onclick = () => { setLang(+b.dataset.l); sfx.chirp(); go('home'); });
   },
+  update() { snore(this); },
   down(x, y) {
     const T = treeArea(), [lx, ly] = toTree(T, x, y);
     for (const [jx, jy, r] of [[300, 868, 95], ...JARS.map(j => [...j, 46])]) if (Math.hypot(lx - jx, ly - jy) < r) { this.jarT = V.t; sfx.sparkle(); burst(x, y, 22, { speed: 220, size: 9, colors: ['#ffd86b', '#fff6da', '#fff'] }); return; }
-    if (Math.hypot(lx - OWL[0], ly - OWL[1] + 45) < 60) { sfx.hoot(); this.cheer = V.t + 1.2; }
+    if (Math.hypot(lx - OWL[0], ly - OWL[1] + 45) < 60) { sfx.hoot(); this.cheer = V.t + 1.2; return; }
+    menuTap(x, y, T);
   },
   draw() {
     const T = treeArea(), t0 = V.t;
     drawSky(ctx, t0); drawTree(ctx, T, t0);
-    treeOwl(ctx, T, t0, t0 < this.cheer ? 'cheer' : 'idle');
+    treeOwl(ctx, T, t0, t0 < this.cheer ? 'cheer' : dozing() ? 'sleep' : 'idle');
+    helper(T, t0);
     const zx = 500 + Math.sin(t0 * .9) * 330, zy = 230 + Math.sin(t0 * 1.8) * 90;
     zip(ctx, T.ox + zx * T.k, T.oy + zy * T.k, Math.max(.6, T.k * 1.6), t0, Math.cos(t0 * .9) > 0 ? 1 : -1);
     // the big jar by the roots: tap it and it sparkles
@@ -115,42 +151,54 @@ scenes.home = {
 
 // ----- Hub: the Night menu -----
 const BRIEF_PICS = [['jar', 'torch'], ['feather', 'jar'], ['cam', 'cam', 'cam'], ['badge:leaf:0', 'lock'], ['torch', 'torch'], ['cam', 'cam', 'cam'], ['star', 'star', 'star'], ['jar', 'beam']];
+const isBoss = n => n % 5 === 0;   // every fifth Night the Baron comes with a plan of his own
+const EXTRA_ICON = { flies: 'fliesFly', mail: 'mailBox', code: 'codeNote' };
 scenes.hub = {
+  sky: true,
   enter() {
     if (S.promo) return go('badge', { promo: true });   // a ceremony that a reload interrupted still takes place
     hud(() => go('home'), `<button class="btn round" id="bBadge" aria-label="${esc(t('badgeTitle'))}">${ic('rank:' + rank(), 34)}</button>`);
     $('#bBadge').onclick = () => { sfx.click(); go('badge', { from: 'hub' }); };
-    const ready = S.st.cam && S.st.gate && S.st.forge;
-    const n = add(`<div class="hub"><div class="cards">${[['cam', 'cam'], ['gate', 'gateI'], ['forge', 'lock']].map(([id, i]) =>
-      `<button class="card ${S.st[id] ? 'done' : ''}" data-s="${id}" aria-label="${esc(t('s_' + id))}, ${S.st[id]}/3">${ic(i, 44)}<span>${esc(t('s_' + id))}</span>${starsHtml(S.st[id], 18)}</button>`).join('')}</div>
+    // Three stations open the raid; from Night 2 a fourth, extra one takes turns (dashed card: a bonus, never needed).
+    const ready = S.st.cam && S.st.gate && S.st.forge, extra = extraOf(S.night), boss = isBoss(S.night) && S.boss !== S.night;
+    const cards = [['cam', 'cam', S.st.cam], ['gate', 'gateI', S.st.gate], ['forge', 'lock', S.st.forge]].concat(extra ? [[extra, EXTRA_ICON[extra], S.st.extra]] : []);
+    const n = add(`<div class="hub"><div class="cards${extra ? ' four' : ''}">${cards.map(([id, i, st]) =>
+      `<button class="card ${st ? 'done' : ''}${id === extra ? ' bonus' : ''}" data-s="${id}" aria-label="${esc(t('s_' + id))}, ${st}/3">${ic(i, 44)}<span>${esc(t('s_' + id))}</span>${starsHtml(st, 18)}</button>`).join('')}</div>
       <div class="row" style="display:flex;gap:.5em;flex-wrap:wrap;justify-content:center">
       <button class="btn" id="bTinker">${ic('hammer', 28)}${esc(t('s_tinker'))}</button>
-      <button class="btn gold ${ready ? 'pulse' : ''}" id="bRaid" ${ready ? '' : 'disabled'}>${ic('jar', 28)}${esc(t('raidGo'))}</button></div></div>`);
+      <button class="btn gold ${ready ? 'pulse' : ''}" id="bRaid" ${ready ? '' : 'disabled'}>${ic(boss ? 'stk:m6' : 'jar', 28)}${esc(t(boss ? 'bossGo' : 'raidGo'))}</button></div></div>`);
     n.querySelectorAll('.card').forEach(b => b.onclick = () => { sfx.pop(); go(b.dataset.s); });
     $('#bTinker', n).onclick = () => { sfx.pop(); go('tinker'); };
-    $('#bRaid', n).onclick = () => { sfx.alarm(); go('raid'); };
+    $('#bRaid', n).onclick = () => { sfx.alarm(); boss ? go('boss', { then: () => go('raid') }) : go('raid'); };
     if (S.briefed < S.night) {
-      const back = S.nest > 0;
+      const back = S.nest > 0, b = Math.min(S.night, 8);
       S.briefed = S.night; S.nest = 0; save();
-      owlSay(t('b' + Math.min(S.night, 8)), { title: t('night', { n: S.night }), html: picsHtml(BRIEF_PICS[Math.min(S.night, 8) - 1]),
+      owlSay(t('b' + b) + (isBoss(S.night) ? ' ' + t('bBoss') : ''), { title: t('night', { n: S.night }), html: picsHtml(BRIEF_PICS[b - 1].concat(isBoss(S.night) ? ['stk:m6'] : [])),
         acts: [{ label: t('go'), cls: 'go', icon: 'play', fn: () => { if (back) { toast(t('jarsBack')); sfx.chirp(); } } }] });
     }
   },
+  update() { snore(this); },
+  down(x, y) { menuTap(x, y, treeArea()); },
   draw() {
     const T = treeArea(), t0 = V.t;
     drawSky(ctx, t0); drawTree(ctx, T, t0);
-    treeOwl(ctx, T, t0);
+    treeOwl(ctx, T, t0, dozing() ? 'sleep' : 'idle');
+    helper(T, t0);
     zip(ctx, T.ox + (500 + Math.sin(t0 * .7) * 300) * T.k, T.oy + (200 + Math.sin(t0 * 1.4) * 60) * T.k, Math.max(.6, T.k * 1.6), t0, Math.cos(t0 * .7) > 0 ? 1 : -1);
     fireflies(ctx, t0, 10);
   },
 };
 
 // The Night ends after the raid: stars, moonbeams, maybe a promotion, then the Tinker Treehouse.
-function finishNight(stolen) {
+// closeNight() counts and saves it the moment the raid is over; the owl's word about it may come later (after a replay).
+function closeNight(stolen) {
   const stars = stolen === 0 ? 3 : stolen === 1 ? 2 : 1, old = rank();
-  S.stars += stars; S.beams += 15 + stars * 10; S.nest = stolen; S.night++; S.st = { cam: 0, gate: 0, forge: 0 };
+  S.stars += stars; S.beams += 15 + stars * 10; S.nest = stolen; S.night++; S.st = { cam: 0, gate: 0, forge: 0, extra: 0 };
   S.promo = rank() > old;   // kept in the save, so closing the page here cannot skip the ceremony
   save();
+  return stars;
+}
+function finishNight(stolen, stars = closeNight(stolen)) {
   stolen ? sfx.hoot() : sfx.win();
   owlSay(stolen ? t('raid1') + ' ' + t('raid2') : t('raid0'), { title: t('night', { n: S.night - 1 }), stars, mood: stolen ? 'idle' : 'cheer', quiet: true,
     html: `<div class="pics"><span class="pill pop">${ic('beam', 22)}<b>+${15 + stars * 10}</b></span></div>`,
@@ -158,21 +206,32 @@ function finishNight(stolen) {
 }
 
 // ----- Badge: profile, promotion ceremony and the Chief's forest-wide celebration -----
+// A promotion starts with its story strip; the ceremony also shows the room the treehouse has just gained.
 scenes.badge = {
   enter(o = {}) {
     this.o = o; this.t0 = V.t; this.panel = null;
     const r = rank(), party = this.party = r === 3;   // a Chief always gets the forest-wide celebration
-    if (o.promo) sfx.fanfare();
+    if (o.promo && !o.told) return go('story', { rank: r, then: () => go('badge', { promo: true, told: true }) });
+    if (o.promo) { sfx.fanfare(); later(() => speak(t('promo', { r: t('rank' + r) }) + (party ? ' ' + t('finaleSay') : '')), 1300); }
     const n = add(`<div class="bar badgebar"><div class="dlg" style="width:min(26em,100%)">
       <h2>${esc(o.promo ? t('promo', { r: t('rank' + r) }) : t('badgeTitle'))}</h2>
       ${party ? `<div id="fin">${esc(t('finale', { n: playerName() }))}</div>` : ''}
-      <div class="pics"><input class="name" maxlength="16" autocomplete="off" placeholder="${esc(t('nameDef'))}" value="${esc(S.name)}" aria-label="${esc(t('nameAsk'))}"></div>
+      ${o.promo ? `<div class="pics"><span class="pill pop got">${ic('room:' + r, 30)}<span>${esc(t('roomNew'))}<br><b>${esc(t('room' + r))}</b></span></span></div>`
+        : `<div class="pics"><input class="name" maxlength="16" autocomplete="off" placeholder="${esc(t('nameDef'))}" value="${esc(S.name)}" aria-label="${esc(t('nameAsk'))}"></div>`}
       <div class="pics"><span class="pill">${ic('rank:' + r, 26)}${esc(t('rank' + r))}</span><span class="pill">${ic('star', 22)}<b>${S.stars}</b></span>
       <span class="pill">${ic('moon', 22)}${esc(t('nights'))}: <b>${S.night - 1}</b></span></div>
-      <div class="acts"><button class="btn go">${ic('yes', 26)}${esc(t('ok'))}</button></div></div></div>`);
+      <div class="acts"><button class="btn round" id="bCert" aria-label="${esc(t('cert'))}">${ic('cert', 30)}</button>
+      ${o.promo ? '' : `<button class="btn round" id="bWho" aria-label="${esc(t('players'))}">${ic('faces', 30)}</button>`}
+      <button class="btn go" id="bOk">${ic('yes', 26)}${esc(t('ok'))}</button></div></div></div>`);
     this.panel = $('.dlg', n);
-    $('input', n).oninput = e => { S.name = e.target.value.trim().slice(0, 16); save(); const f = $('#fin', n); if (f) f.textContent = t('finale', { n: playerName() }); };
-    $('button', n).onclick = () => { sfx.click(); if (o.promo) { S.promo = false; save(); } go(o.promo ? 'tinker' : o.from || 'home'); };
+    if ($('input', n)) $('input', n).oninput = e => { S.name = e.target.value.trim().slice(0, 16); save(); const f = $('#fin', n); if (f) f.textContent = t('finale', { n: playerName() }); };
+    $('#bCert', n).onclick = () => { sfx.click(); showCert(); };
+    if ($('#bWho', n)) $('#bWho', n).onclick = () => { sfx.click(); showPlayers(); };
+    $('#bOk', n).onclick = () => {
+      if (o.promo && V.t - this.t0 < .6) return;   // a second tap meant for the story's last "Next" must not skip the ceremony
+      sfx.click(); if (o.promo) { S.promo = false; save(); } go(o.promo ? 'tinker' : o.from || 'home');
+    };
+    $('#bOk', n).focus({ preventScroll: true });
   },
   draw() {
     // Landscape: the badge (or the party tree) keeps the left half, the panel sits on the right half.
@@ -186,7 +245,7 @@ scenes.badge = {
       treeOwl(ctx, T, t0, 'cheer');
       const gy = T.oy + 930 * T.k, s = Math.max(.45, T.k * 1.1);
       for (let i = 0; i < 5; i++) critter(ctx, T.ox + 130 * T.k + i * Math.max(62 * T.k, 44 * s), gy, s, t0 + i * .4, i);
-      for (let i = 0; i < 3; i++) magpie(ctx, T.ox + 600 * T.k + i * Math.max(80 * T.k, 58 * s), gy - (still() ? 0 : Math.abs(Math.sin(t0 * 5 + i)) * 10), s, t0, { face: 'shock', dir: -1 });
+      for (let i = 0; i < 3; i++) magpie(ctx, T.ox + 600 * T.k + i * Math.max(80 * T.k, 58 * s), gy - (still() ? 0 : Math.abs(Math.sin(t0 * 5 + i)) * 10), s, t0, { face: 'joy', dir: -1, disguise: 4 });   // the newest guards, in caps that are far too big
       for (let i = 0; i < 3; i++) zip(ctx, cx + Math.sin(t0 * (1 + i * .3) + i * 2) * aw * .35, V.h * .2 + Math.cos(t0 * 1.7 + i) * V.h * .1, Math.max(.6, T.k * 1.6), t0 + i, 1);
       if (Math.random() < .06) burst(rnd(V.w), rnd(V.h * .5), 14, { colors: ['#ffd86b', '#ff9ecb', '#7fd0ff', '#6fdc95'], speed: 200, kind: 'star', size: 8 });
     } else if (this.o.promo && Math.random() < .08) burst(cx + rnd(-size, size), cy + rnd(-size, size) * .6, 8, { colors: ['#ffd86b', '#fff'], speed: 120, size: 7 });

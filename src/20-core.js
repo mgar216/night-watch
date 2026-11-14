@@ -10,11 +10,17 @@ const rnd = (a = 1, b) => b === undefined ? Math.random() * a : a + Math.random(
 const pick = a => a[Math.random() * a.length | 0];
 const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const ease = k => 1 - (1 - k) * (1 - k);
+const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);   // a key of the table itself, never an inherited one such as "constructor"
 
 // Saved career. Ranks follow completed Nights: 2 -> Guard, 4 -> Senior Guard, 7 -> Chief.
-const SAVE = 'nightwatch.v1';
-const S = { lang: -1, mute: false, name: '', night: 1, st: { cam: 0, gate: 0, forge: 0 }, beams: 30, stars: 0,
-  items: [{ t: 'cam', m: 1 }], nest: 0, testStar: 0, gateStar: 0, briefed: 0, tinkered: 0, promo: false };
+// Up to four players share one device: each has a save slot of their own (the first one keeps the original key).
+const SLOTS = 4, slotKey = i => 'nightwatch.v1' + (i ? '.' + (i + 1) : '');
+let slot = 0;
+try { slot = clamp(localStorage.getItem('nightwatch.slot') | 0, 0, SLOTS - 1); } catch (e) { /* private mode: one player, nothing saved */ }
+const SAVE = slotKey(slot);
+const S = { lang: -1, mute: false, name: '', night: 1, st: { cam: 0, gate: 0, forge: 0, extra: 0 }, beams: 30, stars: 0,
+  items: [{ t: 'cam', m: 1 }], nest: 0, testStar: 0, gateStar: 0, briefed: 0, tinkered: 0, promo: false,
+  voice: true, stk: {}, own: {}, hat: '', scarf: '', zhat: '', zscarf: '', boss: 0, fooled: 0 };   // owl's voice on; stickers; wardrobe; last Baron Night won
 try { Object.assign(S, JSON.parse(localStorage.getItem(SAVE) || '{}')); } catch (e) { /* private mode: play without saving */ }
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 const rankAt = night => night > 7 ? 3 : night > 4 ? 2 : night > 2 ? 1 : 0;
@@ -39,7 +45,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 function say(text) { $('#live').textContent = text; }
 function toast(text) {
   const n = add(`<div class="toast">${esc(text)}</div>`);
-  say(text);
+  say(text); speak(text, 'owl', true);
   setTimeout(() => n.remove(), 1600);
 }
 // Restart the small "no" shake on an element (a full bar, an empty try).
@@ -56,6 +62,7 @@ function go(name, arg) {
   timers.forEach(clearTimeout); timers = [];
   ui.innerHTML = '';
   fx.length = 0;
+  hush();
   scene = scenes[name];
   scene.id = name;
   scene.enter(arg);
@@ -117,14 +124,34 @@ addEventListener('orientationchange', resize);
 
 // Input: pointer events cover touch, mouse and pen; keys go to the scene.
 const ptr = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
-cv.addEventListener('pointerdown', e => { audioOn(); if (scene && scene.down) scene.down(...ptr(e)); });
+// Secrets of the menu screens (scenes marked `sky`): a shaken phone, or one quick swipe, scatters the fireflies;
+// `lastTouch` lets the owl doze off when nobody plays.
+let lastTouch = 0, scatterT = -9, winkT = -9, swipe = null, grav = null;
+function scatter() {
+  if (!scene || !scene.sky || V.t - scatterT < 2.6) return;
+  scatterT = V.t; sfx.sparkle(); buzz(30);
+}
+addEventListener('devicemotion', e => {
+  const g = e.accelerationIncludingGravity;
+  if (!g || g.x === null) return;
+  if (!grav) grav = [g.x, g.y, g.z];
+  const d = Math.hypot(g.x - grav[0], g.y - grav[1], g.z - grav[2]);   // how far this moment is from the resting pull of gravity
+  grav[0] += (g.x - grav[0]) * .1; grav[1] += (g.y - grav[1]) * .1; grav[2] += (g.z - grav[2]) * .1;
+  if (d > 12) scatter();
+});
+cv.addEventListener('pointerdown', e => { audioOn(); lastTouch = V.t; const p = ptr(e); swipe = [p[0], p[1], V.t]; if (scene && scene.down) scene.down(...p); });
 addEventListener('pointermove', e => { if (scene && scene.move) scene.move(...ptr(e)); });
-addEventListener('pointerup', e => { if (scene && scene.up) scene.up(...ptr(e)); });
-addEventListener('pointercancel', e => { if (scene && scene.up) scene.up(...ptr(e), true); });
+addEventListener('pointerup', e => {
+  const p = ptr(e);
+  if (swipe && V.t - swipe[2] < .4 && Math.hypot(p[0] - swipe[0], p[1] - swipe[1]) > Math.min(V.w, V.h) * .35) scatter();
+  swipe = null;
+  if (scene && scene.up) scene.up(...p);
+});
+addEventListener('pointercancel', e => { swipe = null; if (scene && scene.up) scene.up(...ptr(e), true); });
 // While a dialog is open the keys belong to its buttons, not to the scene underneath.
-addEventListener('keydown', e => { audioOn(); if (scene && scene.key && !$('.veil') && !/INPUT/.test(e.target.tagName)) scene.key(e); });
+addEventListener('keydown', e => { audioOn(); lastTouch = V.t; if (scene && scene.key && !$('.veil') && !/INPUT/.test(e.target.tagName)) scene.key(e); });
 addEventListener('contextmenu', e => e.preventDefault());
-ui.addEventListener('pointerdown', () => audioOn());
+ui.addEventListener('pointerdown', () => { audioOn(); lastTouch = V.t; });   // buttons count as playing too: the owl must not doze off meanwhile
 addEventListener('click', () => audioOn(), true);   // iOS only unlocks sound on a completed tap
 
 let last = 0;

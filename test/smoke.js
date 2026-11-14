@@ -19,7 +19,8 @@ const missing = [...new Set([...src.matchAll(/\bt\('([A-Za-z0-9_]+)'\s*[,)]/g)].
 if (missing.length) { console.error('missing i18n keys:', missing); process.exit(1); }
 
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-ff-'));
-if (calm) fs.writeFileSync(path.join(profile, 'user.js'), 'user_pref("ui.prefersReducedMotion", 1);\n');
+// the owl's recorded clips may play without a tap in the test browser
+fs.writeFileSync(path.join(profile, 'user.js'), 'user_pref("media.autoplay.default", 0);\n' + (calm ? 'user_pref("ui.prefersReducedMotion", 1);\n' : ''));
 let ff, failed = 0, done = 0, watchdog;
 const finish = code => { if (ff) ff.kill('SIGKILL'); fs.rmSync(profile, { recursive: true, force: true }); fs.rmSync(page, { force: true }); process.exit(code); };
 const alive = () => { clearTimeout(watchdog); watchdog = setTimeout(() => { console.error('TIMEOUT: the browser went silent'); finish(1); }, 240000); };
@@ -36,6 +37,11 @@ const server = http.createServer((req, res) => {
       if (++done === runs.length) { console.log(failed ? `FAILED: ${failed} problems` : 'SMOKE OK'); finish(failed ? 1 : 0); }
     });
   } else if (req.url.startsWith('/game')) { res.setHeader('Content-Type', 'text/html; charset=utf-8'); res.end(fs.readFileSync(page)); }
+  else if (req.url.startsWith('/voice/')) {
+    const file = path.join(root, path.normalize(req.url.split('?')[0]));
+    if (!file.startsWith(path.join(root, 'voice')) || !fs.existsSync(file)) { res.statusCode = 404; return res.end(); }
+    res.setHeader('Content-Type', 'audio/mpeg'); res.end(fs.readFileSync(file));
+  }
   else {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.end(`<!DOCTYPE html><body style="margin:0;background:#333"><script>
