@@ -297,6 +297,7 @@ function paintRoom(c, st) {
 
 // ----- The treehouse: the Chief at home, four places to go, the look and the save code -----
 scenes.hub = {
+  leave(url) { location.href = url; },   // a method of its own, so that a test can watch the way out instead of leaving the page
   enter() {
     hud(() => go('map'), '', { book: false });
     const r = rank(), n = allLogged(), all = Object.keys(SPECIES).length, tro = Object.keys(S.ach).length;
@@ -309,7 +310,7 @@ scenes.hub = {
         <button class="card" data-go="trophies">${ic('hubBranch', 40)}<span>${esc(t('trophies'))}</span><small>${tro}/${Object.keys(ACHS).length}</small></button>
         <button class="card" data-go="records">${ic('hubBoard', 40)}<span>${esc(t('records'))}</span></button>
       </div>
-      <div class="hub-row"><button class="btn" id="hLook">${ic('feather', 24)}${esc(t('hub_look'))}</button>
+      <div class="hub-row">${day ? `<button class="btn gold" id="hNight">${ic('moon', 24)}${esc(t('day_back'))}</button>` : ''}<button class="btn" id="hLook">${ic('feather', 24)}${esc(t('hub_look'))}</button>
         <button class="btn" id="hCopy">${ic('hubCopy', 24)}${esc(t('hub_copy'))}</button><button class="btn" id="hPaste">${ic('hubPaste', 24)}${esc(t('hub_paste'))}</button></div>
     </div></div>`);
     this.panel = $('.hub-panel', w);
@@ -317,6 +318,7 @@ scenes.hub = {
     $('#hLook', w).onclick = () => { sfx.click(); this.look(); };
     $('#hCopy', w).onclick = () => { sfx.click(); this.copy(); };
     $('#hPaste', w).onclick = () => { sfx.click(); this.paste(); };
+    if (day) $('#hNight', w).onclick = () => { sfx.pop(); this.leave('../index.html#night'); };   // evening: the day ends where the Night Watch begins
     this.resize();
   },
   resize() { this.st = hubStage(this.panel); },

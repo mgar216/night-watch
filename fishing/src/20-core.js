@@ -13,7 +13,13 @@ const ease = k => 1 - (1 - k) * (1 - k);
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 
 // Saved career. Everything the player has earned lives here; src/99-main.js repairs a damaged save at boot.
-const SAVE = 'firstlight.v1';
+// The fishing is the day between two Nights of The Night Watch (the two games share a site and its storage), so each player
+// of the Night Watch has a fishing career of their own; the first player keeps the original key.
+let nwSlot = 0, nwSave = {};
+try { nwSlot = clamp(localStorage.getItem('nightwatch.slot') | 0, 0, 3); nwSave = JSON.parse(localStorage.getItem('nightwatch.v1' + (nwSlot ? '.' + (nwSlot + 1) : '')) || '{}') || {}; } catch (e) { /* private mode, or no Night Watch here */ }
+const SAVE = 'firstlight.v1' + (nwSlot ? '.' + (nwSlot + 1) : '');
+// `#day` in the address: the Chief comes from the Night Watch at first light, and goes back to it in the evening.
+let day = location.hash === '#day', dayCatch = 0, dayTold = false;
 const S = {
   lang: -1, mute: false, vol: .8, name: '',
   look: { col: 0, hat: '', boat: 0 },        // the Junior Chief: feather colour, hat, boat paint
@@ -29,13 +35,16 @@ const S = {
 };
 // Only the fields this game knows are taken from a save (or from a pasted save code): anything else is left behind.
 try { const o = JSON.parse(localStorage.getItem(SAVE) || '{}'); for (const k in S) if (has(o, k)) S[k] = o[k]; } catch (e) { /* private mode: play without saving */ }
+// Coming from the Night Watch, the Chief keeps that game's language and sound switch and, in a new career, its name.
+const nwLang = Number.isInteger(nwSave.lang) && LANGS[nwSave.lang] ? nwSave.lang : -1;
+if (day) { if (nwLang >= 0) S.lang = nwLang; if (typeof nwSave.mute === 'boolean') S.mute = nwSave.mute; if (!S.name && typeof nwSave.name === 'string') S.name = nwSave.name.slice(0, 16); }
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 function setLang(i) {
   lang = S.lang = i; save();
   document.documentElement.lang = LANGS[i];
   document.title = t('title');
 }
-setLang(Number.isInteger(S.lang) && LANGS[S.lang] ? S.lang : Math.max(0, LANGS.indexOf((navigator.language || 'en').slice(0, 2))));
+setLang(Number.isInteger(S.lang) && LANGS[S.lang] ? S.lang : nwLang >= 0 ? nwLang : Math.max(0, LANGS.indexOf((navigator.language || 'en').slice(0, 2))));
 
 // Events tie the parts together without knowing each other: the fishing emits, the trophies and the logbook listen.
 const subs = {};

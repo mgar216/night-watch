@@ -115,7 +115,7 @@ scenes.home = {
       <div class="row shelf"><button class="btn round" id="bAlbum" aria-label="${esc(t('album'))}">${ic('album', 30)}${fresh ? '<i class="dot"></i>' : ''}</button>
       <button class="btn round" id="bWear" aria-label="${esc(t('wardrobe'))}">${ic('hanger', 30)}</button>
       <button class="btn round" id="bPie" aria-label="${esc(t('s_pie'))}">${ic('pie', 32)}</button>
-      <a class="btn round" id="bFish" href="fishing/index.html" aria-label="${esc(t('fishing'))}">${ic('fish', 30)}</a>
+      <a class="btn round" id="bFish" href="fishing/index.html#day" aria-label="${esc(t('fishing'))}">${ic('fish', 30)}</a>
       <button class="btn round" id="bBadge" aria-label="${esc(t('badgeTitle'))}">${ic('rank:' + rank(), 34)}</button></div>
       <div class="row"><div class="langs" role="group" aria-label="${esc(t('lang'))}">${LANGS.map((l, i) => `<button class="btn" data-l="${i}" aria-label="${esc(L.langName[i])}" aria-pressed="${i === lang}">${ic('bird:' + i, 30)}${l.toUpperCase()}</button>`).join('')}</div>
       <button class="btn round" id="bSnd" aria-label="${esc(t('sound'))}" aria-pressed="${!S.mute}">${ic('snd:' + (S.mute ? 0 : 1), 28)}</button>
@@ -125,6 +125,7 @@ scenes.home = {
     $('#bSnd', n).onclick = () => { setMute(!S.mute); sfx.click(); go('home'); };
     $('#bVoice', n).onclick = () => { S.voice = !S.voice; save(); sfx.click(); go('home'); if (S.voice) speak(t('win')); };
     $('#bBadge', n).onclick = () => { sfx.click(); go('badge', { from: 'home' }); };
+    $('#bFish', n).onclick = () => { S.day = 0; save(); };   // going fishing from here is the day as well: first light does not ask again that evening
     for (const [id, sc] of [['#bAlbum', 'album'], ['#bWear', 'wear'], ['#bPie', 'pie']]) $(id, n).onclick = () => { sfx.pop(); go(sc, { from: 'home' }); };
     n.querySelectorAll('[data-l]').forEach(b => b.onclick = () => { setLang(+b.dataset.l); sfx.chirp(); go('home'); });
   },
@@ -157,6 +158,7 @@ scenes.hub = {
   sky: true,
   enter() {
     if (S.promo) return go('badge', { promo: true });   // a ceremony that a reload interrupted still takes place
+    if (S.day) return go('dawn');                        // first light comes once between two Nights
     hud(() => go('home'), `<button class="btn round" id="bBadge" aria-label="${esc(t('badgeTitle'))}">${ic('rank:' + rank(), 34)}</button>`);
     $('#bBadge').onclick = () => { sfx.click(); go('badge', { from: 'hub' }); };
     // Three stations open the raid; from Night 2 a fourth, extra one takes turns (dashed card: a bonus, never needed).
@@ -189,12 +191,45 @@ scenes.hub = {
   },
 };
 
-// The Night ends after the raid: stars, moonbeams, maybe a promotion, then the Tinker Treehouse.
+// ----- First light: the day between two Nights. The magpies sleep; the Chief may go fishing (the sister game) or rest. -----
+// The day is pending in the save from the end of a Night until this choice is made, so closing the page cannot lose it.
+scenes.dawn = {
+  leave(url) { location.href = url; },   // a method of its own, so that a test can watch the way out instead of leaving the page
+  enter() {
+    this.t0 = V.t;
+    const over = fn => () => { S.day = 0; save(); fn(); };
+    sfx.chirp();
+    // the veil of this dialog is almost clear: the morning is the picture
+    owlSay(t('dawn1'), { title: t('dawnT'), mood: 'cheer', acts: [
+      { label: t('dawnRest'), icon: 'moon', fn: over(() => go('hub')) },
+      // if the page is still here a while later, there was no way to the fishing game: the Night goes on instead
+      { label: t('dawnFish'), cls: 'go', icon: 'fish', fn: over(() => { this.leave('fishing/index.html#day'); later(() => go('hub'), 6000); }) }] }).classList.add('day');
+  },
+  draw() {
+    const T = treeArea(), t0 = V.t, k = still() ? 1 : Math.min(1, (t0 - this.t0) / 2.5), g = ctx.createLinearGradient(0, 0, 0, V.h);
+    drawSky(ctx, t0);
+    // the night sky warms from the horizon up; the sun climbs where the dialog leaves room: from behind the far hills
+    // on a wide screen, in the upper sky across from the moon on a phone (there the horizon lies behind the dialog)
+    g.addColorStop(0, `rgba(104,150,222,${.8 * k})`); g.addColorStop(.5, `rgba(255,192,150,${.8 * k})`); g.addColorStop(.8, `rgba(255,214,150,${.6 * k})`); g.addColorStop(1, `rgba(255,214,150,${.4 * k})`);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, V.w, V.h);
+    const r = Math.min(V.w, V.h) * .08, sx = V.w * (wide() ? .9 : .15), sy = V.h * (wide() ? .8 - .22 * k : .27 - .13 * k);
+    glow(ctx, sx, sy, r * 3.4, '255,238,180', .6 * k); circ(ctx, sx, sy, r, '#fff4cf');
+    farHills(ctx, V.w, V.h);
+    drawTree(ctx, T, t0);
+    treeOwl(ctx, T, t0, 'cheer');
+    helper(T, t0);
+  },
+};
+// The browser's Back button brings this page back as it was left: on the morning screen, with its question already answered.
+addEventListener('pageshow', e => { if (e.persisted && scene === scenes.dawn) go('hub'); });
+
+// The Night ends after the raid: stars, moonbeams, maybe a promotion, then the Tinker Treehouse, then first light.
 // closeNight() counts and saves it the moment the raid is over; the owl's word about it may come later (after a replay).
 function closeNight(stolen) {
   const stars = stolen === 0 ? 3 : stolen === 1 ? 2 : 1, old = rank();
   S.stars += stars; S.beams += 15 + stars * 10; S.nest = stolen; S.night++; S.st = { cam: 0, gate: 0, forge: 0, extra: 0 };
   S.promo = rank() > old;   // kept in the save, so closing the page here cannot skip the ceremony
+  S.day = 1;                // nor the day that follows the Night
   save();
   return stars;
 }

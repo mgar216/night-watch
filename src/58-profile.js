@@ -79,8 +79,11 @@ function showPlayers() {
     sfx.click();
     const i = +b.dataset.del;
     askGrownUp(() => {
-      // The current player starts afresh in the same language; another player's row becomes free.
-      try { i === slot ? localStorage.setItem(slotKey(i), JSON.stringify({ lang: S.lang, mute: S.mute, voice: S.voice })) : localStorage.removeItem(slotKey(i)); } catch (e) { /* nothing was saved */ }
+      // The current player starts afresh in the same language; another player's row becomes free. The player's fishing career goes too.
+      try {
+        i === slot ? localStorage.setItem(slotKey(i), JSON.stringify({ lang: S.lang, mute: S.mute, voice: S.voice })) : localStorage.removeItem(slotKey(i));
+        localStorage.removeItem('firstlight.v1' + (i ? '.' + (i + 1) : ''));
+      } catch (e) { /* nothing was saved */ }
       i === slot ? location.reload() : showPlayers();
     });
   });

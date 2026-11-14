@@ -59,6 +59,14 @@ function menuTap(x, y, T) {
   return false;
 }
 
+// The two rows of far hills: part of the cached sky, and drawn once more in front of the rising sun at first light.
+function farHills(g, w, h) {
+  for (const [col, base, amp, f] of [['#16255c', .8, .05, 3.1], ['#0f1a45', .87, .04, 5.3]]) {
+    g.beginPath(); g.moveTo(0, h);
+    for (let x = 0; x <= w; x += 8) g.lineTo(x, h * (base + Math.sin(x / w * f * TAU + f) * amp * .5 - Math.abs(Math.sin(x / w * f * 9)) * amp * .4));
+    g.lineTo(w, h); g.fillStyle = col; g.fill();
+  }
+}
 // Sky, stars, moon, far hills and the magpies' nest; cached per size, twinkles drawn live.
 let skyCache = null;
 const hash = i => { const x = Math.sin(i * 127.1) * 43758.5453; return x - Math.floor(x); };
@@ -75,11 +83,7 @@ function drawSky(c, t) {
     const [mx, my, mr] = moonAt();
     glow(g, mx, my, mr * 4, '255,240,200', .35); circ(g, mx, my, mr, '#fff3c9');
     circ(g, mx - mr * .3, my - mr * .2, mr * .18, '#f0dca0'); circ(g, mx + mr * .25, my + mr * .3, mr * .12, '#f0dca0'); circ(g, mx + mr * .2, my - mr * .4, mr * .09, '#f0dca0');
-    for (const [col, base, amp, f] of [['#16255c', .8, .05, 3.1], ['#0f1a45', .87, .04, 5.3]]) {
-      g.beginPath(); g.moveTo(0, h);
-      for (let x = 0; x <= w; x += 8) g.lineTo(x, h * (base + Math.sin(x / w * f * TAU + f) * amp * .5 - Math.abs(Math.sin(x / w * f * 9)) * amp * .4));
-      g.lineTo(w, h); g.fillStyle = col; g.fill();
-    }
+    farHills(g, w, h);
     skyCache = { w, h, o };
   }
   c.drawImage(skyCache.o, 0, 0, w, h);

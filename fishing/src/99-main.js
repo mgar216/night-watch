@@ -22,5 +22,10 @@
   S.at = S.at === 'tree' || has(AREA, S.at) && canReach(S.at) ? S.at : 'tree';
 })();
 resize();
-go('home');
+// After a good day's fishing the map says, once, that evening is near; the treehouse then leads back to the Night Watch.
+on('catch', () => { dayCatch++; });
+on('enter', d => { if (day && d && d.home && dayCatch >= 5 && !dayTold) { dayTold = true; toast(t('day_low'), 3200); } });
+// By day (from the Night Watch) the Chief is already on the way: no title screen, straight to the map.
+go(day ? 'map' : 'home');
+if (day) toast(t('day_start'), 2600);
 requestAnimationFrame(frame);

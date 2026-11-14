@@ -27,7 +27,7 @@
   // The grown-up question ("6 + 7 = ?"): press the right answer, or a wrong one.
   const answer = right => { const [a, b] = $('#owlText').textContent.match(/\d+/g).map(Number); [...document.querySelectorAll('.veil .acts .btn')].find(x => (+x.textContent === a + b) === right).click(); };
   const reset = n => { Object.assign(S, { night: n, st: { cam: 0, gate: 0, forge: 0, extra: 0 }, beams: 300, stars: 0, items: [{ t: 'cam', m: 1 }], nest: 0, testStar: 0, gateStar: 0, briefed: n, promo: false, tinkered: 2, name: 'Mia',
-    voice: true, stk: {}, own: {}, hat: '', scarf: '', zhat: '', zscarf: '', boss: 0, fooled: 0 }); tryOn = null; scenes.tinker.page = 0; };
+    voice: true, stk: {}, own: {}, hat: '', scarf: '', zhat: '', zscarf: '', boss: 0, fooled: 0, day: 0 }); tryOn = null; scenes.tinker.page = 0; };
   const worth = () => S.beams + S.items.reduce((a, i) => a + ITEMS[i.t].cost, 0);   // moonbeams in hand plus moonbeams built into the tree
   const key = (k, target = document.body) => target.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
   const ptr = (type, x, y, target = cv) => target.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, bubbles: true, cancelable: true, pointerId: 1 }));
@@ -139,9 +139,12 @@
     $('[data-del]').click(); check(document.querySelectorAll('.veil .acts .btn').length === 3, 'erasing a player asks a grown-up first');
     check(!document.activeElement || !document.activeElement.closest('.acts'), 'no answer of the grown-up question is in focus');
     answer(false); check(!!$('.who.me') && S.name === 'Mia', 'a wrong answer erases nothing and shows the players again');
-    localStorage.setItem(slotKey(1), JSON.stringify({ name: 'Leo<b>', night: 4, stars: 9 })); showPlayers();
+    localStorage.setItem(slotKey(1), JSON.stringify({ name: 'Leo<b>', night: 4, stars: 9 })); localStorage.setItem('firstlight.v1.2', '{}'); showPlayers();
     check($('[data-go="1"]').textContent.includes('Leo<b>') && !$('[data-go="1"] b b'), 'another player is listed by name, as text');
-    $('[data-del="1"]').click(); answer(true); check(!localStorage.getItem(slotKey(1)) && !!$('[data-new="1"]') && S.name === 'Mia', 'the right answer erases only that player'); $('#wOk').click();
+    $('[data-del="1"]').click(); answer(true); check(!localStorage.getItem(slotKey(1)) && !!$('[data-new="1"]') && S.name === 'Mia', 'the right answer erases only that player');
+    check(!localStorage.getItem('firstlight.v1.2'), 'an erased player\'s fishing career is erased too'); $('#wOk').click();
+    reset(3); S.day = 1; go('home'); $('#bFish').onclick();
+    check(S.day === 0 && $('#bFish').getAttribute('href') === 'fishing/index.html#day', 'the fishing button on the home screen is the day as well, and uses the pending day up');
     where = 'secrets';
     reset(8); go('home'); const TS = treeArea(), [mx, my] = moonAt();
     scene.down(mx, my); check(V.t - winkT < .1, 'a tapped moon winks');
@@ -219,6 +222,16 @@
         sim(2); await note(`night ${n}: promoted to rank ${rank()}${scene.party ? ' (finale)' : ''}`); $('#bOk').click();
       }
       check(scene.id === 'tinker', 'tinker after night, got ' + scene.id);
+      // The day between two Nights: leaving the Tinker Treehouse meets first light once; then the next Night begins.
+      if (n === 1 || n === 3) {
+        where = `first light after night ${n}`;
+        let out = ''; scenes.dawn.leave = url => { out = url; };
+        if ($('.veil')) clickDlg();
+        check(S.day === 1, 'a finished Night leaves a day pending'); $('#tDone').click();
+        check(scene.id === 'dawn' && document.querySelectorAll('.veil .acts .btn').length === 2, 'first light comes before the next Night, got ' + scene.id);
+        if (n === 1) { clickDlg(0); check(scene.id === 'hub' && S.day === 0 && !!$('.veil'), 'resting leads to the next Night and its briefing, got ' + scene.id); clickDlg(); }
+        else { clickDlg(); check(out === 'fishing/index.html#day' && S.day === 0, 'going fishing uses the day up and leaves for the fishing game: ' + out); go('hub'); check(scene.id === 'hub', 'after the day the Night begins, got ' + scene.id); }
+      }
       await note(`night ${n} played: stars ${S.stars}, moonbeams ${S.beams}, jars in nest ${S.nest}, stickers ${Object.keys(S.stk).length}`);
     }
     check(rank() === 3, 'chief rank after night 7');
@@ -291,6 +304,7 @@
       S.st = { cam: 3, gate: 2, forge: 1, extra: 0 }; go('hub'); look('hub ready for raid');
       reset(2); S.st = { cam: 3, gate: 3, forge: 3, extra: 2 }; go('hub'); look('hub with the extra station');
       reset(5); S.st = { cam: 1, gate: 1, forge: 1, extra: 0 }; S.briefed = 0; go('hub'); look('briefing on the Baron\'s Night'); clickDlg(); look('hub on the Baron\'s Night');
+      reset(3); S.day = 1; go('hub'); look('first light'); clickDlg(0);
       // album (every sticker owned: the longest names), wardrobe, certificate, players
       reset(8); for (const id in STK) S.stk[id] = 1;
       for (let p = 0; p < 3; p++) { go('album', { page: p }); look('album page ' + p); }

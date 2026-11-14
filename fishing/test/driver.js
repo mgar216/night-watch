@@ -48,6 +48,7 @@ Object.assign(POSES, {
   whole() { mapToggle(); sim(1.5); },
   card() { mapAct(); },
   gate() { S.at = 'falls'; go('map'); sim(.3); tapPlace('chapel'); arrive('chapel'); },
+  byday() { day = true; go(scene.name, scene.arg); if (scene.name === 'map') toast(t('day_start'), 60000); },   // the screen as it is on a day between two Nights
   locked() { tapPlace('creek'); },
   // fishing
   shadow() { SP.card(SP.pop.findIndex(f => !f.decoy)); },
@@ -246,6 +247,16 @@ Object.assign(POSES, {
     const code = hubCode(), back = hubRead(code); check(!!back && back.moons === S.moons && back.name === 'Mia' && hubRead('hello') === null, 'the save code goes round and a bad one is refused');
     for (const sc of ['hub', 'shop', 'trophies', 'records']) { go(sc); sim(.3); }
     go('book', { back: () => go('hub') }); sim(.3); go('book', { back: () => go('hub'), area: 'pond', sp: 'biscuit' }); sim(.3); go('book', { back: () => go('hub'), area: 'chapel', sp: 'bell' }); sim(.3);
+    // --- the day between two Nights of the Night Watch: the treehouse leads back in the evening, and the map says when evening is near ---
+    where = 'day';
+    let went = ''; scenes.hub.leave = url => { went = url; };
+    fresh(); go('hub'); check(!$('#hNight'), 'on a visit of its own the treehouse has no way to the Night Watch');
+    day = true; go('hub'); $('#hNight').click(); check(went === '../index.html#night', 'by day the treehouse leads back to the Night Watch: ' + went);
+    const low = () => [...document.querySelectorAll('.toast')].filter(n => n.textContent === t('day_low')).length;
+    dayCatch = 4; dayTold = false; go('map'); check(low() === 0, 'four catches are not a full day yet');
+    emit('catch', { id: 'perch' }); go('map'); check(low() === 1, 'after five catches the map says once that the sun is getting low');
+    go('map'); check(low() === 0, 'and it does not say so again');
+    go('home'); check($('#bSister').getAttribute('href') === '../index.html#night', 'the title leads back to the Night as well'); day = false;
     await note('shop, trophies and logbook checked, problems so far: ' + out.errors.length);
 
     // --- one whole visit at the pond: land a fish, snap a line, spook a faker ---
@@ -377,6 +388,7 @@ Object.assign(POSES, {
       PRE.open(); S.at = 'falls'; go('map'); sim(.3); tapPlace('chapel'); arrive('chapel', 20); look('the Chapel\'s gate'); clickDlg(0); look('map, Chapel card'); clickDlg(0);
       // the treehouse
       PRE.mid(); go('hub'); sim(.3); look('treehouse');
+      day = true; go('hub'); sim(.3); look('treehouse by day'); day = false;
       for (const tab of ['rod', 'line', 'reel', 'lure', 'gear', 'style']) { shopTab = tab; go('shop'); sim(.2); look('shop, ' + tab); }
       PRE.all(); for (const tab of ['rod', 'lure', 'gear', 'style']) { shopTab = tab; go('shop'); sim(.2); look('shop with everything owned, ' + tab); }
       S.tut = {}; go('shop'); sim(.2); look('shop, first visit'); if (closeDlg) closeDlg(); S.tut = Object.assign({}, LESSONS);

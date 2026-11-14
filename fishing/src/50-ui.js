@@ -81,7 +81,7 @@ scenes.home = {
       <div class="row"><div class="langs" role="group" aria-label="${esc(t('lang'))}">${LANGS.map((l, i) => `<button class="btn" data-l="${i}" aria-label="${esc(L.langName[i])}" aria-pressed="${i === lang}">${ic('bird:' + i, 30)}${l.toUpperCase()}</button>`).join('')}</div></div>
       <div class="row"><button class="btn round" id="bSnd" aria-label="${esc(t('sound'))}" aria-pressed="${!S.mute}">${ic('snd:' + (S.mute ? 0 : 1), 28)}</button>
       <input type="range" id="bVol" min="0" max="100" value="${Math.round(S.vol * 100)}" aria-label="${esc(t('volume'))}">
-      <a class="btn" id="bSister" href="../index.html">${ic('jar', 26)}${esc(t('sister'))}</a></div></div>`);
+      <a class="btn" id="bSister" href="../index.html${day ? '#night' : ''}">${ic('jar', 26)}${esc(t('sister'))}</a></div></div>`);
     $('#bPlay', n).onclick = () => { sfx.pop(); S.name || allLogged() ? go('map') : askName(() => go('map')); };
     $('#bSnd', n).onclick = () => { setMute(!S.mute); sfx.click(); go('home'); };
     $('#bVol', n).oninput = e => { setVol(e.target.value / 100); };

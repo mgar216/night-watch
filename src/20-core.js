@@ -20,7 +20,8 @@ try { slot = clamp(localStorage.getItem('nightwatch.slot') | 0, 0, SLOTS - 1); }
 const SAVE = slotKey(slot);
 const S = { lang: -1, mute: false, name: '', night: 1, st: { cam: 0, gate: 0, forge: 0, extra: 0 }, beams: 30, stars: 0,
   items: [{ t: 'cam', m: 1 }], nest: 0, testStar: 0, gateStar: 0, briefed: 0, tinkered: 0, promo: false,
-  voice: true, stk: {}, own: {}, hat: '', scarf: '', zhat: '', zscarf: '', boss: 0, fooled: 0 };   // owl's voice on; stickers; wardrobe; last Baron Night won
+  voice: true, stk: {}, own: {}, hat: '', scarf: '', zhat: '', zscarf: '', boss: 0, fooled: 0,   // owl's voice on; stickers; wardrobe; last Baron Night won
+  day: -1 };   // 1 while the day after a finished Night has not begun (first light, fishing); -1 in a save from before there were days
 try { Object.assign(S, JSON.parse(localStorage.getItem(SAVE) || '{}')); } catch (e) { /* private mode: play without saving */ }
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 const rankAt = night => night > 7 ? 3 : night > 4 ? 2 : night > 2 ? 1 : 0;

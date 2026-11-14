@@ -59,6 +59,7 @@ button { font: inherit; color: inherit; }
 .foot { font-size: max(11px, .72em); font-weight: 600; opacity: .85; max-width: 34em; margin: .2em 0 calc(.2em + env(safe-area-inset-bottom)); text-shadow: 0 1px 3px #000; }
 
 .veil { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: .7em; background: rgba(6, 10, 32, .55); pointer-events: auto; }
+.veil.day { background: rgba(255, 196, 140, .08); }   /* first light: the sunrise behind the dialog stays bright */
 .dlg { width: min(34em, 100%); max-height: 100%; overflow: auto; padding: .8em; border-radius: 1.4em; background: var(--panel);
   border: 3px solid var(--line); text-align: center; box-shadow: 0 0 40px rgba(255, 200, 80, .25); }
 .dlg h2 { margin: 0 0 .3em; font-size: 1.3em; color: var(--gold); }
@@ -263,6 +264,9 @@ const L = {
   sound: ['Sound', 'Звук', 'Suono'],
   volume: ['Volume', 'Громкость', 'Volume'],
   sister: ['The Night Watch', 'Ночной патруль', 'La Guardia Notturna'],
+  day_start: ['First light. The day is yours, Chief!', 'Рассвет. Весь день твой, командир!', 'Prime luci. La giornata è tua, Capo!'],
+  day_low: ['The sun is getting low. The treehouse is waiting.', 'Солнце клонится к закату. Домик на дереве ждёт.', 'Il sole sta calando. La casa sull\'albero ti aspetta.'],
+  day_back: ['Night Watch', 'Ночной патруль', 'Guardia Notturna'],   // short: four buttons share two rows of the treehouse panel on a phone held sideways
   nameAsk: ['What is your name, Chief?', 'Как тебя зовут, командир?', 'Come ti chiami, Capo?'],
   nameDef: ['Chief', 'Командир', 'Capo'],
   moons: ['Moons', 'Луны', 'Lune'],
@@ -351,7 +355,13 @@ const ease = k => 1 - (1 - k) * (1 - k);
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 
 // Saved career. Everything the player has earned lives here; src/99-main.js repairs a damaged save at boot.
-const SAVE = 'firstlight.v1';
+// The fishing is the day between two Nights of The Night Watch (the two games share a site and its storage), so each player
+// of the Night Watch has a fishing career of their own; the first player keeps the original key.
+let nwSlot = 0, nwSave = {};
+try { nwSlot = clamp(localStorage.getItem('nightwatch.slot') | 0, 0, 3); nwSave = JSON.parse(localStorage.getItem('nightwatch.v1' + (nwSlot ? '.' + (nwSlot + 1) : '')) || '{}') || {}; } catch (e) { /* private mode, or no Night Watch here */ }
+const SAVE = 'firstlight.v1' + (nwSlot ? '.' + (nwSlot + 1) : '');
+// `#day` in the address: the Chief comes from the Night Watch at first light, and goes back to it in the evening.
+let day = location.hash === '#day', dayCatch = 0, dayTold = false;
 const S = {
   lang: -1, mute: false, vol: .8, name: '',
   look: { col: 0, hat: '', boat: 0 },        // the Junior Chief: feather colour, hat, boat paint
@@ -367,13 +377,16 @@ const S = {
 };
 // Only the fields this game knows are taken from a save (or from a pasted save code): anything else is left behind.
 try { const o = JSON.parse(localStorage.getItem(SAVE) || '{}'); for (const k in S) if (has(o, k)) S[k] = o[k]; } catch (e) { /* private mode: play without saving */ }
+// Coming from the Night Watch, the Chief keeps that game's language and sound switch and, in a new career, its name.
+const nwLang = Number.isInteger(nwSave.lang) && LANGS[nwSave.lang] ? nwSave.lang : -1;
+if (day) { if (nwLang >= 0) S.lang = nwLang; if (typeof nwSave.mute === 'boolean') S.mute = nwSave.mute; if (!S.name && typeof nwSave.name === 'string') S.name = nwSave.name.slice(0, 16); }
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 function setLang(i) {
   lang = S.lang = i; save();
   document.documentElement.lang = LANGS[i];
   document.title = t('title');
 }
-setLang(Number.isInteger(S.lang) && LANGS[S.lang] ? S.lang : Math.max(0, LANGS.indexOf((navigator.language || 'en').slice(0, 2))));
+setLang(Number.isInteger(S.lang) && LANGS[S.lang] ? S.lang : nwLang >= 0 ? nwLang : Math.max(0, LANGS.indexOf((navigator.language || 'en').slice(0, 2))));
 
 // Events tie the parts together without knowing each other: the fishing emits, the trophies and the logbook listen.
 const subs = {};
@@ -1051,7 +1064,7 @@ scenes.home = {
       <div class="row"><div class="langs" role="group" aria-label="${esc(t('lang'))}">${LANGS.map((l, i) => `<button class="btn" data-l="${i}" aria-label="${esc(L.langName[i])}" aria-pressed="${i === lang}">${ic('bird:' + i, 30)}${l.toUpperCase()}</button>`).join('')}</div></div>
       <div class="row"><button class="btn round" id="bSnd" aria-label="${esc(t('sound'))}" aria-pressed="${!S.mute}">${ic('snd:' + (S.mute ? 0 : 1), 28)}</button>
       <input type="range" id="bVol" min="0" max="100" value="${Math.round(S.vol * 100)}" aria-label="${esc(t('volume'))}">
-      <a class="btn" id="bSister" href="../index.html">${ic('jar', 26)}${esc(t('sister'))}</a></div></div>`);
+      <a class="btn" id="bSister" href="../index.html${day ? '#night' : ''}">${ic('jar', 26)}${esc(t('sister'))}</a></div></div>`);
     $('#bPlay', n).onclick = () => { sfx.pop(); S.name || allLogged() ? go('map') : askName(() => go('map')); };
     $('#bSnd', n).onclick = () => { setMute(!S.mute); sfx.click(); go('home'); };
     $('#bVol', n).oninput = e => { setVol(e.target.value / 100); };
@@ -5890,6 +5903,7 @@ function paintRoom(c, st) {
 
 // ----- The treehouse: the Chief at home, four places to go, the look and the save code -----
 scenes.hub = {
+  leave(url) { location.href = url; },   // a method of its own, so that a test can watch the way out instead of leaving the page
   enter() {
     hud(() => go('map'), '', { book: false });
     const r = rank(), n = allLogged(), all = Object.keys(SPECIES).length, tro = Object.keys(S.ach).length;
@@ -5902,7 +5916,7 @@ scenes.hub = {
         <button class="card" data-go="trophies">${ic('hubBranch', 40)}<span>${esc(t('trophies'))}</span><small>${tro}/${Object.keys(ACHS).length}</small></button>
         <button class="card" data-go="records">${ic('hubBoard', 40)}<span>${esc(t('records'))}</span></button>
       </div>
-      <div class="hub-row"><button class="btn" id="hLook">${ic('feather', 24)}${esc(t('hub_look'))}</button>
+      <div class="hub-row">${day ? `<button class="btn gold" id="hNight">${ic('moon', 24)}${esc(t('day_back'))}</button>` : ''}<button class="btn" id="hLook">${ic('feather', 24)}${esc(t('hub_look'))}</button>
         <button class="btn" id="hCopy">${ic('hubCopy', 24)}${esc(t('hub_copy'))}</button><button class="btn" id="hPaste">${ic('hubPaste', 24)}${esc(t('hub_paste'))}</button></div>
     </div></div>`);
     this.panel = $('.hub-panel', w);
@@ -5910,6 +5924,7 @@ scenes.hub = {
     $('#hLook', w).onclick = () => { sfx.click(); this.look(); };
     $('#hCopy', w).onclick = () => { sfx.click(); this.copy(); };
     $('#hPaste', w).onclick = () => { sfx.click(); this.paste(); };
+    if (day) $('#hNight', w).onclick = () => { sfx.pop(); this.leave('../index.html#night'); };   // evening: the day ends where the Night Watch begins
     this.resize();
   },
   resize() { this.st = hubStage(this.panel); },
@@ -6452,7 +6467,12 @@ ICON.ach = (c, id) => {
   S.at = S.at === 'tree' || has(AREA, S.at) && canReach(S.at) ? S.at : 'tree';
 })();
 resize();
-go('home');
+// After a good day's fishing the map says, once, that evening is near; the treehouse then leads back to the Night Watch.
+on('catch', () => { dayCatch++; });
+on('enter', d => { if (day && d && d.home && dayCatch >= 5 && !dayTold) { dayTold = true; toast(t('day_low'), 3200); } });
+// By day (from the Night Watch) the Chief is already on the way: no title screen, straight to the map.
+go(day ? 'map' : 'home');
+if (day) toast(t('day_start'), 2600);
 requestAnimationFrame(frame);
 })();
 </script>

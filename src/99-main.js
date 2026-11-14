@@ -5,6 +5,7 @@
   S.night = int(S.night, 1, 1e6); S.beams = int(S.beams, 0, 1e9); S.stars = int(S.stars, 0, 1e9); S.nest = int(S.nest, 0, 3);
   S.briefed = int(S.briefed, 0, S.night); S.testStar |= 0; S.gateStar |= 0; S.boss |= 0; S.fooled |= 0;
   S.name = String(S.name || '').slice(0, 16); S.mute = !!S.mute; S.promo = !!S.promo; S.voice = S.voice !== false;
+  S.day = S.day < 0 ? +(S.night > 1) : S.day ? 1 : 0;   // a career from before there were days meets its first morning at once
   for (const k of ['stk', 'own']) if (!S[k] || typeof S[k] !== 'object' || Array.isArray(S[k])) S[k] = {};
   for (const k in S.stk) if (has(STK, k)) S.stk[k] = S.stk[k] === 2 ? 2 : 1; else delete S.stk[k];
   for (const k in S.own) if (has(WEAR, k)) S.own[k] = 1; else delete S.own[k];
@@ -15,5 +16,6 @@
     (it.t === 'shield') === (it.m === VAULT) && all.findIndex(o => o && o.m === it.m) === i).map(it => ({ t: it.t, m: it.m }));
 })();
 resize();
-go('home');
+// `#night` in the address: the Chief comes back from the day's fishing, straight to the Night (a first-time player still starts at home).
+go(location.hash === '#night' && (S.name || S.night > 1 || S.briefed) ? 'hub' : 'home');
 requestAnimationFrame(frame);
