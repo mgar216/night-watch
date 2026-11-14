@@ -17,8 +17,8 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--night)
   font: 600 var(--u)/1.3 ui-rounded, "SF Pro Rounded", "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
   user-select: none; -webkit-user-select: none; touch-action: manipulation; overscroll-behavior: none; }
 #c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
-#ui { position: fixed; inset: 0; pointer-events: none;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+/* Side insets (notch in landscape) are applied here; top and bottom insets are added by the bars themselves. */
+#ui { position: fixed; top: 0; bottom: 0; left: env(safe-area-inset-left); right: env(safe-area-inset-right); pointer-events: none; }
 #live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 canvas.ic { display: inline-block; vertical-align: middle; flex: none; }
 
@@ -50,13 +50,13 @@ button { font: inherit; color: inherit; }
 .home { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding: .6em; text-align: center; pointer-events: none; }
 .home > * { pointer-events: auto; }
 .title { margin: .2em 0 0; font-size: clamp(30px, 9vmin, 76px); line-height: 1; font-weight: 900; color: var(--gold);
-  text-shadow: 0 0 18px rgba(255, 200, 80, .7), 0 4px 0 #7a4c00; letter-spacing: .01em; pointer-events: none; }
+  text-shadow: 0 0 3px #201400, 0 3px 0 #7a4c00, 0 0 18px rgba(255, 200, 80, .7); letter-spacing: .01em; pointer-events: none; }
 .home .mid { flex: 1; pointer-events: none; }
 .home .row { display: flex; gap: .6em; align-items: center; justify-content: center; flex-wrap: wrap; margin: .35em 0; }
 .langs { display: inline-flex; gap: .3em; padding: .25em; border-radius: 999px; background: var(--panel); border: 2px solid var(--line); }
 .langs .btn { min-height: 48px; padding: .1em .7em .1em .4em; box-shadow: none; background: transparent; border-color: transparent; }
 .langs .btn[aria-pressed=true] { background: #f2b93b; color: #3a2400; border-color: #fff3c4; }
-.foot { font-size: .72em; font-weight: 600; opacity: .85; max-width: 34em; margin: .2em 0 calc(.2em + env(safe-area-inset-bottom)); text-shadow: 0 1px 3px #000; }
+.foot { font-size: max(11px, .72em); font-weight: 600; opacity: .85; max-width: 34em; margin: .2em 0 calc(.2em + env(safe-area-inset-bottom)); text-shadow: 0 1px 3px #000; }
 
 .veil { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: .7em; background: rgba(6, 10, 32, .55); pointer-events: auto; }
 .dlg { width: min(34em, 100%); max-height: 100%; overflow: auto; padding: .8em; border-radius: 1.4em; background: var(--panel);
@@ -66,7 +66,7 @@ button { font: inherit; color: inherit; }
 .bubble { position: relative; flex: 1; padding: .6em .8em; border-radius: 1.1em; background: var(--cream); color: #2a1c05; font-size: 1.1em; font-weight: 800; }
 .bubble::before { content: ""; position: absolute; left: -12px; top: 50%; margin-top: -9px; border: 9px solid transparent; border-left: 0; border-right: 13px solid var(--cream); }
 .pics { display: flex; gap: .4em; align-items: center; justify-content: center; flex-wrap: wrap; margin: .5em 0 0; }
-.pics .lab { display: inline-flex; flex-direction: column; align-items: center; font-size: .7em; font-weight: 700; }
+.pics .lab { display: inline-flex; flex-direction: column; align-items: center; font-size: max(11px, .7em); font-weight: 700; }
 .acts { display: flex; gap: .6em; justify-content: center; flex-wrap: wrap; margin-top: .7em; }
 .stars { display: flex; gap: .2em; justify-content: center; margin: .3em 0; }
 .stars canvas { animation: pop .45s cubic-bezier(.3, 1.6, .5, 1) both; }
@@ -92,10 +92,11 @@ input.name { font: inherit; font-weight: 800; text-align: center; width: min(14e
   padding: .5em .5em calc(.5em + env(safe-area-inset-bottom)); pointer-events: none; }
 .bar > * { pointer-events: auto; }
 .gatebtns .btn { flex: 1 1 40%; max-width: 15em; min-height: 68px; font-size: 1.3em; }
-.ref { position: absolute; top: calc(3.4em + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); display: flex; gap: .5em; align-items: center;
+.badgebar { flex-direction: column; flex-wrap: nowrap; }
+.ref { position: absolute; top: calc(4em + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); display: flex; gap: .5em; align-items: center;
   padding: .25em .7em; border-radius: 1em; background: var(--panel); border: 2px solid var(--line); pointer-events: none; max-width: 96%; }
 .ref .sep { width: 2px; align-self: stretch; background: var(--line); }
-.ref .lab { display: inline-flex; flex-direction: column; align-items: center; font-size: .62em; font-weight: 700; line-height: 1.1; }
+.ref .lab { display: inline-flex; flex-direction: column; align-items: center; font-size: max(11px, .62em); font-weight: 700; line-height: 1.1; }
 
 .forge { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; gap: .35em; align-items: center;
   padding: .4em .4em calc(.4em + env(safe-area-inset-bottom)); background: linear-gradient(transparent, rgba(6, 10, 32, .9) 22%); pointer-events: none; }
@@ -104,12 +105,12 @@ input.name { font: inherit; font-weight: 800; text-align: center; width: min(14e
   border-radius: 1em; border: 3px dashed var(--line); background: rgba(0, 0, 0, .3); }
 .tiles { display: flex; gap: .3em; flex-wrap: wrap; justify-content: center; width: min(40em, 100%); }
 .tile { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; min-width: 56px; min-height: 56px; padding: .15em .35em;
-  border-radius: .8em; border: 3px solid #fff3c4; background: #fff6da; color: #2a1c05; font-weight: 800; font-size: .7em; line-height: 1.05; cursor: pointer;
+  border-radius: .8em; border: 3px solid #fff3c4; background: #fff6da; color: #2a1c05; font-weight: 800; font-size: max(11px, .7em); line-height: 1.05; cursor: pointer;
   box-shadow: 0 3px 0 rgba(0, 0, 0, .35); }
 .tile b { font-size: 1.9em; line-height: 1.1; }
 .tile.n { background: #cfe8ff; border-color: #fff; border-radius: 50%; } .tile.s { background: #ffd9ec; border-color: #fff; border-radius: .2em 1.2em; }
 .tile:active { transform: translateY(2px); }
-.meter { width: min(38em, 100%); text-align: center; font-weight: 900; }
+.meter { width: min(38em, 100%); text-align: center; font-weight: 900; text-shadow: 0 1px 3px #000; }
 .meter .track { position: relative; height: 22px; border-radius: 999px; background: rgba(0, 0, 0, .45); border: 2px solid var(--line); overflow: hidden; }
 .meter .fill { height: 100%; width: 0; border-radius: 999px; background: repeating-linear-gradient(45deg, #ffd86b 0 10px, #f2a93b 10px 20px); transition: width .4s cubic-bezier(.3, 1.4, .5, 1); }
 .meter .flag { position: absolute; top: -2px; bottom: -2px; width: 4px; background: #fff; box-shadow: 0 0 6px #fff; }
@@ -132,20 +133,40 @@ input.name { font: inherit; font-weight: 800; text-align: center; width: min(14e
   .home .mid { flex: 0; }
   .forge { left: 45%; top: 3.6em; justify-content: center; background: none; }
   .ref { left: auto; right: .5em; transform: none; }
-  .pal { flex: 0 0 auto; }
+  .badgebar { left: 50%; top: 0; }
   .title { font-size: clamp(26px, 6.5vw, 72px); }
 }
+@media (min-width: 560px) { .pal { flex: 0 0 auto; } }   /* room for all eight in one row */
+@media (max-width: 380px) { .langs .btn { padding: .1em .4em .1em .2em; } .home .row { gap: .4em; } }
 @media (max-width: 430px) {
   .hud { gap: .25em; padding-left: .3em; padding-right: .3em; }
   .hud .pill { padding: .1em .45em; font-size: .82em; }
   .hud .btn.round { width: 48px; height: 48px; }
+  .gatebtns .btn { font-size: 1.1em; gap: .3em; padding: .3em .6em; }
+}
+/* phones and anything lower: smaller tiles keep the Password Forge scene large */
+@media (max-height: 700px) {
+  .tile { min-width: 48px; min-height: 48px; } .tile b { font-size: 1.5em; } .slots { min-height: 50px; }
 }
 @media (max-height: 520px) {
-  .card { min-height: 64px; } .tile { min-width: 48px; min-height: 48px; } .slots { min-height: 50px; }
-  .tile b { font-size: 1.5em; } .foot { font-size: .62em; }
+  .card { min-height: 64px; } .foot { font-size: max(11px, .62em); }
+  /* dialogs must fit a 360 px high screen without scrolling */
+  .dlg { padding: .5em .7em; } .dlg h2 { font-size: 1.1em; margin: 0; }
+  .dlg .stars canvas { width: 30px !important; height: 30px !important; }
+  .dlg canvas.owl { width: 70px !important; height: 65px !important; }
+  .bubble { font-size: 1em; padding: .4em .6em; }
+  .goals { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: .1em .8em; font-size: .75em; margin-top: .2em; }
+  .pics { margin-top: .3em; } .acts { margin-top: .4em; }
+}
+/* A phone on its side: station bars drop the extra pills, and the Tinker palette becomes a two-column strip on the right. */
+@media (min-aspect-ratio: 23/20) and (max-height: 520px) {
+  .hud.slim .extra, .hud.slim #pStars, .hud.slim #pBeams { display: none; }
+  .palette { left: auto; top: 4.6em; width: 10.6em; align-content: flex-start; border-top: 0; border-left: 2px solid var(--line); overflow-y: auto; }
+  .pal { flex: 1 0 40%; min-height: 52px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .toast { animation: none !important; }   /* its last keyframe is invisible; without motion it simply shows until it is removed */
 }
 </style>
 </head>
@@ -159,7 +180,9 @@ input.name { font: inherit; font-weight: 800; text-align: center; width: min(14e
 // ---------- Localization: every UI string, [English, Russian, Italian] side by side ----------
 const LANGS = ['en', 'ru', 'it'];
 const L = {
-  title: ['The Night Watch', 'Ночной дозор', 'La Guardia Notturna'],
+  title: ['The Night Watch', 'Ночной патруль', 'La Guardia Notturna'],
+  lang: ['Language', 'Язык', 'Lingua'],
+  langName: ['English', 'Русский', 'Italiano'],   // each language under its own name, whatever the current language is
   foot: ['A game about watching carefully, checking kindly, and building cleverly.',
     'Игра о том, как смотреть внимательно, проверять по-доброму и строить с умом.',
     'Un gioco per osservare con attenzione, controllare con gentilezza e costruire con ingegno.'],
@@ -167,33 +190,31 @@ const L = {
   ok: ['OK', 'Хорошо', 'OK'],
   go: ['Go!', 'Вперёд!', 'Via!'],
   retry: ['Try again', 'Ещё раз', 'Riprova'],
-  back: ['Back', 'Назад', 'Indietro'],
   home: ['Home', 'Домой', 'Casa'],
   sound: ['Sound', 'Звук', 'Suono'],
   done: ['Done', 'Готово', 'Fatto'],
   night: ['Night {n}', 'Ночь {n}', 'Notte {n}'],
-  nextNight: ['Next night', 'Следующая ночь', 'Prossima notte'],
-  nameAsk: ['What is your name, Chief?', 'Как тебя зовут, Шеф?', 'Come ti chiami, Capo?'],
-  nameDef: ['Chief', 'Шеф', 'Capo'],
-  win: ['Well done, Chief!', 'Молодец, Шеф!', 'Ottimo lavoro, Capo!'],
+  nameAsk: ['What is your name, Chief?', 'Как тебя зовут, командир?', 'Come ti chiami, Capo?'],
+  nameDef: ['Chief', 'Командир', 'Capo'],
+  win: ['Well done, Chief!', 'Молодец, командир!', 'Ottimo lavoro, Capo!'],
   bonus: ['Bonus star!', 'Звезда в подарок!', 'Stella bonus!'],
-  soft: ['The magpies were extra sneaky tonight.', 'Сегодня сороки были очень хитрые.', 'Stanotte le gazze erano furbissime.'],
+  soft: ['The magpies were extra sneaky tonight.', 'Этой ночью сороки были особенно хитрыми.', 'Stanotte le gazze erano furbissime.'],
 
-  rank0: ['Cadet', 'Кадет', 'Cadetto'],
+  rank0: ['Cadet', 'Кадет', 'Recluta'],
   rank1: ['Guard', 'Страж', 'Guardia'],
   rank2: ['Senior Guard', 'Старший страж', 'Guardia Scelta'],
-  rank3: ['Night Watch Chief', 'Шеф Ночного дозора', 'Capo della Guardia Notturna'],
-  promo: ['You are now: {r}!', 'Теперь ты — {r}!', 'Ora sei: {r}!'],
-  finale: ['The whole forest cheers for you!', 'Весь лес радуется за тебя!', 'Tutto il bosco fa festa per te!'],
-  badgeTitle: ['Night Watch Badge', 'Значок Ночного дозора', 'Distintivo della Guardia Notturna'],
+  rank3: ['Night Watch Chief', 'Командир Ночного патруля', 'Capo della Guardia Notturna'],
+  promo: ['You are now: {r}!', 'Теперь ты — {r}!', 'Ora sei {r}!'],
+  finale: ['The whole forest cheers for you, {n}!', 'Весь лес радуется за тебя, {n}!', 'Tutto il bosco fa festa per te, {n}!'],
+  badgeTitle: ['Night Watch Badge', 'Значок Ночного патруля', 'Distintivo della Guardia Notturna'],
   nights: ['Nights', 'Ночи', 'Notti'],
 
-  b1: ['Welcome, Chief! Keep our firefly jars safe.', 'Привет, Шеф! Береги наши банки со светлячками.', 'Benvenuto, Capo! Proteggi i nostri barattoli di lucciole.'],
+  b1: ['Welcome, Chief! Keep our firefly jars safe.', 'Привет, командир! Береги наши банки со светлячками.', 'Ciao, Capo! Proteggi i nostri barattoli di lucciole.'],
   b2: ['Friends are not thieves. Look twice.', 'Друзья — не воришки. Смотри внимательно.', 'Gli amici non sono ladri. Guarda bene.'],
-  b3: ['More cameras tonight. Watch them all.', 'Сегодня камер больше. Следи за всеми.', 'Stanotte più telecamere. Guardale tutte.'],
+  b3: ['More cameras tonight. Watch them all.', 'Этой ночью камер больше. Следи за всеми.', 'Stanotte ci sono più telecamere. Guardale tutte.'],
   b4: ['Tricksters wear disguises. Check both things!', 'Хитрецы переодеваются. Проверяй и то, и другое!', 'I furbetti si travestono. Controlla tutte e due le cose!'],
   b5: ['Two magpies may come together.', 'Сороки могут прийти вдвоём.', 'Le gazze possono arrivare in due.'],
-  b6: ['Nine cameras now. Stay calm, Chief.', 'Теперь девять камер. Спокойно, Шеф.', 'Ora nove telecamere. Calma, Capo.'],
+  b6: ['Nine cameras now. Stay calm, Chief.', 'Теперь девять камер. Спокойно, командир.', 'Ora ci sono nove telecamere. Calma, Capo.'],
   b7: ['The big night. You can do it!', 'Главная ночь. У тебя всё получится!', 'La grande notte. Ce la farai!'],
   b8: ['Another night. The forest trusts you.', 'Новая ночь. Лес верит в тебя.', 'Un\'altra notte. Il bosco si fida di te.'],
   jarsBack: ['Zip brought the jars home!', 'Зип вернул банки домой!', 'Zip ha riportato i barattoli a casa!'],
@@ -203,16 +224,16 @@ const L = {
   s_forge: ['Password Forge', 'Кузница паролей', 'Fucina delle password'],
   s_tinker: ['Tinker Treehouse', 'Мастерская', 'Officina'],
   raidGo: ['The magpies are coming!', 'Сороки летят!', 'Arrivano le gazze!'],
-  raid0: ['All jars are safe. Wonderful, Chief!', 'Все банки на месте. Чудесно, Шеф!', 'Tutti i barattoli sono al sicuro. Che meraviglia, Capo!'],
+  raid0: ['All jars are safe. Wonderful, Chief!', 'Все банки на месте. Чудесно, командир!', 'Tutti i barattoli sono al sicuro. Che meraviglia, Capo!'],
   raid1: ['The magpies took a jar or two. Zip will bring them back.', 'Сороки утащили банку-другую. Зип их вернёт.', 'Le gazze hanno preso qualche barattolo. Zip li riporterà.'],
   raid2: ['Let\'s build better defenses!', 'Давай укрепим наш домик!', 'Rinforziamo la casa sull\'albero!'],
 
   camIntro: ['Tap a magpie to shine your light.', 'Нажми на сороку — посвети фонариком.', 'Tocca una gazza per illuminarla.'],
   camTipFriend: ['Zip and fireflies are friends. Look for the white belly.', 'Зип и светлячки — друзья. Ищи белое брюшко.', 'Zip e le lucciole sono amici. Cerca la pancia bianca.'],
-  camTipBatt: ['Let the flashlight rest. Tap only magpies.', 'Дай фонарику отдохнуть. Нажимай только на сорок.', 'Fai riposare la torcia. Tocca solo le gazze.'],
-  camTipSlow: ['Watch the leaves shake. Tap when it steps out.', 'Смотри, где шевелятся листья. Жми, когда сорока выйдет.', 'Guarda le foglie che si muovono. Tocca quando esce.'],
+  camTipBatt: ['Let the flashlight rest. Tap only magpies.', 'Дай фонарику отдохнуть. Свети только на сороку.', 'Fai riposare la torcia. Tocca solo le gazze.'],
+  camTipSlow: ['Watch the leaves shake. Tap when it steps out.', 'Смотри, где шевелятся листья. Жми, когда сорока выйдет.', 'Guarda le foglie che si muovono. Tocca quando la gazza esce.'],
   camTipDecoy: ['A shadow has no eyes. Magpies do!', 'У тени нет глаз. А у сороки есть!', 'Un\'ombra non ha occhi. Le gazze sì!'],
-  camTipTime: ['Stay with the cameras, Chief. You can do it.', 'Не отходи от камер, Шеф. Ты справишься.', 'Resta alle telecamere, Capo. Ce la fai.'],
+  camTipTime: ['Stay with the cameras, Chief. You can do it.', 'Не отходи от камер, командир. Ты справишься.', 'Tieni d\'occhio le telecamere, Capo. Ce la fai.'],
   nestOk: ['The jars are safe in the nest. We will get them back.', 'Банки целы — они в сорочьем гнезде. Мы их вернём.', 'I barattoli sono al sicuro nel nido. Li riprenderemo.'],
 
   gateIntro: ['Friends have the badge AND the password.', 'У друзей есть и значок, И пароль.', 'Gli amici hanno il distintivo E la parola segreta.'],
@@ -220,11 +241,11 @@ const L = {
   shoo: ['SHOO', 'КЫШ', 'SCIÒ'],
   pass: ['Password', 'Пароль', 'Parola segreta'],
   badge: ['Badge', 'Значок', 'Distintivo'],
-  gateTip: ['Check the badge AND the password, Chief.', 'Проверяй и значок, И пароль, Шеф.', 'Controlla il distintivo E la parola segreta, Capo.'],
-  gateTipFriend: ['Friends have both. Let them in, Chief.', 'У друзей есть и то, и другое. Впускай их, Шеф.', 'Gli amici hanno tutte e due le cose. Falli entrare, Capo.'],
-  gateOops: ['That was a friend. Look again next time.', 'Это был друг. В другой раз посмотри ещё раз.', 'Era un amico. La prossima volta guarda meglio.'],
+  gateTip: ['Check the badge AND the password, Chief.', 'Проверяй и значок, И пароль, командир.', 'Controlla il distintivo E la parola segreta, Capo.'],
+  gateTipFriend: ['Friends have both. Let them in, Chief.', 'У друзей есть и то, и другое. Впускай их, командир.', 'Gli amici hanno tutte e due le cose. Falli entrare, Capo.'],
+  gateOops: ['That was a friend. Look again next time.', 'Это был друг. В следующий раз смотри внимательнее.', 'Era un amico. La prossima volta guarda meglio.'],
   please: ['Pleeease?', 'Ну пожааалуйста!', 'Per favoreee!'],
-  lost: ['I lost my badge!', 'Я потерял значок!', 'Ho perso il distintivo!'],
+  lost: ['I lost my badge!', 'Мой значок потерялся!', 'Ho perso il distintivo!'],
   streak: ['{n} in a row!', '{n} подряд!', '{n} di fila!'],
   alarm: ['Zip rings the alarm!', 'Зип поднял тревогу!', 'Zip dà l\'allarme!'],
 
@@ -237,14 +258,15 @@ const L = {
   forgeIntro: ['Build a long password. Words are bricks!', 'Собери длинный пароль. Слова — это кирпичики!', 'Costruisci una password lunga. Le parole sono mattoni!'],
   tryIt: ['Try it', 'Проверить', 'Prova'],
   goal: ['Goal', 'Цель', 'Obiettivo'],
-  forgeTipWord: ['Add one more word, Chief. Words are bricks.', 'Добавь ещё слово, Шеф. Слова — это кирпичики.', 'Aggiungi un\'altra parola, Capo. Le parole sono mattoni.'],
+  forgeTipWord: ['Add one more word, Chief. Words are bricks.', 'Добавь ещё слово, командир. Слова — это кирпичики.', 'Aggiungi un\'altra parola, Capo. Le parole sono mattoni.'],
   forgeTipSame: ['Use different words. Twins are easy to guess.', 'Бери разные слова. Одинаковые легко угадать.', 'Usa parole diverse. Quelle uguali si indovinano subito.'],
-  forgeTipMix: ['Mix in a number and a symbol.', 'Добавь цифру и значок.', 'Aggiungi un numero e un simbolo.'],
-  forgeWin: ['The vault is locked tight!', 'Хранилище заперто крепко-накрепко!', 'Il caveau è chiuso benissimo!'],
+  forgeTipMix: ['Mix in a number and a symbol.', 'Добавь число и знак.', 'Aggiungi un numero e un simbolo.'],
+  forgeTipFull: ['No room left! Swap small tiles for words.', 'Места больше нет! Замени мелкие кирпичики словами.', 'Non c\'è più posto! Cambia le tessere piccole con parole.'],
+  forgeWin: ['The vault is locked tight!', 'Хранилище заперто крепко-накрепко!', 'La cassaforte è chiusa a doppia mandata!'],
   cracked: ['Cracked! Time: {t}', 'Взломано! Время: {t}', 'Scoperta! Tempo: {t}'],
   g_target: ['Reach the goal', 'Дойди до цели', 'Raggiungi l\'obiettivo'],
-  g_few: ['{n} tiles or fewer', 'Не больше {n} плиток', 'Al massimo {n} tessere'],
-  g_mix: ['3 words + number + symbol', '3 слова + цифра + значок', '3 parole + numero + simbolo'],
+  g_few: ['{n} tiles or fewer', 'Не больше {n} кирпичиков', 'Al massimo {n} tessere'],
+  g_mix: ['3 words + number + symbol', '3 слова + число + знак', '3 parole + numero + simbolo'],
   // plural forms: en/it "one|other", ru "one|few|many"
   u_s: ['second|seconds', 'секунда|секунды|секунд', 'secondo|secondi'],
   u_m: ['minute|minutes', 'минута|минуты|минут', 'minuto|minuti'],
@@ -252,20 +274,20 @@ const L = {
   u_d: ['day|days', 'день|дня|дней', 'giorno|giorni'],
   u_y: ['year|years', 'год|года|лет', 'anno|anni'],
   u_c: ['century|centuries', 'век|века|веков', 'secolo|secoli'],
-  oldest: ['longer than the oldest tree', 'дольше, чем живёт самое старое дерево', 'più dell\'albero più vecchio'],
+  oldest: ['longer than the oldest tree', 'дольше самого старого дерева', 'più a lungo dell\'albero più vecchio'],
 
   i_cam: ['Camera', 'Камера', 'Telecamera'], i_lamp: ['Lantern', 'Фонарь', 'Lanterna'],
   i_bell: ['Gate bell', 'Колокольчик', 'Campanella'], i_shield: ['Vault shield', 'Щит', 'Scudo'],
-  i_banner: ['Banner', 'Флажки', 'Stendardo'], i_flowers: ['Flower box', 'Цветы', 'Fiori'],
+  i_banner: ['Flags', 'Флажки', 'Bandierine'], i_flowers: ['Flower box', 'Цветы', 'Fiori'],
   i_scope: ['Telescope', 'Телескоп', 'Telescopio'], i_lights: ['String lights', 'Гирлянда', 'Lucine'],
-  testRaid: ['TEST RAID', 'ПРОБНЫЙ НАЛЁТ', 'PROVA ASSALTO'],
+  testRaid: ['TEST RAID', 'ПРОБНЫЙ НАЛЁТ', 'FINTO ASSALTO'],
   tinkerIntro: ['Place cameras. Then test your idea!', 'Расставь камеры. Потом проверь свою идею!', 'Metti le telecamere. Poi prova la tua idea!'],
   poor: ['Not enough moonbeams', 'Не хватает лунных лучиков', 'Non bastano i raggi di luna'],
-  o_none: ['No cameras yet. Try one on a branch, Chief.', 'Камер пока нет. Поставь одну на ветку, Шеф.', 'Ancora nessuna telecamera. Mettine una su un ramo, Capo.'],
-  o_route: ['{r} had no camera, Chief.', '{r} — там не было камеры, Шеф.', '{r}: lì non c\'era una telecamera, Capo.'],
-  o_busy: ['{r} was too busy for one camera. A lantern slows magpies down.', '{r} — одна камера не успела. Фонарь задержит сорок.', '{r}: una telecamera non bastava. Una lanterna rallenta le gazze.'],
-  o_bell: ['The bell works best by the ladder, Chief.', 'Колокольчик лучше всего работает у лестницы, Шеф.', 'La campanella funziona meglio vicino alla scala, Capo.'],
-  o_great: ['Not one magpie got close. Great design, Chief!', 'Ни одна сорока не подобралась. Отличный план, Шеф!', 'Nessuna gazza si è avvicinata. Ottimo progetto, Capo!'],
+  o_none: ['No cameras yet. Try one on a branch, Chief.', 'Камер пока нет. Поставь одну на ветку, командир.', 'Ancora nessuna telecamera. Mettine una su un ramo, Capo.'],
+  o_route: ['{r} had no camera, Chief.', '{r} — там не было камеры, командир.', '{r}: lì non c\'era una telecamera, Capo.'],
+  o_busy: ['{r} was too busy for one camera. A lantern slows magpies down.', '{r} — одна камера не успела. Фонарь задержит воришек.', '{r}: una telecamera non bastava. Una lanterna rallenta le gazze.'],
+  o_bell: ['The bell works best by the ladder, Chief.', 'Колокольчик лучше всего работает у лестницы, командир.', 'La campanella funziona meglio vicino alla scala, Capo.'],
+  o_great: ['Not one magpie got close. Great design, Chief!', 'Ни одна сорока не подобралась. Отличный план, командир!', 'Nessuna gazza si è avvicinata. Ottimo progetto, Capo!'],
   giveUp: ['The magpies give up!', 'Сороки сдаются!', 'Le gazze si arrendono!'],
   r_lt: ['The top left branch', 'Левая верхняя ветка', 'Il ramo in alto a sinistra'],
   r_rt: ['The top right branch', 'Правая верхняя ветка', 'Il ramo in alto a destra'],
@@ -305,7 +327,7 @@ const ease = k => 1 - (1 - k) * (1 - k);
 // Saved career. Ranks follow completed Nights: 2 -> Guard, 4 -> Senior Guard, 7 -> Chief.
 const SAVE = 'nightwatch.v1';
 const S = { lang: -1, mute: false, name: '', night: 1, st: { cam: 0, gate: 0, forge: 0 }, beams: 30, stars: 0,
-  items: [{ t: 'cam', m: 1 }], nest: 0, testStar: 0, briefed: 0, chief: false };
+  items: [{ t: 'cam', m: 1 }], nest: 0, testStar: 0, gateStar: 0, briefed: 0, tinkered: 0, promo: false };
 try { Object.assign(S, JSON.parse(localStorage.getItem(SAVE) || '{}')); } catch (e) { /* private mode: play without saving */ }
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 const rankAt = night => night > 7 ? 3 : night > 4 ? 2 : night > 2 ? 1 : 0;
@@ -315,7 +337,7 @@ function setLang(i) {
   document.documentElement.lang = LANGS[i];
   document.title = t('title');
 }
-setLang(S.lang >= 0 ? S.lang : Math.max(0, LANGS.indexOf((navigator.language || 'en').slice(0, 2))));
+setLang(LANGS[S.lang] ? S.lang : Math.max(0, LANGS.indexOf((navigator.language || 'en').slice(0, 2))));
 
 // DOM helpers: scenes build their overlay from small HTML snippets.
 function add(html, parent = ui) {
@@ -333,6 +355,8 @@ function toast(text) {
   say(text);
   setTimeout(() => n.remove(), 1600);
 }
+// Restart the small "no" shake on an element (a full bar, an empty try).
+function nudge(el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
 // Timers that die with the scene, so a late callback never touches the next screen.
 let timers = [];
 function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
@@ -410,7 +434,8 @@ cv.addEventListener('pointerdown', e => { audioOn(); if (scene && scene.down) sc
 addEventListener('pointermove', e => { if (scene && scene.move) scene.move(...ptr(e)); });
 addEventListener('pointerup', e => { if (scene && scene.up) scene.up(...ptr(e)); });
 addEventListener('pointercancel', e => { if (scene && scene.up) scene.up(...ptr(e), true); });
-addEventListener('keydown', e => { audioOn(); if (scene && scene.key && !/INPUT/.test(e.target.tagName)) scene.key(e); });
+// While a dialog is open the keys belong to its buttons, not to the scene underneath.
+addEventListener('keydown', e => { audioOn(); if (scene && scene.key && !$('.veil') && !/INPUT/.test(e.target.tagName)) scene.key(e); });
 addEventListener('contextmenu', e => e.preventDefault());
 ui.addEventListener('pointerdown', () => audioOn());
 addEventListener('click', () => audioOn(), true);   // iOS only unlocks sound on a completed tap
@@ -446,6 +471,8 @@ function setMute(m) {
   if (AC) m ? AC.suspend() : AC.resume();
   if (!m) audioOn();
 }
+// No lullaby from a tab or an app in the background.
+document.addEventListener('visibilitychange', () => { if (AC && !S.mute) document.hidden ? AC.suspend() : AC.resume(); });
 // One enveloped oscillator note; `to` glides the pitch.
 function tone(f, d = .15, type = 'sine', vol = .2, when = 0, to = 0, attack = .01) {
   if (S.mute || !AC) return;
@@ -599,7 +626,7 @@ const ICON = {
   yes: c => line(c, [-.7, .05, -.2, .6, .75, -.6], '#fff', .3),
   no: c => line(c, [-.6, -.6, .6, .6, 0, 0, .6, -.6, -.6, .6], '#fff', .3),
   // Language birds: same friendly bird, three different crests and bellies, plus the code letters beside it.
-  bird: (c, i) => { const bel = ['#ff8a5a', '#ff6b8a', '#ffd24a'][i]; ell(c, 0, .15, .7, .62, '#8a5a3a'); ell(c, .05, .32, .45, .38, bel); circ(c, .3, -.25, .42, '#8a5a3a'); circ(c, .42, -.3, .1, '#fff'); circ(c, .44, -.3, .05, '#222'); poly(c, [.68, -.28, 1, -.18, .68, -.08], '#ffb02e'); poly(c, [-.6, .1, -1, -.15, -.95, .35], '#6b4226'); if (i === 1) circ(c, .3, -.6, .2, '#222'); if (i === 2) poly(c, [.1, -.6, .2, -1, .35, -.65, .5, -.95, .5, -.55], '#ffb02e'); },
+  bird: (c, i) => { i = +i; const bel = ['#ff8a5a', '#ff6b8a', '#ffd24a'][i]; ell(c, 0, .15, .7, .62, '#8a5a3a'); ell(c, .05, .32, .45, .38, bel); circ(c, .3, -.25, .42, '#8a5a3a'); circ(c, .42, -.3, .1, '#fff'); circ(c, .44, -.3, .05, '#222'); poly(c, [.68, -.28, 1, -.18, .68, -.08], '#ffb02e'); poly(c, [-.6, .1, -1, -.15, -.95, .35], '#6b4226'); if (i === 1) circ(c, .3, -.6, .2, '#222'); if (i === 2) poly(c, [.1, -.6, .2, -1, .35, -.65, .5, -.95, .5, -.55], '#ffb02e'); },
   badge: (c, shape, style) => badgeArt(c, shape, +style),
   // Rank badge: a gold shield with one chevron per rank step and a star for the Chief.
   rank: (c, n) => { c.beginPath(); c.moveTo(0, -.95); c.lineTo(.85, -.6); c.quadraticCurveTo(.85, .5, 0, .98); c.quadraticCurveTo(-.85, .5, -.85, -.6); c.closePath(); c.fillStyle = '#2b3f8f'; c.fill(); c.lineWidth = .12; c.strokeStyle = '#ffd24a'; c.stroke(); n = +n; for (let i = 0; i < Math.min(n, 2) + 1; i++) line(c, [-.4, .1 + i * .25 - (n > 2 ? -.1 : .2), 0, .35 + i * .25 - (n > 2 ? -.1 : .2), .4, .1 + i * .25 - (n > 2 ? -.1 : .2)], '#ffd24a', .13); if (n > 2) { starPath(c, 0, -.35, .36, .16, 5); c.fillStyle = '#ffd24a'; c.fill(); } },
@@ -640,8 +667,8 @@ function jar(c, x, y, s, t, lit = 1) {
 // ---------- Characters. All are drawn with feet at (x, y); `s` scales, `t` animates ----------
 const still = () => calm.matches;
 
-// The owl: sleepy, kind, guard's cap, flashlight. mood: idle | talk | no | cheer | sleep
-function owl(c, x, y, s, t, mood = 'idle') {
+// The owl: sleepy, kind, guard's cap, flashlight. mood: idle | talk | no | cheer | sleep. `beam` draws the light cone.
+function owl(c, x, y, s, t, mood = 'idle', beam = true) {
   const bob = still() ? 0 : Math.sin(t * 2) * 1.5, shake = mood === 'no' && !still() ? Math.sin(t * 13) * 5 : 0;
   const blink = t % 3.7 < .14, lid = mood === 'sleep' ? 1 : blink ? 1 : mood === 'cheer' ? .05 : mood === 'talk' ? .22 : .4;
   const up = mood === 'cheer' ? -1.9 : 0;
@@ -654,7 +681,7 @@ function owl(c, x, y, s, t, mood = 'idle') {
   // flashlight wing
   c.save(); c.translate(32, -52); c.rotate(-.2 + up);
   ell(c, 0, 16, 12, 26, '#7a4e28');
-  if (mood !== 'cheer') { c.translate(4, 34); c.rotate(-1.1); poly(c, [16, -5, 60, -22, 60, 22, 16, 5], 'rgba(255,233,163,.28)'); rr(c, -12, -5, 24, 10, 3); c.fillStyle = '#58a6ff'; c.fill(); poly(c, [12, -5, 19, -8, 19, 8, 12, 5], '#dfe6f5'); }
+  if (mood !== 'cheer') { c.translate(4, 34); c.rotate(-1.1); if (beam) poly(c, [16, -5, 60, -22, 60, 22, 16, 5], 'rgba(255,233,163,.28)'); rr(c, -12, -5, 24, 10, 3); c.fillStyle = '#58a6ff'; c.fill(); poly(c, [12, -5, 19, -8, 19, 8, 12, 5], '#dfe6f5'); }
   c.restore();
   c.translate(shake, 0);
   poly(c, [-30, -70, -26, -92, -14, -78], '#7a4e28'); poly(c, [30, -70, 26, -92, 14, -78], '#7a4e28');
@@ -668,6 +695,7 @@ function owl(c, x, y, s, t, mood = 'idle') {
   ell(c, 0, -78, 30, 8, '#16224f'); rr(c, -22, -96, 44, 18, 7); c.fillStyle = '#22306e'; c.fill();
   ell(c, 6, -76, 22, 5, '#0d1638'); starPath(c, 0, -87, 6, 2.6, 5); c.fillStyle = '#ffd24a'; c.fill();
   if (mood === 'sleep' && !still()) for (let i = 0; i < 3; i++) { const k = (t * .5 + i / 3) % 1; c.globalAlpha = 1 - k; circ(c, 30 + k * 18, -84 - k * 30, 2 + k * 4, '#dff0ff'); c.globalAlpha = 1; }
+  if (mood === 'no' && still()) { circ(c, 36, -88, 11, '#e0553f'); drawIcon(c, 'no', 36, -88, 13); }   // with motion reduced the head cannot shake: show a small cross instead
   c.restore();
 }
 
@@ -712,7 +740,11 @@ function magpie(c, x, y, s, t, o = {}) {
     }
     if (o.disguise === 2) { ell(c, hx + 9, hy + 8, 7, 3.2, '#8a5a2a', .5); ell(c, hx + 19, hy + 8, 7, 3.2, '#8a5a2a', -.5); }
     if (o.disguise === 1) { c.save(); c.translate(hx - 2, hy - 13); c.rotate(-.3); c.scale(15, 9); c.beginPath(); SHAPES.leaf(c); c.fillStyle = '#62c26a'; c.fill(); c.restore(); line(c, [hx - 14, hy - 12, hx + 10, hy - 15], '#2e7a3a', 1.5); }
-    if (o.disguise === 4) { c.save(); c.translate(hx + 2, hy - 9); c.rotate(.18); ell(c, 0, 2, 22, 6, '#16224f'); rr(c, -16, -14, 32, 16, 6); c.fillStyle = '#22306e'; c.fill(); ell(c, 8, 4, 16, 4, '#0d1638'); starPath(c, 0, -6, 5, 2.2, 5); c.fillStyle = '#ffd24a'; c.fill(); c.restore(); }
+    if (o.disguise === 4) {   // a guard's cap that is clearly too big, in a lighter blue with a pale rim so it shows against the night
+      c.save(); c.translate(hx + 2, hy - 9); c.rotate(.18); c.scale(1.3, 1.3);
+      ell(c, 0, 2, 22, 6, '#2b3f8f'); rr(c, -16, -14, 32, 16, 6); c.fillStyle = '#3a52ad'; c.fill(); c.lineWidth = 1.5; c.strokeStyle = 'rgba(190,210,255,.9)'; c.stroke();
+      ell(c, 8, 4, 16, 4, '#1b2a6b'); starPath(c, 0, -6, 5, 2.2, 5); c.fillStyle = '#ffd24a'; c.fill(); c.restore();
+    }
     if (o.hat) {
       ell(c, hx, hy - 12, 17, 4, '#3a2a4a'); c.beginPath(); c.arc(hx, hy - 13, 11, Math.PI, 0); c.fillStyle = '#4a3660'; c.fill();
       if (o.flame) { const f = still() ? 0 : Math.sin(t * 20) * 2; ell(c, hx + f * .3, hy - 30, 5, 9 + f, '#ff9a3a'); ell(c, hx, hy - 28, 2.5, 5, '#ffe9a3'); }
@@ -761,7 +793,7 @@ function critter(c, x, y, s, t, kind, sad) {
     c.globalAlpha = .5; circ(c, -13, -52, 4, '#ff9ecb'); circ(c, 13, -52, 4, '#ff9ecb'); c.globalAlpha = 1;
   }
   for (const sx of [-8, 8]) { circ(c, sx, -62, 3.4, kind === 4 ? '#fff' : '#1a1210'); circ(c, sx + (kind === 4 ? 0 : 1), -63, kind === 4 ? 1.8 : 1.1, kind === 4 ? '#111' : '#fff'); }
-  if (sad) { line(c, [-12, -69, -5, -67], '#3a2418', 1.6); line(c, [12, -69, 5, -67], '#3a2418', 1.6); }
+  if (sad) { line(c, [-12, -67, -5, -71], '#3a2418', 1.6); line(c, [12, -67, 5, -71], '#3a2418', 1.6); }   // inner ends up: sad, never angry
   c.restore();
 }
 // ---------- The forest and the treehouse headquarters (logical 1000 x 1000 space) ----------
@@ -787,21 +819,25 @@ function routeAt(p, d) {
   }
 }
 // Places where things can be mounted. Index is saved with each item; 22 is the vault (shield only).
+// Every spot keeps clear of the jars, the owl and the ladder, so a placed item is always fully visible.
 const MOUNTS = [[150, 338], [270, 368], [390, 398], [850, 310], [730, 343], [610, 376], [170, 607], [310, 622], [430, 635],
-  [830, 649], [700, 635], [585, 623], [500, 480], [500, 560], [500, 760], [640, 905], [400, 905], [500, 108], [425, 165], [575, 165],
-  [345, 318], [655, 318], [500, 232]];
+  [830, 649], [700, 635], [620, 627], [500, 480], [500, 560], [500, 760], [640, 905], [400, 905], [500, 108], [425, 165], [575, 165],
+  [318, 318], [694, 318], [500, 232]];
 const VAULT = 22;
 const ITEMS = {
   cam: { cost: 30, r: 135, cd: 3 }, lamp: { cost: 15, r: 75 }, bell: { cost: 20, r: 120, cd: 1.5 }, shield: { cost: 45 },
   banner: { cost: 8, deco: 1 }, flowers: { cost: 6, deco: 1 }, scope: { cost: 12, deco: 1 }, lights: { cost: 10, deco: 1 },
 };
-const JARS = [[445, 262], [555, 262], [368, 304], [385, 380], [615, 380], [435, 380]];
+// Two jars in each window, two on the left deck. Jars are taken from the end of the list.
+const JARS = [[434, 262], [456, 262], [544, 262], [566, 262], [362, 304], [386, 304]];
+const OWL = [630, 330];   // the owl's post on the right deck
+const treeOwl = (c, T, t, mood) => owl(c, T.ox + OWL[0] * T.k, T.oy + OWL[1] * T.k, T.k * 1.05, t, mood);
 const count = type => S.items.filter(i => i.t === type).length;
 
 // Sky, stars, moon, far hills and the magpies' nest; cached per size, twinkles drawn live.
 let skyCache = null;
 const hash = i => { const x = Math.sin(i * 127.1) * 43758.5453; return x - Math.floor(x); };
-function drawSky(c, t, nest = 0) {
+function drawSky(c, t) {
   const w = V.w, h = V.h;
   if (!skyCache || skyCache.w !== w || skyCache.h !== h) {
     const o = document.createElement('canvas'), d = Math.min(window.devicePixelRatio || 1, 2);
@@ -826,10 +862,6 @@ function drawSky(c, t, nest = 0) {
     const a = still() ? .6 : .5 + .5 * Math.sin(t * (1 + hash(i) * 2) + i);
     starPath(c, hash(i + 50) * w, hash(i + 90) * h * .6, 2 + a * 3, 1, 4); c.fillStyle = `rgba(255,246,218,${a})`; c.fill();
   }
-  // the magpies' nest: stolen jars glow faintly here until Zip brings them home
-  const nx = w * .93, ny = h * .78;
-  line(c, [nx, h * .9, nx, ny], '#0a1235', 6); ell(c, nx, ny, 22, 9, '#3a2c20');
-  for (let i = 0; i < nest; i++) { glow(c, nx - 10 + i * 10, ny - 8, 16, '255,216,107', .5); circ(c, nx - 10 + i * 10, ny - 8, 3, '#ffe9a3'); }
 }
 
 // Fit the tree into a screen rectangle. Returns the transform used by drawTree and by pointer maths.
@@ -839,8 +871,9 @@ function fitTree(ax, ay, aw, ah) {
 }
 const toTree = (T, x, y) => [(x - T.ox) / T.k, (y - T.oy) / T.k];
 
-function drawItem(c, type, x, y, t) {
-  const big = ITEMS[type].deco ? 62 : 50;
+// `k` is the tree's on-screen scale: on small screens items keep a readable size.
+function drawItem(c, type, x, y, t, k = 1) {
+  const big = Math.max(ITEMS[type].deco ? 62 : 50, 22 / k);
   if (type === 'shield') { c.globalAlpha = .28 + (still() ? 0 : .08 * Math.sin(t * 3)); circ(c, 500, 265, 150, '#7fd0ff'); c.globalAlpha = 1; c.lineWidth = 4; c.setLineDash([4, 10]); c.strokeStyle = '#fff'; c.beginPath(); c.arc(500, 265, 150, 0, TAU); c.stroke(); c.setLineDash([]); }
   drawIcon(c, type, x, y - big * .42, big);
 }
@@ -853,7 +886,7 @@ function drawZone(c, type, x, y) {
   c.setLineDash(dash); c.lineWidth = 4; c.strokeStyle = `rgba(${rgb},.85)`; c.beginPath(); c.arc(x, y, r, 0, TAU); c.stroke(); c.setLineDash([]);
 }
 
-// The big tree, the cabin, jars and everything the player has placed. o: { jars, zones, skip (mount index being dragged) }
+// The big tree, the cabin, jars and everything the player has placed. o: { jars, nest, zones, skip (mount index being dragged) }
 function drawTree(c, T, t, o = {}) {
   c.save(); c.translate(T.ox, T.oy); c.scale(T.k, T.k); c.lineCap = c.lineJoin = 'round';
   c.fillStyle = '#0c1740'; c.fillRect(-3000, 930, 7000, 3000);
@@ -868,19 +901,24 @@ function drawTree(c, T, t, o = {}) {
   }
   for (const x of [560, 590]) line(c, [x, 344, x, 928], '#d9b77a', 3);
   for (let y = 370; y < 925; y += 38) line(c, [560, y, 590, y], '#d9b77a', 4);
-  rr(c, 340, 330, 320, 16, 5); c.fillStyle = '#8a5a34'; c.fill();
-  for (const x of [350, 650]) line(c, [x, 330, x, 296], '#8a5a34', 5);
-  line(c, [350, 298, 400, 298], '#8a5a34', 4); line(c, [600, 298, 650, 298], '#8a5a34', 4);
+  rr(c, 288, 330, 424, 16, 5); c.fillStyle = '#8a5a34'; c.fill();
+  for (const x of [298, 702]) line(c, [x, 330, x, 296], '#8a5a34', 5);
+  line(c, [298, 298, 400, 298], '#8a5a34', 4); line(c, [600, 298, 702, 298], '#8a5a34', 4);
   rr(c, 400, 205, 200, 127, 8); c.fillStyle = '#a8703f'; c.fill();
   for (let y = 230; y < 330; y += 25) line(c, [404, y, 596, y], '#8f5c30', 2);
   poly(c, [372, 214, 500, 112, 628, 214], '#c2503c'); line(c, [372, 214, 500, 112, 628, 214], '#e06a54', 6);
   for (const x of [445, 555]) { glow(c, x, 258, 70, '255,216,107', .4); rr(c, x - 26, 232, 52, 50, 8); c.fillStyle = '#4a2f1a'; c.fill(); c.lineWidth = 4; c.strokeStyle = '#e8c984'; c.stroke(); }
   rr(c, 480, 262, 40, 68, 14); c.fillStyle = '#6b462a'; c.fill(); circ(c, 512, 300, 3, '#ffd24a');
-  for (const x of [385, 615, 435]) line(c, [x, 346, x, 366], '#d9b77a', 2);
   const n = o.jars === undefined ? JARS.length - S.nest : o.jars;
   for (let i = 0; i < JARS.length; i++) jar(c, JARS[i][0], JARS[i][1], 20, t + i, i < n ? 1 : 0.12);
+  // The magpies' own little tree with their nest: jars they took sit here and glow until Zip brings them home.
+  const nest = o.nest === undefined ? S.nest : o.nest;
+  line(c, [868, 934, 868, 874], '#3a2716', 9); line(c, [868, 904, 846, 888], '#3a2716', 5); line(c, [868, 896, 890, 880], '#3a2716', 5);
+  ell(c, 868, 868, 32, 11, '#6b4a2e');
+  for (let i = 0; i < nest; i++) jar(c, 852 + i * 16, 853, 11, t + i, .75);
+  line(c, [838, 866, 850, 875, 886, 875, 898, 866], '#8a6a44', 5);
   if (o.zones) for (const it of S.items) if (it.m !== o.skip) drawZone(c, it.t, MOUNTS[it.m][0], MOUNTS[it.m][1]);
-  for (const it of S.items) if (it.m !== o.skip) drawItem(c, it.t, MOUNTS[it.m][0], MOUNTS[it.m][1], t);
+  for (const it of S.items) if (it.m !== o.skip) drawItem(c, it.t, MOUNTS[it.m][0], MOUNTS[it.m][1], t, T.k);
   c.restore();
 }
 // Drifting fireflies for any scene (screen space).
@@ -893,42 +931,51 @@ function fireflies(c, t, n = 16) {
 }
 // ---------- Shared screens: owl dialog, home, hub (Night menu), badge ceremony ----------
 const wide = () => V.w > V.h * 1.15;
-const treeArea = () => wide() ? fitTree(0, V.h * .04, V.w * .5, V.h * .94) : fitTree(0, V.h * .09, V.w, V.h * .6);
+const treeArea = () => wide() ? fitTree(0, V.h * .04, V.w * .5, V.h * .94) : fitTree(0, V.h * .09, V.w, V.h * (V.h < 700 ? .55 : .6));
 const playerName = () => S.name || t('nameDef');
 
 // The owl speaks: one short sentence, optional pictures / stars, big buttons.
-let portrait = null;
+// It is a real modal dialog: the rest of the overlay is inert while it is open, and focus goes back afterwards.
+let portrait = null, closeDlg = null;
 function owlSay(text, o = {}) {
-  const v = add(`<div class="veil"><div class="dlg pop" role="dialog">
+  if (closeDlg) closeDlg();   // never two dialogs at once
+  const before = document.activeElement, others = [...ui.children];
+  const v = add(`<div class="veil"><div class="dlg pop" role="dialog" aria-modal="true" aria-labelledby="owlText">
     ${o.title ? `<h2>${esc(o.title)}</h2>` : ''}${o.stars !== undefined ? starsHtml(o.stars, 46) : ''}
-    <div class="owlrow"><canvas class="owl" style="width:84px;height:96px;flex:none"></canvas><div class="bubble">${esc(text)}</div></div>
+    <div class="owlrow"><canvas class="owl" style="width:108px;height:100px;flex:none"></canvas><div class="bubble" id="owlText">${esc(text)}</div></div>
     ${o.html || ''}<div class="acts"></div></div></div>`);
+  others.forEach(el => { el.inert = true; });
+  closeDlg = () => { v.remove(); portrait = null; closeDlg = null; others.forEach(el => { el.inert = false; }); };
   const acts = $('.acts', v);
   for (const a of o.acts || [{ label: t('ok'), cls: 'go', icon: 'yes' }]) {
     const b = add(`<button class="btn ${a.cls || ''}">${a.icon ? ic(a.icon, 26) : ''}${esc(a.label)}</button>`, acts);
-    b.onclick = () => { sfx.click(); v.remove(); portrait = null; if (a.fn) a.fn(); };
+    b.onclick = () => {
+      sfx.click(); closeDlg();
+      if (before && before.isConnected && before !== document.body) before.focus({ preventScroll: true });
+      if (a.fn) a.fn();
+    };
   }
   const el = $('canvas.owl', v), d = Math.min(window.devicePixelRatio || 1, 2);
-  el.width = 84 * d; el.height = 96 * d;
+  el.width = 108 * d; el.height = 100 * d;   // wide enough for raised wings; the flashlight beam is left out here
   portrait = { el, c: el.getContext('2d'), d, mood: o.mood || 'talk', t0: V.t };
   say(text);
   if (!o.quiet) sfx.hoot();
-  acts.firstChild.focus({ preventScroll: true });
+  ($('.btn.go', acts) || acts.firstChild).focus({ preventScroll: true });   // Enter continues; it never restarts or leaves by surprise
   return v;
 }
 function drawPortrait() {
   if (!portrait) return;
   if (!portrait.el.isConnected) { portrait = null; return; }
   const { c, d } = portrait;
-  c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, 84, 96);
-  owl(c, 40, 93, .9, V.t, portrait.mood === 'talk' && V.t - portrait.t0 > 2.2 ? 'idle' : portrait.mood);
+  c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, 108, 100);
+  owl(c, 52, 97, .9, V.t, portrait.mood === 'talk' && V.t - portrait.t0 > 2.2 ? 'idle' : portrait.mood, false);
 }
 const picsHtml = names => `<div class="pics">${names.map(n => ic(n, 40)).join('')}</div>`;
 
-// Top bar used by most screens.
-function hud(backFn, extra = '') {
-  const n = add(`<div class="hud"><button class="btn round" aria-label="${t('back')}">${ic(backFn ? 'home' : 'home', 28)}</button>
-    <span class="pill">${esc(t('night', { n: S.night }))}</span><span class="sp"></span>${extra}
+// Top bar used by most screens. `slim` bars drop the Night, star and moonbeam pills on low landscape screens.
+function hud(backFn, extra = '', slim = false) {
+  const n = add(`<div class="hud${slim ? ' slim' : ''}"><button class="btn round" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
+    <span class="pill extra">${esc(t('night', { n: S.night }))}</span><span class="sp"></span>${extra}
     <span class="pill" id="pStars">${ic('star', 22)}<b>${S.stars}</b></span><span class="pill" id="pBeams">${ic('beam', 22)}<b>${S.beams}</b></span></div>`);
   $('button', n).onclick = () => { sfx.click(); backFn(); };
   return n;
@@ -940,9 +987,14 @@ function refreshHud() {
 }
 
 // Station results. Stars and moonbeams are paid for improvement, so replaying is always worth a try.
-function stationWin(id, stars, text, html = '') {
+// The win is saved the moment it happens (the player may leave during the celebration); the owl's dialog follows.
+function award(id, stars) {
   const gain = Math.max(0, stars - S.st[id]);
   S.st[id] = Math.max(S.st[id], stars); S.stars += gain; S.beams += gain * 5; save();
+  refreshHud();
+  return gain;
+}
+function stationWin(id, stars, gain, text, html = '') {
   sfx.win();
   burst(V.w / 2, V.h * .35, 40, { colors: ['#ffd86b', '#fff', '#ff9ecb', '#7fd0ff'], speed: 320, life: 1.4, kind: 'star', size: 9 });
   owlSay(text || t('win'), { title: t('s_' + id), stars, mood: 'cheer', quiet: true,
@@ -954,7 +1006,7 @@ function stationFail(id, text, retry) {
   owlSay(text, { mood: 'idle', quiet: true, acts: [{ label: t('home'), icon: 'home', fn: () => go('hub') }, { label: t('retry'), cls: 'go', icon: 'retry', fn: retry || (() => go(id)) }] });
 }
 function askName(then) {
-  const v = owlSay(t('nameAsk'), { html: `<div class="pics"><input class="name" maxlength="16" autocomplete="off" placeholder="${esc(t('nameDef'))}" value="${esc(S.name)}"></div>`,
+  const v = owlSay(t('nameAsk'), { html: `<div class="pics"><input class="name" maxlength="16" autocomplete="off" placeholder="${esc(t('nameDef'))}" value="${esc(S.name)}" aria-label="${esc(t('nameAsk'))}"></div>`,
     acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => { save(); then(); } }] });
   $('input', v).oninput = e => { S.name = e.target.value.trim().slice(0, 16); };
 }
@@ -965,7 +1017,7 @@ scenes.home = {
     this.cheer = 0;
     const n = add(`<div class="home"><h1 class="title">${esc(t('title'))}</h1><div class="mid"></div>
       <div class="row"><button class="btn gold big pulse" id="bPlay">${ic('play', 30)}${esc(t('play'))}</button></div>
-      <div class="row"><div class="langs" role="group">${LANGS.map((l, i) => `<button class="btn" data-l="${i}" aria-pressed="${i === lang}">${ic('bird:' + i, 30)}${l.toUpperCase()}</button>`).join('')}</div>
+      <div class="row"><div class="langs" role="group" aria-label="${esc(t('lang'))}">${LANGS.map((l, i) => `<button class="btn" data-l="${i}" aria-label="${esc(L.langName[i])}" aria-pressed="${i === lang}">${ic('bird:' + i, 30)}${l.toUpperCase()}</button>`).join('')}</div>
       <button class="btn round" id="bSnd" aria-label="${esc(t('sound'))}" aria-pressed="${!S.mute}">${ic('snd:' + (S.mute ? 0 : 1), 28)}</button>
       <button class="btn round" id="bBadge" aria-label="${esc(t('badgeTitle'))}">${ic('rank:' + rank(), 34)}</button></div>
       <p class="foot">${esc(t('foot'))}</p></div>`);
@@ -977,12 +1029,12 @@ scenes.home = {
   down(x, y) {
     const T = treeArea(), [lx, ly] = toTree(T, x, y);
     for (const [jx, jy, r] of [[300, 868, 95], ...JARS.map(j => [...j, 46])]) if (Math.hypot(lx - jx, ly - jy) < r) { this.jarT = V.t; sfx.sparkle(); burst(x, y, 22, { speed: 220, size: 9, colors: ['#ffd86b', '#fff6da', '#fff'] }); return; }
-    if (Math.hypot(lx - 640, ly - 290) < 60) { sfx.hoot(); this.cheer = V.t + 1.2; }
+    if (Math.hypot(lx - OWL[0], ly - OWL[1] + 45) < 60) { sfx.hoot(); this.cheer = V.t + 1.2; }
   },
   draw() {
     const T = treeArea(), t0 = V.t;
-    drawSky(ctx, t0, S.nest); drawTree(ctx, T, t0);
-    owl(ctx, T.ox + 640 * T.k, T.oy + 330 * T.k, T.k * 1.05, t0, t0 < this.cheer ? 'cheer' : 'idle');
+    drawSky(ctx, t0); drawTree(ctx, T, t0);
+    treeOwl(ctx, T, t0, t0 < this.cheer ? 'cheer' : 'idle');
     const zx = 500 + Math.sin(t0 * .9) * 330, zy = 230 + Math.sin(t0 * 1.8) * 90;
     zip(ctx, T.ox + zx * T.k, T.oy + zy * T.k, Math.max(.6, T.k * 1.6), t0, Math.cos(t0 * .9) > 0 ? 1 : -1);
     // the big jar by the roots: tap it and it sparkles
@@ -996,11 +1048,12 @@ scenes.home = {
 const BRIEF_PICS = [['jar', 'torch'], ['feather', 'jar'], ['cam', 'cam', 'cam'], ['badge:leaf:0', 'lock'], ['torch', 'torch'], ['cam', 'cam', 'cam'], ['star', 'star', 'star'], ['jar', 'beam']];
 scenes.hub = {
   enter() {
+    if (S.promo) return go('badge', { promo: true });   // a ceremony that a reload interrupted still takes place
     hud(() => go('home'), `<button class="btn round" id="bBadge" aria-label="${esc(t('badgeTitle'))}">${ic('rank:' + rank(), 34)}</button>`);
     $('#bBadge').onclick = () => { sfx.click(); go('badge', { from: 'hub' }); };
     const ready = S.st.cam && S.st.gate && S.st.forge;
     const n = add(`<div class="hub"><div class="cards">${[['cam', 'cam'], ['gate', 'gateI'], ['forge', 'lock']].map(([id, i]) =>
-      `<button class="card ${S.st[id] ? 'done' : ''}" data-s="${id}">${ic(i, 44)}<span>${esc(t('s_' + id))}</span>${starsHtml(S.st[id], 18)}</button>`).join('')}</div>
+      `<button class="card ${S.st[id] ? 'done' : ''}" data-s="${id}" aria-label="${esc(t('s_' + id))}, ${S.st[id]}/3">${ic(i, 44)}<span>${esc(t('s_' + id))}</span>${starsHtml(S.st[id], 18)}</button>`).join('')}</div>
       <div class="row" style="display:flex;gap:.5em;flex-wrap:wrap;justify-content:center">
       <button class="btn" id="bTinker">${ic('hammer', 28)}${esc(t('s_tinker'))}</button>
       <button class="btn gold ${ready ? 'pulse' : ''}" id="bRaid" ${ready ? '' : 'disabled'}>${ic('jar', 28)}${esc(t('raidGo'))}</button></div></div>`);
@@ -1016,8 +1069,8 @@ scenes.hub = {
   },
   draw() {
     const T = treeArea(), t0 = V.t;
-    drawSky(ctx, t0, S.nest); drawTree(ctx, T, t0);
-    owl(ctx, T.ox + 640 * T.k, T.oy + 330 * T.k, T.k * 1.05, t0);
+    drawSky(ctx, t0); drawTree(ctx, T, t0);
+    treeOwl(ctx, T, t0);
     zip(ctx, T.ox + (500 + Math.sin(t0 * .7) * 300) * T.k, T.oy + (200 + Math.sin(t0 * 1.4) * 60) * T.k, Math.max(.6, T.k * 1.6), t0, Math.cos(t0 * .7) > 0 ? 1 : -1);
     fireflies(ctx, t0, 10);
   },
@@ -1026,40 +1079,46 @@ scenes.hub = {
 // The Night ends after the raid: stars, moonbeams, maybe a promotion, then the Tinker Treehouse.
 function finishNight(stolen) {
   const stars = stolen === 0 ? 3 : stolen === 1 ? 2 : 1, old = rank();
-  S.stars += stars; S.beams += 15 + stars * 10; S.nest = stolen; S.night++; S.st = { cam: 0, gate: 0, forge: 0 }; save();
+  S.stars += stars; S.beams += 15 + stars * 10; S.nest = stolen; S.night++; S.st = { cam: 0, gate: 0, forge: 0 };
+  S.promo = rank() > old;   // kept in the save, so closing the page here cannot skip the ceremony
+  save();
   stolen ? sfx.hoot() : sfx.win();
   owlSay(stolen ? t('raid1') + ' ' + t('raid2') : t('raid0'), { title: t('night', { n: S.night - 1 }), stars, mood: stolen ? 'idle' : 'cheer', quiet: true,
     html: `<div class="pics"><span class="pill pop">${ic('beam', 22)}<b>+${15 + stars * 10}</b></span></div>`,
-    acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => rank() > old ? go('badge', { promo: true }) : go('tinker') }] });
+    acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => S.promo ? go('badge', { promo: true }) : go('tinker') }] });
 }
 
 // ----- Badge: profile, promotion ceremony and the Chief's forest-wide celebration -----
 scenes.badge = {
   enter(o = {}) {
-    this.o = o; this.t0 = V.t;
-    const r = rank(), party = this.party = o.promo && r === 3 || !o.promo && S.chief;
-    if (o.promo) { sfx.fanfare(); if (r === 3) { S.chief = true; save(); } }
-    const n = add(`<div class="bar" style="flex-direction:column"><div class="dlg" style="width:min(26em,100%)">
+    this.o = o; this.t0 = V.t; this.panel = null;
+    const r = rank(), party = this.party = r === 3;   // a Chief always gets the forest-wide celebration
+    if (o.promo) sfx.fanfare();
+    const n = add(`<div class="bar badgebar"><div class="dlg" style="width:min(26em,100%)">
       <h2>${esc(o.promo ? t('promo', { r: t('rank' + r) }) : t('badgeTitle'))}</h2>
-      ${party ? `<div>${esc(t('finale'))}</div>` : ''}
+      ${party ? `<div id="fin">${esc(t('finale', { n: playerName() }))}</div>` : ''}
       <div class="pics"><input class="name" maxlength="16" autocomplete="off" placeholder="${esc(t('nameDef'))}" value="${esc(S.name)}" aria-label="${esc(t('nameAsk'))}"></div>
       <div class="pics"><span class="pill">${ic('rank:' + r, 26)}${esc(t('rank' + r))}</span><span class="pill">${ic('star', 22)}<b>${S.stars}</b></span>
       <span class="pill">${ic('moon', 22)}${esc(t('nights'))}: <b>${S.night - 1}</b></span></div>
       <div class="acts"><button class="btn go">${ic('yes', 26)}${esc(t('ok'))}</button></div></div></div>`);
-    $('input', n).oninput = e => { S.name = e.target.value.trim().slice(0, 16); save(); };
-    $('button', n).onclick = () => { sfx.click(); go(o.promo ? 'tinker' : o.from || 'home'); };
+    this.panel = $('.dlg', n);
+    $('input', n).oninput = e => { S.name = e.target.value.trim().slice(0, 16); save(); const f = $('#fin', n); if (f) f.textContent = t('finale', { n: playerName() }); };
+    $('button', n).onclick = () => { sfx.click(); if (o.promo) { S.promo = false; save(); } go(o.promo ? 'tinker' : o.from || 'home'); };
   },
   draw() {
-    const t0 = V.t, k = Math.min(1, (t0 - this.t0) * 1.6), cx = V.w / 2, cy = V.h * .3, size = Math.min(V.w, V.h) * .42;
-    drawSky(ctx, t0, 0);
+    // Landscape: the badge (or the party tree) keeps the left half, the panel sits on the right half.
+    const t0 = V.t, k = Math.min(1, (t0 - this.t0) * 1.6), land = wide(), aw = land ? V.w / 2 : V.w;
+    const cx = aw / 2, cy = land ? V.h * .44 : V.h * .3, size = Math.min(aw, V.h) * (land ? .56 : .42);
+    drawSky(ctx, t0);
     if (this.party) {
-      const T = fitTree(0, V.h * .02, V.w, V.h * .62);
-      drawTree(ctx, T, t0, { jars: 6 });
-      owl(ctx, T.ox + 640 * T.k, T.oy + 330 * T.k, T.k * 1.05, t0, 'cheer');
+      // in portrait the party tree uses the room the panel leaves free, so the cheering crowd is never behind it
+      const T = land ? fitTree(0, V.h * .02, aw, V.h * .96) : fitTree(0, V.h * .02, V.w, this.panel.getBoundingClientRect().top - V.h * .04);
+      drawTree(ctx, T, t0, { jars: JARS.length, nest: 0 });   // the party shows every jar lit and none in the nest
+      treeOwl(ctx, T, t0, 'cheer');
       const gy = T.oy + 930 * T.k, s = Math.max(.45, T.k * 1.1);
-      for (let i = 0; i < 5; i++) critter(ctx, T.ox + (140 + i * 70) * T.k, gy, s, t0 + i * .4, i);
-      for (let i = 0; i < 3; i++) magpie(ctx, T.ox + (690 + i * 90) * T.k, gy - (still() ? 0 : Math.abs(Math.sin(t0 * 5 + i)) * 10), s, t0, { face: 'shock', dir: -1 });
-      for (let i = 0; i < 3; i++) zip(ctx, cx + Math.sin(t0 * (1 + i * .3) + i * 2) * V.w * .35, V.h * .2 + Math.cos(t0 * 1.7 + i) * V.h * .1, Math.max(.6, T.k * 1.6), t0 + i, 1);
+      for (let i = 0; i < 5; i++) critter(ctx, T.ox + 130 * T.k + i * Math.max(62 * T.k, 44 * s), gy, s, t0 + i * .4, i);
+      for (let i = 0; i < 3; i++) magpie(ctx, T.ox + 600 * T.k + i * Math.max(80 * T.k, 58 * s), gy - (still() ? 0 : Math.abs(Math.sin(t0 * 5 + i)) * 10), s, t0, { face: 'shock', dir: -1 });
+      for (let i = 0; i < 3; i++) zip(ctx, cx + Math.sin(t0 * (1 + i * .3) + i * 2) * aw * .35, V.h * .2 + Math.cos(t0 * 1.7 + i) * V.h * .1, Math.max(.6, T.k * 1.6), t0 + i, 1);
       if (Math.random() < .06) burst(rnd(V.w), rnd(V.h * .5), 14, { colors: ['#ffd86b', '#ff9ecb', '#7fd0ff', '#6fdc95'], speed: 200, kind: 'star', size: 8 });
     } else if (this.o.promo && Math.random() < .08) burst(cx + rnd(-size, size), cy + rnd(-size, size) * .6, 8, { colors: ['#ffd86b', '#fff'], speed: 120, size: 7 });
     fireflies(ctx, t0, 12);
@@ -1085,14 +1144,21 @@ scenes.cam = {
       friendGap: n === 1 ? 6 : Math.max(2.2, 4.5 - .25 * n), decoy: n >= 4 ? .2 : 0, statics: n >= 6, dark: .18 - .05 * lamps };
     this.fav = n >= 3 ? shuffle([...Array(this.P.feeds).keys()]).slice(0, 2) : [];
     this.feeds = [...Array(this.P.feeds)].map(() => ({ bushes: [rnd(.22, .36), rnd(.62, .78)], mag: null, friend: null, staticT: 0, flashT: 0, wait: 0 }));
+    // The timer is generous: a child who catches every magpie only on its way out with the jar still wins.
     Object.assign(this, { caught: 0, stolen: 0, friendHits: 0, decoyHits: 0, misses: 0, empty: 0, batt: 5, spawnT: 1.2, friendT: 3, staticT: 8,
-      time: this.P.need * this.P.gap * 1.7 + 20, run: false, noT: 0, cur: -1, shakeT: 0 });
+      time: this.P.need * (this.P.gap + 1.3 / this.P.speed + 4), run: false, noT: 0, cur: -1, shakeT: 0 });
     this.total = this.time;
-    hud(() => go('hub'), `<span class="pill" id="pCatch">${ic('pie', 26)}<b>0</b>/${this.P.need}</span>`);
+    hud(() => go('hub'), `<span class="pill" id="pCatch">${ic('pie', 26)}<span><b>0</b>/${this.P.need}</span></span>`, true);
     owlSay(t('camIntro'), { html: picsHtml(['pie', 'torch']), acts: [{ label: t('go'), cls: 'go', icon: 'play', fn: () => { this.run = true; } }] });
   },
+  // Where the status strip goes. On a low landscape screen it moves up into the top bar, so the feeds get the height;
+  // on big screens it grows with the screen.
+  strip() {
+    const low = wide() && V.h <= 520, k = low ? 1 : clamp(V.h / 720, 1, 1.6);   // same limit as the slim top bar in the stylesheet
+    return low ? { k, x: 64, y: 4, w: V.w - 182, top: 60 } : { k, x: 0, y: 62, w: V.w, top: 62 + 50 * k };
+  },
   rect(i) {
-    const n = this.P.feeds, cols = n === 4 ? 2 : n === 9 ? 3 : wide() ? 3 : 2, rows = n / cols, top = 112, pad = 8;
+    const n = this.P.feeds, cols = n === 4 ? 2 : n === 9 ? 3 : wide() ? 3 : 2, rows = n / cols, top = this.strip().top, pad = 8;
     const w = (V.w - pad * (cols + 1)) / cols, h = (V.h - top - pad * (rows + 1)) / rows;
     return [pad + (i % cols) * (w + pad), top + pad + (i / cols | 0) * (h + pad), w, h];
   },
@@ -1103,8 +1169,10 @@ scenes.cam = {
     f.mag = { x: dir > 0 ? -.14 : 1.14, dir, phase: 'in', state: 'walk', hideT: 0, stops: S.night === 1 ? [pick(f.bushes)] : [...f.bushes], decoy: Math.random() < this.P.decoy, carry: false };
   },
   flash(i) {
-    const f = this.feeds[i], m = f.mag;
-    if (!this.run || i >= this.feeds.length) return;
+    const f = this.feeds[i];
+    if (!this.run || !f) return;   // also covers digit keys above the number of feeds
+    const m = f.mag;
+    if (m && m.state === 'caught') return;   // a second tap on a magpie that was just caught costs nothing
     if (this.batt < 1) { sfx.empty(); this.empty++; this.shakeT = .4; return; }
     this.batt -= 1; f.flashT = .4; sfx.flash();
     const [x, y, w, h] = this.rect(i), exposed = m && m.state === 'walk' && m.x > .03 && m.x < .97 && f.staticT <= 0;
@@ -1121,7 +1189,10 @@ scenes.cam = {
   finish(won, timeout) {
     if (!this.run) return;
     this.run = false;
-    if (won) return later(() => stationWin('cam', this.stolen === 0 && this.friendHits + this.decoyHits + this.misses <= 2 ? 3 : this.stolen <= 1 ? 2 : 1), 700);
+    if (won) {
+      const stars = this.stolen === 0 && this.friendHits + this.decoyHits + this.misses <= 2 ? 3 : this.stolen <= 1 ? 2 : 1, gain = award('cam', stars);
+      return later(() => stationWin('cam', stars, gain), 700);
+    }
     const tip = timeout ? 'camTipTime' : this.friendHits >= 3 ? 'camTipFriend' : this.decoyHits >= 2 ? 'camTipDecoy' : this.empty >= 3 ? 'camTipBatt' : 'camTipSlow';
     later(() => { const v = owlSay(t('soft') + ' ' + t(tip), { quiet: true, mood: 'idle', html: `<div class="pics" style="font-size:.8em">${ic('jar', 26)}${esc(t('nestOk'))}</div>`,
       acts: [{ label: t('home'), icon: 'home', fn: () => go('hub') }, { label: t('retry'), cls: 'go', icon: 'retry', fn: () => go('cam') }] }); sfx.oops(); return v; }, 600);
@@ -1140,7 +1211,8 @@ scenes.cam = {
     this.batt = Math.min(5, this.batt + dt / 2.2);
     this.time -= dt; this.shakeT -= dt;
     if (this.time <= 0) return this.finish(false, true);
-    if ((this.spawnT -= dt) <= 0 && this.feeds.filter(f => f.mag).length < P.live) { this.spawn(); this.spawnT = P.gap * rnd(.8, 1.2); }
+    // shadow decoys do not count against the number of magpies on screen, so they never hold real magpies back
+    if ((this.spawnT -= dt) <= 0 && this.feeds.filter(f => f.mag && !f.mag.decoy).length < P.live) { this.spawn(); this.spawnT = P.gap * rnd(.8, 1.2); }
     if ((this.friendT -= dt) <= 0) {
       const f = pick(this.feeds);
       if (!f.friend) f.friend = { kind: pick(['zip', 'leaf', 'flies']), t: 0, y: rnd(.2, .55), dir: pick([1, -1]) };
@@ -1174,20 +1246,28 @@ scenes.cam = {
   draw() {
     const t0 = V.t, P = this.P;
     ctx.fillStyle = '#070d2a'; ctx.fillRect(0, 0, V.w, V.h);
-    // status strip: owl, battery cells (shape-coded), time bar, jars taken
-    const sy = 62, sx = this.shakeT > 0 && !still() ? Math.sin(t0 * 60) * 4 : 0;
-    owl(ctx, 30, sy + 46, .46, t0, t0 < this.noT ? 'no' : 'idle');
-    drawIcon(ctx, 'torch', 78 + sx, sy + 22, 30);
+    // status strip: owl, battery cells (shape-coded), time bar, jars
+    const st = this.strip(), sw = st.w / st.k, sx = this.shakeT > 0 && !still() ? Math.sin(t0 * 60) * 4 : 0;
+    ctx.save(); ctx.translate(st.x, st.y); ctx.scale(st.k, st.k);
+    owl(ctx, 30, 46, .46, t0, t0 < this.noT ? 'no' : 'idle', false);
+    drawIcon(ctx, 'torch', 78 + sx, 22, 30);
     for (let i = 0; i < 5; i++) {
-      rr(ctx, 98 + i * 20 + sx, sy + 8, 15, 28, 4);
+      rr(ctx, 98 + i * 18 + sx, 8, 14, 28, 4);
       ctx.fillStyle = i < Math.floor(this.batt) ? '#ffd86b' : 'rgba(255,255,255,.14)'; ctx.fill();
-      if (i === Math.floor(this.batt)) { ctx.save(); ctx.clip(); ctx.fillStyle = 'rgba(255,216,107,.55)'; const k = this.batt % 1; ctx.fillRect(98 + i * 20 + sx, sy + 36 - 28 * k, 15, 28 * k); ctx.restore(); }
+      if (i === Math.floor(this.batt)) { ctx.save(); ctx.clip(); ctx.fillStyle = 'rgba(255,216,107,.55)'; const k = this.batt % 1; ctx.fillRect(98 + i * 18 + sx, 36 - 28 * k, 14, 28 * k); ctx.restore(); }
     }
-    const bx = 206, bw = Math.max(40, V.w - bx - 104);
-    rr(ctx, bx, sy + 14, bw, 16, 8); ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.fill();
-    rr(ctx, bx, sy + 14, Math.max(16, bw * this.time / this.total), 16, 8); ctx.fillStyle = '#7fd0ff'; ctx.fill();
-    drawIcon(ctx, 'moon', bx + bw * this.time / this.total, sy + 22, 24);
-    for (let i = 0; i < 3; i++) { ctx.globalAlpha = i < this.stolen ? .25 : 1; drawIcon(ctx, 'jar', V.w - 86 + i * 28, sy + 22, 26); ctx.globalAlpha = 1; if (i < this.stolen) drawIcon(ctx, 'no', V.w - 86 + i * 28, sy + 22, 16); }
+    const bx = 194, jx0 = sw - 78, bw = Math.max(30, jx0 - 20 - bx);
+    rr(ctx, bx, 14, bw, 16, 8); ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.fill();
+    rr(ctx, bx, 14, Math.max(16, bw * this.time / this.total), 16, 8); ctx.fillStyle = '#7fd0ff'; ctx.fill();
+    drawIcon(ctx, 'moon', bx + bw * this.time / this.total, 22, 24);
+    // jars the magpies took sit in their nest and glow faintly: borrowed, never destroyed
+    for (let i = 0; i < 3; i++) {
+      const jx = jx0 + i * 28, taken = i < this.stolen;
+      if (taken) ell(ctx, jx, 37, 14, 6, '#6b4a2e');
+      ctx.globalAlpha = taken ? .45 : 1; drawIcon(ctx, 'jar', jx, taken ? 25 : 22, taken ? 20 : 26); ctx.globalAlpha = 1;
+      if (taken) line(ctx, [jx - 13, 36, jx - 5, 40, jx + 5, 40, jx + 13, 36], '#8a6a44', 3);
+    }
+    ctx.restore();
     if (!scanPat) { const o = document.createElement('canvas'); o.width = 4; o.height = 4; const g = o.getContext('2d'); g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(0, 0, 4, 1); scanPat = ctx.createPattern(o, 'repeat'); }
     this.feeds.forEach((f, i) => {
       const [x, y, w, h] = this.rect(i), by = y + h * .76, s = Math.min(h * .36, w * .34) / 80, m = f.mag;
@@ -1204,9 +1284,9 @@ scenes.cam = {
       };
       if (m && m.state === 'hide') drawMag();
       f.bushes.forEach((b, j) => {
-        const rustle = m && m.state === 'hide' && Math.abs(m.x - b) < .05 && !still() ? Math.sin(t0 * 30) * 2.5 : 0, r = Math.min(h * .2, w * .13), cx = x + b * w + rustle, cy = by - r * .7;
+        const hiding = m && m.state === 'hide' && Math.abs(m.x - b) < .05, rustle = hiding && !still() ? Math.sin(t0 * 30) * 2.5 : 0, r = Math.min(h * .2, w * .13), cx = x + b * w + rustle, cy = by - r * .7;
         circ(ctx, cx, cy, r, '#1d6a52'); circ(ctx, cx - r * .7, cy + r * .35, r * .7, '#18584a'); circ(ctx, cx + r * .7, cy + r * .3, r * .75, '#237a5c'); circ(ctx, cx + r * .1, cy - r * .55, r * .6, '#2a8a66');
-        if (rustle) { line(ctx, [cx - r * 1.5, cy - r, cx - r * 1.8, cy - r * 1.3], '#bfeee4', 2); line(ctx, [cx + r * 1.5, cy - r, cx + r * 1.8, cy - r * 1.3], '#bfeee4', 2); }
+        if (hiding) { line(ctx, [cx - r * 1.5, cy - r, cx - r * 1.8, cy - r * 1.3], '#bfeee4', 2); line(ctx, [cx + r * 1.5, cy - r, cx + r * 1.8, cy - r * 1.3], '#bfeee4', 2); }   // the marks stay when motion is reduced
       });
       if (m && m.state !== 'hide') drawMag();
       const fr = f.friend;
@@ -1233,13 +1313,16 @@ const GSYM = ['moon', 'berry', 'star', 'leaf', 'acorn', 'mushroom', 'feather', '
 function gateQueue(n, pass, badge) {
   const total = Math.min(5 + n, 10), bad = Math.max(2, Math.round(total * .45));
   const kinds = ['shape', 'pic', 'both'].concat(n >= 3 ? ['order', 'style'] : [], n >= 4 ? ['short'] : [], n >= 5 ? ['lost'] : []);
+  // From Night 4 some tricksters come inside a full forest-animal costume. Looks stop helping: only badge and password decide.
+  const costumes = n < 4 ? 0 : n < 6 ? 1 : n < 8 ? 2 : 3;
   const q = [];
   for (let i = 0; i < total; i++) {
     const v = { friend: i >= bad, pass: [...pass], badge: { ...badge }, kind: Math.random() * (n >= 4 ? 5 : 4) | 0 };
     if (!v.friend) {
       const err = i < kinds.length && n >= 3 ? kinds[kinds.length - 1 - i] : pick(kinds);
       v.disguise = 1 + (Math.random() * Math.min(n, 4) | 0);
-      v.puppy = n >= 4 && i === 0;
+      v.puppy = n >= 4 && i === 0;                                  // the very polite one keeps his magpie face
+      if (i >= 1 && i <= costumes) v.costume = Math.random() * 4 | 0;
       if (err === 'shape' || err === 'both') v.badge.shape = pick(SHAPE_KEYS.filter(s => s !== badge.shape));
       if (err === 'pic' || err === 'both') v.pass[Math.random() * 3 | 0] = pick(GSYM.filter(s => !pass.includes(s)));
       if (err === 'order') { const a = Math.random() * 3 | 0, b = (a + 1) % 3; [v.pass[a], v.pass[b]] = [v.pass[b], v.pass[a]]; }
@@ -1253,15 +1336,21 @@ function gateQueue(n, pass, badge) {
   if (n === 1) q.unshift(...q.splice(q.findIndex(v => v.friend), 1));   // the first Night opens with a friend
   return q;
 }
+// One visitor at (0, 0): a forest friend, a magpie in a small disguise, or a magpie hidden in an animal costume.
+// `off` means the disguise or costume has just come off.
+function gateVisitor(c, v, s, t, o = {}) {
+  if (v.friend || v.costume !== undefined && !o.off) return critter(c, 0, 0, s, t, v.friend ? v.kind : v.costume, o.sad);
+  magpie(c, 0, 0, s, t, { dir: o.dir || -1, pose: o.pose, face: o.face, disguise: o.off ? 0 : v.disguise });
+}
 scenes.gate = {
   enter() {
     const n = S.night;
     this.pass = shuffle([...GSYM]).slice(0, 3);
     this.badge = { shape: pick(SHAPE_KEYS), style: Math.random() * 4 | 0 };
     this.q = gateQueue(n, this.pass, this.badge);
-    Object.assign(this, { i: 0, state: 'in', at: V.t, correct: 0, wrong: 0, let: 0, streak: 0, noT: 0, cut: 0, run: false,
+    Object.assign(this, { i: 0, state: 'in', at: V.t, correct: 0, wrong: 0, let: 0, streak: 0, noT: 0, cut: 0, run: false, won: false,
       patience: n >= 3 ? (15 - Math.min(n, 8) * .8) * (count('bell') ? 1.35 : 1) : 1e9 });
-    hud(() => go('hub'), `<span class="pill" id="pGate">${ic('yes', 20)}<b>0</b>/${this.q.length}</span>`);
+    hud(() => go('hub'), `<span class="pill" id="pGate">${ic('yes', 20)}<span><b>0</b>/${this.q.length}</span></span>`);
     const lab = s => `<span class="lab">${ic(s, 34)}${esc(t(s))}</span>`;
     add(`<div class="ref"><span class="lab">${esc(t('pass'))}</span>${this.pass.map(lab).join('')}<span class="sep"></span>
       <span class="lab">${ic(`badge:${this.badge.shape}:${this.badge.style}`, 40)}${esc(t('badge'))}</span></div>`);
@@ -1280,20 +1369,31 @@ scenes.gate = {
       this.correct++; this.streak++;
       letIn ? sfx.yes() : sfx.squawk();
       burst(V.w / 2, this.gy() - 80, letIn ? 14 : 10, letIn ? { speed: 160 } : { kind: 'feather', color: '#8fd08a', speed: 150 });
-      if ([3, 5, 8].includes(this.streak)) later(() => { toast(t('streak', { n: this.streak })); sfx.sparkle(); }, 350);
+      // Five right in a row earns a bonus star, once per Night: a reward for steady checking, not for speed.
+      const bonus = this.streak === 5 && S.gateStar !== S.night;
+      if (bonus) { S.gateStar = S.night; S.stars++; save(); refreshHud(); }
+      if ([3, 5, 8].includes(this.streak)) { const n = this.streak; later(() => { toast(t('streak', { n }) + (bonus ? ' ' + t('bonus') : '')); sfx.sparkle(); }, 350); }
     } else {
       this.streak = 0; sfx.oops(); this.noT = V.t + 1.2;
-      if (letIn) { this.let++; if (this.let >= 2) { this.cut = V.t; later(() => { toast(t('alarm')); sfx.alarm(); }, 900); } }
-      else { this.wrong++; later(() => toast(t('gateOops')), 200); }
+      if (letIn) {
+        this.let++;
+        if (this.let >= 2) { this.cut = V.t; later(() => { toast(t('alarm')); sfx.alarm(); }, 900); }
+        else later(() => toast(t('gateTip')), 500);   // the first slip gets its tip at once
+      } else { this.wrong++; later(() => toast(t('gateOops')), 200); }
     }
     $('#pGate b').textContent = this.correct;
+    // The result is settled and saved with the last decision; the dialog follows after the visitor has left.
+    if (this.i === this.q.length - 1 && !this.cut) {
+      const N = this.q.length;
+      this.won = this.correct >= Math.ceil(N * .8);
+      if (this.won) { this.stars = this.correct === N ? 3 : this.let === 0 ? 2 : 1; this.gain = award('gate', this.stars); }
+    }
   },
   next() {
     if (this.cut) { this.run = false; return stationFail('gate', t('soft') + ' ' + t('gateTip')); }
     if (++this.i < this.q.length) { this.state = 'in'; this.at = V.t; return; }
     this.run = false; this.state = 'end';
-    const N = this.q.length;
-    if (this.correct >= Math.ceil(N * .8)) stationWin('gate', this.correct === N ? 3 : this.let === 0 ? 2 : 1);
+    if (this.won) stationWin('gate', this.stars, this.gain);
     else stationFail('gate', t('soft') + ' ' + t(this.wrong > this.let ? 'gateTipFriend' : 'gateTip'));
   },
   gy() { return V.h - Math.max(118, V.h * .2); },
@@ -1305,7 +1405,7 @@ scenes.gate = {
   },
   draw() {
     const t0 = V.t, gy = this.gy(), s = clamp(V.h * .0031, .85, 2.2), land = wide(), cx = land ? V.w / 2 : V.w * .64, dt = t0 - this.at, v = this.q[this.i];
-    drawSky(ctx, t0, 0);
+    drawSky(ctx, t0);
     ctx.fillStyle = '#0c1740'; ctx.fillRect(0, gy, V.w, V.h);
     ell(ctx, cx, gy + 6, V.w * .6, 12, '#13235a');
     // the gate: two posts, an arch, a lantern (and the bell when the player has placed one)
@@ -1315,39 +1415,44 @@ scenes.gate = {
     drawIcon(ctx, 'lamp', gx, gy - gh - 6 * g, 34 * g);
     if (count('bell')) drawIcon(ctx, 'bell', gx + 52 * g, gy - gh + 10 * g, 28 * g);
     owl(ctx, gx, gy, g * .62, t0, t0 < this.noT ? 'no' : 'idle');
-    zip(ctx, gx + 60 * g + (this.cut ? Math.sin(t0 * 14) * 30 : Math.sin(t0) * 12), gy - gh - 30 * g + Math.sin(t0 * 2) * 6, Math.max(.7, g * .8), t0, 1);
-    if (this.cut) jar(ctx, gx - 30 * g, gy - 14 * g, 15 * g, t0, 1);
-    // waiting queue
+    zip(ctx, gx + 44 * g + (this.cut ? Math.sin(t0 * 14) * 30 : Math.sin(t0) * 12), gy - gh - 70 * g + Math.sin(t0 * 2) * 6, Math.max(.7, g * .8), t0, 1);
+    if (this.cut) jar(ctx, gx + 62 * g, gy - 14 * g, 15 * g, t0, 1);   // the jar the trickster is after, just outside the gate
+    // the waiting queue: always on screen, between the visitor and the right edge
     const wob = this.state === 'ask' && dt > this.patience && !still() ? Math.sin(t0 * 9) * .07 : 0;
+    const step = Math.min((V.w - 8 - (cx + 30 * s)) / 3, 32 * s), qs = step / 52;
     for (let j = Math.min(3, this.q.length - 1 - this.i); j >= 1; j--) {
-      const w = this.q[this.i + j], qs = land ? s * .62 : s * .42, qx = cx + (land ? (70 + j * 52) * s : 28 * s + 20 + j * 38);
-      ctx.save(); ctx.translate(qx, gy); ctx.rotate(wob * .7); ctx.globalAlpha = .75;
-      w.friend ? critter(ctx, 0, 0, qs, t0 + j, w.kind) : magpie(ctx, 0, 0, qs, t0, { dir: -1, disguise: w.disguise });
+      ctx.save(); ctx.translate(cx + 30 * s + (j - .5) * step, gy); ctx.rotate(wob * .7); ctx.globalAlpha = .75;
+      gateVisitor(ctx, this.q[this.i + j], qs, t0 + j);
       ctx.restore();
     }
     if (!v || this.state === 'end') return;
-    let x = cx, face = v.puppy ? 'puppy' : 'sly', pose = 'stand', dis = v.disguise, sad = false, alpha = 1;
+    let x = cx, sc = s, face = v.puppy ? 'puppy' : 'sly', pose = 'stand', sad = false, alpha = 1, dir = -1;
     if (this.state === 'in') { x = lerp(V.w + 60, cx, ease(Math.min(1, dt / .7))); pose = 'walk'; }
     if (this.state === 'out') {
       const k = Math.min(1, dt / 1.1);
-      if (v.letIn) { x = lerp(cx, this.cut ? gx + 14 * g : gx, ease(Math.min(1, dt / (this.cut ? 2.4 : 1.1)))); pose = v.friend ? 'walk' : 'sneak'; face = 'smug'; alpha = this.cut ? 1 : 1 - k * k; }
-      else { x = lerp(cx, V.w + 80, k * k); pose = 'sulk'; face = 'sad'; sad = true; if (!v.friend && dt > .15) dis = 0; }
+      if (v.letIn) {
+        // going in through the gate, shrinking to the gate's own scale; a second trickster tiptoes to the jar instead
+        const kk = ease(Math.min(1, dt / (this.cut ? 2.4 : 1.1)));
+        x = lerp(cx, this.cut ? gx + 104 * g : gx, kk); sc = lerp(s, g, kk);
+        pose = v.friend ? 'walk' : 'sneak'; face = 'smug'; alpha = this.cut ? 1 : 1 - k * k;
+      } else { x = lerp(cx, V.w + 80, k * k); pose = 'sulk'; face = 'sad'; sad = true; dir = 1; }
     }
+    // a shooed trickster loses the disguise at once; one who slipped in drops the costume a moment later
+    const off = this.state === 'out' && (v.letIn ? v.costume !== undefined && dt > .3 : dt > .15);
     ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, gy); ctx.rotate(this.state === 'ask' ? wob : 0);
-    if (v.friend) critter(ctx, 0, 0, s, t0, v.kind, sad);
-    else magpie(ctx, 0, 0, s, t0, { dir: this.state === 'out' && !v.letIn ? 1 : -1, pose, face, disguise: dis });
+    gateVisitor(ctx, v, sc, t0, { dir, pose, face, sad, off });
     ctx.restore();
     if (this.state !== 'ask') return;
-    // held-up badge and the spoken password (pictures plus words)
-    const bs = 46 * s * .75, bx = x - 52 * s, by = gy - 62 * s;
+    // the badge is held up high and in front, clear of beak and whiskers; the password is spoken in pictures plus words
+    const bs = 46 * s * .68, bx = x - 66 * s, by = gy - 77 * s;
     circ(ctx, bx, by, bs * .62, 'rgba(255,246,218,.95)');
     if (v.badge) drawIcon(ctx, `badge:${v.badge.shape}:${v.badge.style}`, bx, by, bs);
     else { ctx.setLineDash([5, 5]); ctx.lineWidth = 3; ctx.strokeStyle = '#8a7a5a'; ctx.beginPath(); ctx.arc(bx, by, bs * .4, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
-    const isz = clamp(V.w * .1, 34, 30 * s), fs = clamp(isz * .32, 11, 15), n = v.pass.length, bw = n * (isz + 12) + 16, bh = isz + fs + 18, top = gy - 96 * s - bh;
+    const isz = clamp(V.w * .1, 34, 30 * s), fs = clamp(isz * .32, 11, 15), n = v.pass.length, col = isz + 24, bw = n * col + 8, bh = isz + fs + 18, top = gy - 96 * s - bh;
     const lx = clamp(x - bw / 2, 6, V.w - bw - 6);
     rr(ctx, lx, top, bw, bh, 14); ctx.fillStyle = '#fff6da'; ctx.fill(); poly(ctx, [x - 8, top + bh - 1, x + 8, top + bh - 1, x + 2, top + bh + 12], '#fff6da');
     ctx.font = `800 ${fs}px ui-rounded, "Segoe UI", Roboto, sans-serif`; ctx.textAlign = 'center'; ctx.fillStyle = '#2a1c05';
-    v.pass.forEach((p, j) => { const px = lx + 14 + j * (isz + 12) + isz / 2; drawIcon(ctx, p, px, top + 8 + isz / 2, isz); ctx.fillText(t(p), px, top + isz + fs + 8, isz + 10); });
+    v.pass.forEach((p, j) => { const px = lx + 4 + j * col + col / 2; drawIcon(ctx, p, px, top + 8 + isz / 2, isz); ctx.fillText(t(p), px, top + isz + fs + 8, col - 4); });   // each word keeps its own column
     const extra = !v.badge ? t('lost') : v.puppy ? t('please') : '';
     if (extra) {
       const ew = ctx.measureText(extra).width + 20, ex = clamp(x + 30 * s, 6, V.w - ew - 6), ey = gy - 40 * s;
@@ -1391,7 +1496,7 @@ function forgeStars(tiles, few) {
 scenes.forge = {
   enter() {
     const [goal, few] = FORGE_LV[Math.min(S.night, 7) - 1];
-    Object.assign(this, { goal, few, tiles: [], sec: 0, shown: 0, crackT: 0, wonT: 0, run: true });
+    Object.assign(this, { goal, few, tiles: [], sec: 0, crackT: 0, wonT: 0, run: true });
     this.tray = shuffle([...FWORDS]).slice(0, 6).map(v => ({ k: 'w', v }))
       .concat(shuffle(['2', '3', '5', '7', '8', '9', '12', '42', '77', '99']).slice(0, 3).map(v => ({ k: 'n', v })))
       .concat(shuffle(['!', '?', '#', '*', '&', '+', '@', '%']).slice(0, 3).map(v => ({ k: 's', v })));
@@ -1399,13 +1504,18 @@ scenes.forge = {
     this.panel = add(`<div class="forge"><div class="meter"><div class="val" id="fVal">&nbsp;</div>
       <div class="track"><div class="fill" id="fFill"></div><div class="flag" style="left:${meterPos(goal) * 100}%"></div></div>
       <div style="font-size:.8em">${ic('star', 18)} ${esc(t('goal'))}: ${esc(crackLabel(goal))}</div></div>
-      <div class="slots" id="fSlots" aria-label="${esc(t('pass'))}"></div><div class="tiles" id="fTray"></div>
+      <div class="slots" id="fSlots" role="group" aria-label="${esc(t('pass'))}"></div><div class="tiles" id="fTray"></div>
       <button class="btn gold" id="fTry">${ic('lock', 26)}${esc(t('tryIt'))}</button></div>`);
     const tileHtml = (x, i) => `<button class="tile ${x.k === 'w' ? '' : x.k}" data-i="${i}">${x.k === 'w' ? ic(x.v, 30) + `<span>${esc(t(x.v))}</span>` : `<b>${esc(x.v)}</b>`}</button>`;
     this.tileHtml = tileHtml;
     $('#fTray').innerHTML = this.tray.map(tileHtml).join(''); paintIcons($('#fTray'));
-    $('#fTray').onclick = e => { const b = e.target.closest('.tile'); if (b && this.run && this.tiles.length < 8) { this.tiles.push(this.tray[+b.dataset.i]); sfx.tile(this.tiles.length); this.refresh(); } };
-    $('#fSlots').onclick = e => { const b = e.target.closest('.tile'); if (b && this.run) { this.tiles.splice(+b.dataset.i, 1); sfx.click(); this.refresh(); } };
+    $('#fTray').onclick = e => {
+      const b = e.target.closest('.tile');
+      if (!b || !this.run || this.crackT) return;   // no changes while the hacker is busy with the last try
+      if (this.tiles.length >= 8) { sfx.empty(); nudge($('#fSlots')); return; }   // the bar is full: show it
+      this.tiles.push(this.tray[+b.dataset.i]); sfx.tile(this.tiles.length); this.refresh();
+    };
+    $('#fSlots').onclick = e => { const b = e.target.closest('.tile'); if (b && this.run && !this.crackT) { this.tiles.splice(+b.dataset.i, 1); sfx.click(); this.refresh(); } };
     $('#fTry').onclick = () => this.tryIt();
     this.refresh();
     if (!S.st.forge) owlSay(t('forgeIntro'), { html: this.goalsHtml([false, false, false]), acts: [{ label: t('go'), cls: 'go', icon: 'play' }] });
@@ -1422,11 +1532,11 @@ scenes.forge = {
     say($('#fVal').textContent);
   },
   tryIt() {
-    if (!this.run || this.crackT || !this.tiles.length) { if (!this.tiles.length) { const b = $('#fTry'); b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); } return; }
+    if (!this.run || this.crackT || !this.tiles.length) { if (!this.tiles.length) nudge($('#fTry')); return; }
     if (this.sec >= this.goal) {
       this.run = false; this.wonT = V.t; sfx.slam();
-      const on = forgeStars(this.tiles, this.few);
-      later(() => stationWin('forge', on.filter(Boolean).length, t('forgeWin'), this.goalsHtml(on)), 1700);
+      const on = forgeStars(this.tiles, this.few), stars = on.filter(Boolean).length, gain = award('forge', stars);
+      later(() => stationWin('forge', stars, gain, t('forgeWin'), this.goalsHtml(on)), 1700);
       return;
     }
     // Below the goal: the hacker cracks it in a puff of feathers, the owl gives one idea, and building goes on.
@@ -1440,17 +1550,17 @@ scenes.forge = {
     later(() => {
       const w = this.tiles.filter(x => x.k === 'w'), uniq = new Set(w.map(x => x.v)).size;
       this.crackT = 0;
-      owlSay(t(!w.length ? 'forgeTipWord' : uniq < w.length ? 'forgeTipSame' : uniq >= 3 && w.length === this.tiles.length ? 'forgeTipMix' : 'forgeTipWord'), { mood: 'talk' });
+      // one idea the child can act on: twins out, or (bar full) small tiles out, or mix kinds, or one more word
+      owlSay(t(uniq < w.length ? 'forgeTipSame' : this.tiles.length >= 8 ? 'forgeTipFull' : uniq >= 3 && w.length === this.tiles.length ? 'forgeTipMix' : 'forgeTipWord'), { mood: 'talk' });
     }, 2300);
   },
   draw() {
     const t0 = V.t, top = 56, aw = wide() ? V.w * .45 : V.w, ah = (wide() ? V.h : this.panel.offsetTop) - top, u = Math.min(aw / 400, ah / 230);
-    drawSky(ctx, t0, 0);
-    this.shown = lerp(this.shown, this.sec, .12);
+    drawSky(ctx, t0);
     const sec = this.sec, won = this.wonT > 0, wk = won ? Math.min(1, (t0 - this.wonT) / .5) : 0;
     const face = won || sec >= 100 * YEAR ? 'sleep' : sec >= YEAR ? 'sweat' : sec >= 3600 ? 'worry' : 'smug';
     ctx.save(); ctx.translate((aw - 400 * u) / 2, top + (ah - 230 * u) / 2); ctx.scale(u, u);
-    line(ctx, [-400, 196, 800, 196], '#5a3a22', 14);
+    line(ctx, [-400, 196, wide() ? aw / (2 * u) + 200 : 800, 196], '#5a3a22', 14);   // in landscape the floor stops where the tile panel begins
     owl(ctx, 24, 190, .5, t0, won ? 'cheer' : 'idle');
     // tiny laptop with a glowing screen
     const busy = this.crackT && !still();
@@ -1531,7 +1641,7 @@ function stepRaid(R, dt) {
       else if (R.stolen + R.mags.filter(q => q.carry).length < 3) { m.carry = true; m.state = 'back'; sfx.oops(); }
       else m.state = 'sulk';
     }
-    if (m.d < 0) { if (m.carry) R.stolen++; m.state = 'gone'; }
+    if (m.d < 0) { if (m.carry) { R.stolen++; m.carry = false; } m.state = 'gone'; }   // a jar that left the screen is counted once, as stolen
   }
   if (!alive) R.done = true;
 }
@@ -1553,16 +1663,31 @@ scenes.tinker = {
       <button class="btn gold" id="tTest">${ic('pie', 26)}${esc(t('testRaid'))}</button><span class="pill" id="pBeams">${ic('beam', 22)}<b>${S.beams}</b></span></div>`);
     $('#tDone', bar).onclick = () => { sfx.click(); go('hub'); };
     $('#tTest', bar).onclick = () => { sfx.alarm(); go('raid', { test: true }); };
-    this.pal = add(`<div class="palette">${PALETTE.map(k => `<button class="pal" data-k="${k}" aria-label="${esc(t('i_' + k))}">${ic(k, 34)}<span>${ic('beam', 14)}${ITEMS[k].cost}</span></button>`).join('')}</div>`);
+    this.pal = add(`<div class="palette">${PALETTE.map(k => `<button class="pal" data-k="${k}" aria-label="${esc(t('i_' + k))}, ${ITEMS[k].cost}">${ic(k, 34)}<span>${ic('beam', 14)}${ITEMS[k].cost}</span></button>`).join('')}</div>`);
     this.pal.querySelectorAll('.pal').forEach(b => {
       b.onpointerdown = e => { const k = b.dataset.k; this.hand = this.hand === k && !this.drag ? null : k; this.drag = !!this.hand; [this.sx, this.sy] = [this.px, this.py] = [e.clientX, e.clientY]; sfx.click(); this.marks(); };
-      b.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { this.hand = this.hand === b.dataset.k ? null : b.dataset.k; this.marks(); e.preventDefault(); } };
+      // Keyboard: Enter picks the item and hands the keys to the tree (arrows choose a free spot, Enter places it there).
+      b.onkeydown = e => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const k = b.dataset.k, spots = this.free(k);
+        this.hand = this.hand === k ? null : k; this.kb = this.hand && spots.length ? spots[0] : -1;
+        this.marks(); b.blur(); e.preventDefault();
+      };
     });
     this.marks();
     if (!S.tinkered) { S.tinkered = 1; save(); owlSay(t('tinkerIntro'), { html: picsHtml(['cam', 'lamp', 'bell', 'shield']) }); }
   },
-  marks() { this.pal.querySelectorAll('.pal').forEach(b => { b.classList.toggle('sel', b.dataset.k === this.hand); b.classList.toggle('poor', ITEMS[b.dataset.k].cost > S.beams); }); refreshHud(); },
-  T() { return fitTree(0, 60, V.w, this.pal.offsetTop - 64); },
+  marks() {
+    this.pal.querySelectorAll('.pal').forEach(b => {
+      const on = b.dataset.k === this.hand, poor = ITEMS[b.dataset.k].cost > S.beams;
+      b.classList.toggle('sel', on); b.classList.toggle('poor', poor);
+      b.setAttribute('aria-pressed', on); b.setAttribute('aria-disabled', poor);
+    });
+    refreshHud();
+  },
+  // The tree gets whatever the palette leaves free: the space above it, or (low landscape) the space to its left.
+  T() { const p = this.pal.getBoundingClientRect(); return p.top > V.h * .5 ? fitTree(0, 60, V.w, p.top - 64) : fitTree(0, 60, p.left, V.h - 64); },
+  overPal(x, y) { const p = this.pal.getBoundingClientRect(); return x >= p.left && y >= p.top; },
   free(type) { return MOUNTS.map((m, i) => i).filter(i => (type === 'shield') === (i === VAULT) && !S.items.some(it => it.m === i)); },
   near(x, y, list, reach) {
     const T = this.T(), [lx, ly] = toTree(T, x, y);
@@ -1594,12 +1719,13 @@ scenes.tinker = {
     if (m >= 0) { this.lift(m); this.drag = true; }
   },
   move(x, y) { this.px = x; this.py = y; },
-  up(x, y) {
+  up(x, y, cancelled) {
     if (!this.drag) return;
     this.drag = false;
     if (!this.hand) return;
+    if (cancelled) { this.hand = null; this.marks(); return; }   // the browser took the gesture away: the item goes back to the palette
     const moved = Math.hypot(x - this.sx, y - this.sy) > 14;
-    if (y < this.pal.offsetTop && moved) { if (!this.place(this.hand === 'shield' ? (this.free('shield').length ? VAULT : -1) : this.near(x, y, this.free(this.hand), 120))) { this.hand = null; this.marks(); } }
+    if (!this.overPal(x, y) && moved) { if (!this.place(this.hand === 'shield' ? (this.free('shield').length ? VAULT : -1) : this.near(x, y, this.free(this.hand), 120))) { this.hand = null; this.marks(); } }
     else if (moved) { this.hand = null; this.marks(); }
   },
   key(e) {
@@ -1609,14 +1735,15 @@ scenes.tinker = {
   },
   draw() {
     const t0 = V.t, T = this.T();
-    drawSky(ctx, t0, S.nest); drawTree(ctx, T, t0, { zones: true });
-    owl(ctx, T.ox + 640 * T.k, T.oy + 330 * T.k, T.k * 1.05, t0);
+    drawSky(ctx, t0); drawTree(ctx, T, t0, { zones: true });
+    treeOwl(ctx, T, t0);
     ctx.save(); ctx.translate(T.ox, T.oy); ctx.scale(T.k, T.k);
     if (this.hand) {
       const free = this.free(this.hand), aim = this.drag ? this.near(this.px, this.py, free, 120) : this.kb;
-      for (const i of free) { const [x, y] = MOUNTS[i], on = i === aim, r = (on ? 16 : 9) + (still() ? 0 : Math.sin(t0 * 5 + i) * 2); circ(ctx, x, y - 20, r, on ? 'rgba(255,255,255,.9)' : 'rgba(255,216,107,.6)'); ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y - 20, r, 0, TAU); ctx.stroke(); }
-      if (free.includes(aim)) { drawZone(ctx, this.hand, MOUNTS[aim][0], MOUNTS[aim][1]); ctx.globalAlpha = .7; drawItem(ctx, this.hand === 'shield' ? 'shield' : this.hand, MOUNTS[aim][0], MOUNTS[aim][1], t0); ctx.globalAlpha = 1; }
-    } else if (this.kb >= 0) { const [x, y] = MOUNTS[this.kb]; ctx.lineWidth = 4; ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y - 20, 34, 0, TAU); ctx.stroke(); }
+      // free spots keep a visible size on small screens
+      for (const i of free) { const [x, y] = MOUNTS[i], on = i === aim, r = Math.max(on ? 16 : 9, (on ? 11 : 7) / T.k) + (still() ? 0 : Math.sin(t0 * 5 + i) * 2); circ(ctx, x, y - 20, r, on ? 'rgba(255,255,255,.9)' : 'rgba(255,216,107,.6)'); ctx.lineWidth = Math.max(3, 1.5 / T.k); ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y - 20, r, 0, TAU); ctx.stroke(); }
+      if (free.includes(aim)) { drawZone(ctx, this.hand, MOUNTS[aim][0], MOUNTS[aim][1]); ctx.globalAlpha = .7; drawItem(ctx, this.hand, MOUNTS[aim][0], MOUNTS[aim][1], t0, T.k); ctx.globalAlpha = 1; }
+    } else if (this.kb >= 0) { const [x, y] = MOUNTS[this.kb]; ctx.lineWidth = Math.max(4, 2 / T.k); ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y - 20, Math.max(34, 16 / T.k), 0, TAU); ctx.stroke(); }
     ctx.restore();
     if (this.hand && this.drag) drawIcon(ctx, this.hand, this.px, this.py - 30, 54);
     fireflies(ctx, t0, 8);
@@ -1629,7 +1756,9 @@ scenes.raid = {
     this.test = !!o.test; this.endT = 0;
     const st = this.test ? { cam: S.st.cam || 2, gate: S.st.gate || 2, forge: S.st.forge || 2 } : S.st;
     this.R = makeRaid(raidPlan(S.night, st), st.forge - 1);
-    add(`<div class="hud"><span class="pill">${ic('pie', 24)}${esc(t(this.test ? 'testRaid' : 'raidGo'))}</span><span class="sp"></span></div>`);
+    add(`<div class="hud">${this.test ? `<button class="btn round" id="rBack" aria-label="${esc(t('done'))}">${ic('no', 24)}</button>` : ''}
+      <span class="pill">${ic('pie', 24)}${esc(t(this.test ? 'testRaid' : 'raidGo'))}</span><span class="sp"></span></div>`);
+    if (this.test) $('#rBack').onclick = () => { sfx.click(); go('tinker'); };   // a practice raid can be left at any time
     if (!this.test) later(() => toast(t('raidGo')), 100);
   },
   update(dt) {
@@ -1650,10 +1779,10 @@ scenes.raid = {
   draw() {
     const t0 = V.t, R = this.R, T = fitTree(0, 56, V.w, V.h - 70);
     const carrying = R.mags.filter(m => m.carry).length;
-    drawSky(ctx, t0, R.stolen);
-    drawTree(ctx, T, t0, { zones: true, jars: JARS.length - R.stolen - carrying });
+    drawSky(ctx, t0);
+    drawTree(ctx, T, t0, { zones: true, jars: JARS.length - R.stolen - carrying, nest: R.stolen });
     ctx.save(); ctx.translate(T.ox, T.oy); ctx.scale(T.k, T.k);
-    owl(ctx, 640, 330, 1.05, t0, R.done ? (R.stolen ? 'idle' : 'cheer') : carrying ? 'no' : 'sleep');
+    owl(ctx, OWL[0], OWL[1], 1.05, t0, R.done ? (R.stolen ? 'idle' : 'cheer') : carrying ? 'no' : 'sleep');
     for (const d of R.cams) if (d.cd > 0) { ctx.beginPath(); ctx.arc(d.x, d.y - 20, 30, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - d.cd / ITEMS[d.t].cd)); ctx.lineWidth = 6; ctx.strokeStyle = '#fff'; ctx.stroke(); }
     for (const b of R.beams) {
       ctx.globalAlpha = Math.min(1, b.t * 3);
@@ -1664,7 +1793,8 @@ scenes.raid = {
     for (const m of R.mags) {
       if (m.state === 'wait' || m.state === 'gone') continue;
       const [x, y, f] = routeAt(ROUTES[m.route], Math.max(0, m.d)), back = m.state !== 'go';
-      magpie(ctx, x, y, .62, t0 + m.at, { dir: back ? -f : f, carry: m.carry, pose: m.dizzy > 0 ? 'dizzy' : { go: 'sneak', back: 'walk', flee: 'flee', sulk: 'sulk' }[m.state], face: m.state === 'flee' ? 'shock' : m.state === 'sulk' ? 'sad' : 'sly' });
+      // on a small tree the raiders are drawn a little larger than life, so the bonks and sulks can be seen
+      magpie(ctx, x, y, .62 * Math.max(1, .6 / T.k), t0 + m.at, { dir: back ? -f : f, carry: m.carry, pose: m.dizzy > 0 ? 'dizzy' : { go: 'sneak', back: 'walk', flee: 'flee', sulk: 'sulk' }[m.state], face: m.state === 'flee' ? 'shock' : m.state === 'sulk' ? 'sad' : 'sly' });
     }
     R.zipX = lerp(R.zipX, 500 + Math.sin(t0) * 200, .01); R.zipY = lerp(R.zipY, 150, .01);
     zip(ctx, R.zipX, R.zipY, 1.5, t0, 1);
@@ -1673,6 +1803,17 @@ scenes.raid = {
   },
 };
 // ---------- Boot ----------
+// A save that is damaged, old or edited by hand must not break the game or reach the page as HTML.
+(() => {
+  const int = (v, lo, hi) => clamp(v | 0, lo, hi);
+  S.night = int(S.night, 1, 1e6); S.beams = int(S.beams, 0, 1e9); S.stars = int(S.stars, 0, 1e9); S.nest = int(S.nest, 0, 3);
+  S.briefed = int(S.briefed, 0, S.night); S.testStar |= 0; S.gateStar |= 0;
+  S.name = String(S.name || '').slice(0, 16); S.mute = !!S.mute; S.promo = !!S.promo;
+  const st = S.st && typeof S.st === 'object' ? S.st : {};
+  S.st = { cam: int(st.cam, 0, 3), gate: int(st.gate, 0, 3), forge: int(st.forge, 0, 3) };
+  S.items = (Array.isArray(S.items) ? S.items : []).filter((it, i, all) => it && ITEMS[it.t] && Number.isInteger(it.m) && MOUNTS[it.m] &&
+    (it.t === 'shield') === (it.m === VAULT) && all.findIndex(o => o && o.m === it.m) === i).map(it => ({ t: it.t, m: it.m }));
+})();
 resize();
 go('home');
 requestAnimationFrame(frame);

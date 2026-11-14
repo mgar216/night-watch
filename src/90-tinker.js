@@ -58,7 +58,7 @@ function stepRaid(R, dt) {
       else if (R.stolen + R.mags.filter(q => q.carry).length < 3) { m.carry = true; m.state = 'back'; sfx.oops(); }
       else m.state = 'sulk';
     }
-    if (m.d < 0) { if (m.carry) R.stolen++; m.state = 'gone'; }
+    if (m.d < 0) { if (m.carry) { R.stolen++; m.carry = false; } m.state = 'gone'; }   // a jar that left the screen is counted once, as stolen
   }
   if (!alive) R.done = true;
 }
@@ -80,16 +80,31 @@ scenes.tinker = {
       <button class="btn gold" id="tTest">${ic('pie', 26)}${esc(t('testRaid'))}</button><span class="pill" id="pBeams">${ic('beam', 22)}<b>${S.beams}</b></span></div>`);
     $('#tDone', bar).onclick = () => { sfx.click(); go('hub'); };
     $('#tTest', bar).onclick = () => { sfx.alarm(); go('raid', { test: true }); };
-    this.pal = add(`<div class="palette">${PALETTE.map(k => `<button class="pal" data-k="${k}" aria-label="${esc(t('i_' + k))}">${ic(k, 34)}<span>${ic('beam', 14)}${ITEMS[k].cost}</span></button>`).join('')}</div>`);
+    this.pal = add(`<div class="palette">${PALETTE.map(k => `<button class="pal" data-k="${k}" aria-label="${esc(t('i_' + k))}, ${ITEMS[k].cost}">${ic(k, 34)}<span>${ic('beam', 14)}${ITEMS[k].cost}</span></button>`).join('')}</div>`);
     this.pal.querySelectorAll('.pal').forEach(b => {
       b.onpointerdown = e => { const k = b.dataset.k; this.hand = this.hand === k && !this.drag ? null : k; this.drag = !!this.hand; [this.sx, this.sy] = [this.px, this.py] = [e.clientX, e.clientY]; sfx.click(); this.marks(); };
-      b.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { this.hand = this.hand === b.dataset.k ? null : b.dataset.k; this.marks(); e.preventDefault(); } };
+      // Keyboard: Enter picks the item and hands the keys to the tree (arrows choose a free spot, Enter places it there).
+      b.onkeydown = e => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const k = b.dataset.k, spots = this.free(k);
+        this.hand = this.hand === k ? null : k; this.kb = this.hand && spots.length ? spots[0] : -1;
+        this.marks(); b.blur(); e.preventDefault();
+      };
     });
     this.marks();
     if (!S.tinkered) { S.tinkered = 1; save(); owlSay(t('tinkerIntro'), { html: picsHtml(['cam', 'lamp', 'bell', 'shield']) }); }
   },
-  marks() { this.pal.querySelectorAll('.pal').forEach(b => { b.classList.toggle('sel', b.dataset.k === this.hand); b.classList.toggle('poor', ITEMS[b.dataset.k].cost > S.beams); }); refreshHud(); },
-  T() { return fitTree(0, 60, V.w, this.pal.offsetTop - 64); },
+  marks() {
+    this.pal.querySelectorAll('.pal').forEach(b => {
+      const on = b.dataset.k === this.hand, poor = ITEMS[b.dataset.k].cost > S.beams;
+      b.classList.toggle('sel', on); b.classList.toggle('poor', poor);
+      b.setAttribute('aria-pressed', on); b.setAttribute('aria-disabled', poor);
+    });
+    refreshHud();
+  },
+  // The tree gets whatever the palette leaves free: the space above it, or (low landscape) the space to its left.
+  T() { const p = this.pal.getBoundingClientRect(); return p.top > V.h * .5 ? fitTree(0, 60, V.w, p.top - 64) : fitTree(0, 60, p.left, V.h - 64); },
+  overPal(x, y) { const p = this.pal.getBoundingClientRect(); return x >= p.left && y >= p.top; },
   free(type) { return MOUNTS.map((m, i) => i).filter(i => (type === 'shield') === (i === VAULT) && !S.items.some(it => it.m === i)); },
   near(x, y, list, reach) {
     const T = this.T(), [lx, ly] = toTree(T, x, y);
@@ -121,12 +136,13 @@ scenes.tinker = {
     if (m >= 0) { this.lift(m); this.drag = true; }
   },
   move(x, y) { this.px = x; this.py = y; },
-  up(x, y) {
+  up(x, y, cancelled) {
     if (!this.drag) return;
     this.drag = false;
     if (!this.hand) return;
+    if (cancelled) { this.hand = null; this.marks(); return; }   // the browser took the gesture away: the item goes back to the palette
     const moved = Math.hypot(x - this.sx, y - this.sy) > 14;
-    if (y < this.pal.offsetTop && moved) { if (!this.place(this.hand === 'shield' ? (this.free('shield').length ? VAULT : -1) : this.near(x, y, this.free(this.hand), 120))) { this.hand = null; this.marks(); } }
+    if (!this.overPal(x, y) && moved) { if (!this.place(this.hand === 'shield' ? (this.free('shield').length ? VAULT : -1) : this.near(x, y, this.free(this.hand), 120))) { this.hand = null; this.marks(); } }
     else if (moved) { this.hand = null; this.marks(); }
   },
   key(e) {
@@ -136,14 +152,15 @@ scenes.tinker = {
   },
   draw() {
     const t0 = V.t, T = this.T();
-    drawSky(ctx, t0, S.nest); drawTree(ctx, T, t0, { zones: true });
-    owl(ctx, T.ox + 640 * T.k, T.oy + 330 * T.k, T.k * 1.05, t0);
+    drawSky(ctx, t0); drawTree(ctx, T, t0, { zones: true });
+    treeOwl(ctx, T, t0);
     ctx.save(); ctx.translate(T.ox, T.oy); ctx.scale(T.k, T.k);
     if (this.hand) {
       const free = this.free(this.hand), aim = this.drag ? this.near(this.px, this.py, free, 120) : this.kb;
-      for (const i of free) { const [x, y] = MOUNTS[i], on = i === aim, r = (on ? 16 : 9) + (still() ? 0 : Math.sin(t0 * 5 + i) * 2); circ(ctx, x, y - 20, r, on ? 'rgba(255,255,255,.9)' : 'rgba(255,216,107,.6)'); ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y - 20, r, 0, TAU); ctx.stroke(); }
-      if (free.includes(aim)) { drawZone(ctx, this.hand, MOUNTS[aim][0], MOUNTS[aim][1]); ctx.globalAlpha = .7; drawItem(ctx, this.hand === 'shield' ? 'shield' : this.hand, MOUNTS[aim][0], MOUNTS[aim][1], t0); ctx.globalAlpha = 1; }
-    } else if (this.kb >= 0) { const [x, y] = MOUNTS[this.kb]; ctx.lineWidth = 4; ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y - 20, 34, 0, TAU); ctx.stroke(); }
+      // free spots keep a visible size on small screens
+      for (const i of free) { const [x, y] = MOUNTS[i], on = i === aim, r = Math.max(on ? 16 : 9, (on ? 11 : 7) / T.k) + (still() ? 0 : Math.sin(t0 * 5 + i) * 2); circ(ctx, x, y - 20, r, on ? 'rgba(255,255,255,.9)' : 'rgba(255,216,107,.6)'); ctx.lineWidth = Math.max(3, 1.5 / T.k); ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y - 20, r, 0, TAU); ctx.stroke(); }
+      if (free.includes(aim)) { drawZone(ctx, this.hand, MOUNTS[aim][0], MOUNTS[aim][1]); ctx.globalAlpha = .7; drawItem(ctx, this.hand, MOUNTS[aim][0], MOUNTS[aim][1], t0, T.k); ctx.globalAlpha = 1; }
+    } else if (this.kb >= 0) { const [x, y] = MOUNTS[this.kb]; ctx.lineWidth = Math.max(4, 2 / T.k); ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y - 20, Math.max(34, 16 / T.k), 0, TAU); ctx.stroke(); }
     ctx.restore();
     if (this.hand && this.drag) drawIcon(ctx, this.hand, this.px, this.py - 30, 54);
     fireflies(ctx, t0, 8);
@@ -156,7 +173,9 @@ scenes.raid = {
     this.test = !!o.test; this.endT = 0;
     const st = this.test ? { cam: S.st.cam || 2, gate: S.st.gate || 2, forge: S.st.forge || 2 } : S.st;
     this.R = makeRaid(raidPlan(S.night, st), st.forge - 1);
-    add(`<div class="hud"><span class="pill">${ic('pie', 24)}${esc(t(this.test ? 'testRaid' : 'raidGo'))}</span><span class="sp"></span></div>`);
+    add(`<div class="hud">${this.test ? `<button class="btn round" id="rBack" aria-label="${esc(t('done'))}">${ic('no', 24)}</button>` : ''}
+      <span class="pill">${ic('pie', 24)}${esc(t(this.test ? 'testRaid' : 'raidGo'))}</span><span class="sp"></span></div>`);
+    if (this.test) $('#rBack').onclick = () => { sfx.click(); go('tinker'); };   // a practice raid can be left at any time
     if (!this.test) later(() => toast(t('raidGo')), 100);
   },
   update(dt) {
@@ -177,10 +196,10 @@ scenes.raid = {
   draw() {
     const t0 = V.t, R = this.R, T = fitTree(0, 56, V.w, V.h - 70);
     const carrying = R.mags.filter(m => m.carry).length;
-    drawSky(ctx, t0, R.stolen);
-    drawTree(ctx, T, t0, { zones: true, jars: JARS.length - R.stolen - carrying });
+    drawSky(ctx, t0);
+    drawTree(ctx, T, t0, { zones: true, jars: JARS.length - R.stolen - carrying, nest: R.stolen });
     ctx.save(); ctx.translate(T.ox, T.oy); ctx.scale(T.k, T.k);
-    owl(ctx, 640, 330, 1.05, t0, R.done ? (R.stolen ? 'idle' : 'cheer') : carrying ? 'no' : 'sleep');
+    owl(ctx, OWL[0], OWL[1], 1.05, t0, R.done ? (R.stolen ? 'idle' : 'cheer') : carrying ? 'no' : 'sleep');
     for (const d of R.cams) if (d.cd > 0) { ctx.beginPath(); ctx.arc(d.x, d.y - 20, 30, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - d.cd / ITEMS[d.t].cd)); ctx.lineWidth = 6; ctx.strokeStyle = '#fff'; ctx.stroke(); }
     for (const b of R.beams) {
       ctx.globalAlpha = Math.min(1, b.t * 3);
@@ -191,7 +210,8 @@ scenes.raid = {
     for (const m of R.mags) {
       if (m.state === 'wait' || m.state === 'gone') continue;
       const [x, y, f] = routeAt(ROUTES[m.route], Math.max(0, m.d)), back = m.state !== 'go';
-      magpie(ctx, x, y, .62, t0 + m.at, { dir: back ? -f : f, carry: m.carry, pose: m.dizzy > 0 ? 'dizzy' : { go: 'sneak', back: 'walk', flee: 'flee', sulk: 'sulk' }[m.state], face: m.state === 'flee' ? 'shock' : m.state === 'sulk' ? 'sad' : 'sly' });
+      // on a small tree the raiders are drawn a little larger than life, so the bonks and sulks can be seen
+      magpie(ctx, x, y, .62 * Math.max(1, .6 / T.k), t0 + m.at, { dir: back ? -f : f, carry: m.carry, pose: m.dizzy > 0 ? 'dizzy' : { go: 'sneak', back: 'walk', flee: 'flee', sulk: 'sulk' }[m.state], face: m.state === 'flee' ? 'shock' : m.state === 'sulk' ? 'sad' : 'sly' });
     }
     R.zipX = lerp(R.zipX, 500 + Math.sin(t0) * 200, .01); R.zipY = lerp(R.zipY, 150, .01);
     zip(ctx, R.zipX, R.zipY, 1.5, t0, 1);

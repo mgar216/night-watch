@@ -21,21 +21,25 @@ function routeAt(p, d) {
   }
 }
 // Places where things can be mounted. Index is saved with each item; 22 is the vault (shield only).
+// Every spot keeps clear of the jars, the owl and the ladder, so a placed item is always fully visible.
 const MOUNTS = [[150, 338], [270, 368], [390, 398], [850, 310], [730, 343], [610, 376], [170, 607], [310, 622], [430, 635],
-  [830, 649], [700, 635], [585, 623], [500, 480], [500, 560], [500, 760], [640, 905], [400, 905], [500, 108], [425, 165], [575, 165],
-  [345, 318], [655, 318], [500, 232]];
+  [830, 649], [700, 635], [620, 627], [500, 480], [500, 560], [500, 760], [640, 905], [400, 905], [500, 108], [425, 165], [575, 165],
+  [318, 318], [694, 318], [500, 232]];
 const VAULT = 22;
 const ITEMS = {
   cam: { cost: 30, r: 135, cd: 3 }, lamp: { cost: 15, r: 75 }, bell: { cost: 20, r: 120, cd: 1.5 }, shield: { cost: 45 },
   banner: { cost: 8, deco: 1 }, flowers: { cost: 6, deco: 1 }, scope: { cost: 12, deco: 1 }, lights: { cost: 10, deco: 1 },
 };
-const JARS = [[445, 262], [555, 262], [368, 304], [385, 380], [615, 380], [435, 380]];
+// Two jars in each window, two on the left deck. Jars are taken from the end of the list.
+const JARS = [[434, 262], [456, 262], [544, 262], [566, 262], [362, 304], [386, 304]];
+const OWL = [630, 330];   // the owl's post on the right deck
+const treeOwl = (c, T, t, mood) => owl(c, T.ox + OWL[0] * T.k, T.oy + OWL[1] * T.k, T.k * 1.05, t, mood);
 const count = type => S.items.filter(i => i.t === type).length;
 
 // Sky, stars, moon, far hills and the magpies' nest; cached per size, twinkles drawn live.
 let skyCache = null;
 const hash = i => { const x = Math.sin(i * 127.1) * 43758.5453; return x - Math.floor(x); };
-function drawSky(c, t, nest = 0) {
+function drawSky(c, t) {
   const w = V.w, h = V.h;
   if (!skyCache || skyCache.w !== w || skyCache.h !== h) {
     const o = document.createElement('canvas'), d = Math.min(window.devicePixelRatio || 1, 2);
@@ -60,10 +64,6 @@ function drawSky(c, t, nest = 0) {
     const a = still() ? .6 : .5 + .5 * Math.sin(t * (1 + hash(i) * 2) + i);
     starPath(c, hash(i + 50) * w, hash(i + 90) * h * .6, 2 + a * 3, 1, 4); c.fillStyle = `rgba(255,246,218,${a})`; c.fill();
   }
-  // the magpies' nest: stolen jars glow faintly here until Zip brings them home
-  const nx = w * .93, ny = h * .78;
-  line(c, [nx, h * .9, nx, ny], '#0a1235', 6); ell(c, nx, ny, 22, 9, '#3a2c20');
-  for (let i = 0; i < nest; i++) { glow(c, nx - 10 + i * 10, ny - 8, 16, '255,216,107', .5); circ(c, nx - 10 + i * 10, ny - 8, 3, '#ffe9a3'); }
 }
 
 // Fit the tree into a screen rectangle. Returns the transform used by drawTree and by pointer maths.
@@ -73,8 +73,9 @@ function fitTree(ax, ay, aw, ah) {
 }
 const toTree = (T, x, y) => [(x - T.ox) / T.k, (y - T.oy) / T.k];
 
-function drawItem(c, type, x, y, t) {
-  const big = ITEMS[type].deco ? 62 : 50;
+// `k` is the tree's on-screen scale: on small screens items keep a readable size.
+function drawItem(c, type, x, y, t, k = 1) {
+  const big = Math.max(ITEMS[type].deco ? 62 : 50, 22 / k);
   if (type === 'shield') { c.globalAlpha = .28 + (still() ? 0 : .08 * Math.sin(t * 3)); circ(c, 500, 265, 150, '#7fd0ff'); c.globalAlpha = 1; c.lineWidth = 4; c.setLineDash([4, 10]); c.strokeStyle = '#fff'; c.beginPath(); c.arc(500, 265, 150, 0, TAU); c.stroke(); c.setLineDash([]); }
   drawIcon(c, type, x, y - big * .42, big);
 }
@@ -87,7 +88,7 @@ function drawZone(c, type, x, y) {
   c.setLineDash(dash); c.lineWidth = 4; c.strokeStyle = `rgba(${rgb},.85)`; c.beginPath(); c.arc(x, y, r, 0, TAU); c.stroke(); c.setLineDash([]);
 }
 
-// The big tree, the cabin, jars and everything the player has placed. o: { jars, zones, skip (mount index being dragged) }
+// The big tree, the cabin, jars and everything the player has placed. o: { jars, nest, zones, skip (mount index being dragged) }
 function drawTree(c, T, t, o = {}) {
   c.save(); c.translate(T.ox, T.oy); c.scale(T.k, T.k); c.lineCap = c.lineJoin = 'round';
   c.fillStyle = '#0c1740'; c.fillRect(-3000, 930, 7000, 3000);
@@ -102,19 +103,24 @@ function drawTree(c, T, t, o = {}) {
   }
   for (const x of [560, 590]) line(c, [x, 344, x, 928], '#d9b77a', 3);
   for (let y = 370; y < 925; y += 38) line(c, [560, y, 590, y], '#d9b77a', 4);
-  rr(c, 340, 330, 320, 16, 5); c.fillStyle = '#8a5a34'; c.fill();
-  for (const x of [350, 650]) line(c, [x, 330, x, 296], '#8a5a34', 5);
-  line(c, [350, 298, 400, 298], '#8a5a34', 4); line(c, [600, 298, 650, 298], '#8a5a34', 4);
+  rr(c, 288, 330, 424, 16, 5); c.fillStyle = '#8a5a34'; c.fill();
+  for (const x of [298, 702]) line(c, [x, 330, x, 296], '#8a5a34', 5);
+  line(c, [298, 298, 400, 298], '#8a5a34', 4); line(c, [600, 298, 702, 298], '#8a5a34', 4);
   rr(c, 400, 205, 200, 127, 8); c.fillStyle = '#a8703f'; c.fill();
   for (let y = 230; y < 330; y += 25) line(c, [404, y, 596, y], '#8f5c30', 2);
   poly(c, [372, 214, 500, 112, 628, 214], '#c2503c'); line(c, [372, 214, 500, 112, 628, 214], '#e06a54', 6);
   for (const x of [445, 555]) { glow(c, x, 258, 70, '255,216,107', .4); rr(c, x - 26, 232, 52, 50, 8); c.fillStyle = '#4a2f1a'; c.fill(); c.lineWidth = 4; c.strokeStyle = '#e8c984'; c.stroke(); }
   rr(c, 480, 262, 40, 68, 14); c.fillStyle = '#6b462a'; c.fill(); circ(c, 512, 300, 3, '#ffd24a');
-  for (const x of [385, 615, 435]) line(c, [x, 346, x, 366], '#d9b77a', 2);
   const n = o.jars === undefined ? JARS.length - S.nest : o.jars;
   for (let i = 0; i < JARS.length; i++) jar(c, JARS[i][0], JARS[i][1], 20, t + i, i < n ? 1 : 0.12);
+  // The magpies' own little tree with their nest: jars they took sit here and glow until Zip brings them home.
+  const nest = o.nest === undefined ? S.nest : o.nest;
+  line(c, [868, 934, 868, 874], '#3a2716', 9); line(c, [868, 904, 846, 888], '#3a2716', 5); line(c, [868, 896, 890, 880], '#3a2716', 5);
+  ell(c, 868, 868, 32, 11, '#6b4a2e');
+  for (let i = 0; i < nest; i++) jar(c, 852 + i * 16, 853, 11, t + i, .75);
+  line(c, [838, 866, 850, 875, 886, 875, 898, 866], '#8a6a44', 5);
   if (o.zones) for (const it of S.items) if (it.m !== o.skip) drawZone(c, it.t, MOUNTS[it.m][0], MOUNTS[it.m][1]);
-  for (const it of S.items) if (it.m !== o.skip) drawItem(c, it.t, MOUNTS[it.m][0], MOUNTS[it.m][1], t);
+  for (const it of S.items) if (it.m !== o.skip) drawItem(c, it.t, MOUNTS[it.m][0], MOUNTS[it.m][1], t, T.k);
   c.restore();
 }
 // Drifting fireflies for any scene (screen space).

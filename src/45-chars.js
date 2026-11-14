@@ -1,8 +1,8 @@
 // ---------- Characters. All are drawn with feet at (x, y); `s` scales, `t` animates ----------
 const still = () => calm.matches;
 
-// The owl: sleepy, kind, guard's cap, flashlight. mood: idle | talk | no | cheer | sleep
-function owl(c, x, y, s, t, mood = 'idle') {
+// The owl: sleepy, kind, guard's cap, flashlight. mood: idle | talk | no | cheer | sleep. `beam` draws the light cone.
+function owl(c, x, y, s, t, mood = 'idle', beam = true) {
   const bob = still() ? 0 : Math.sin(t * 2) * 1.5, shake = mood === 'no' && !still() ? Math.sin(t * 13) * 5 : 0;
   const blink = t % 3.7 < .14, lid = mood === 'sleep' ? 1 : blink ? 1 : mood === 'cheer' ? .05 : mood === 'talk' ? .22 : .4;
   const up = mood === 'cheer' ? -1.9 : 0;
@@ -15,7 +15,7 @@ function owl(c, x, y, s, t, mood = 'idle') {
   // flashlight wing
   c.save(); c.translate(32, -52); c.rotate(-.2 + up);
   ell(c, 0, 16, 12, 26, '#7a4e28');
-  if (mood !== 'cheer') { c.translate(4, 34); c.rotate(-1.1); poly(c, [16, -5, 60, -22, 60, 22, 16, 5], 'rgba(255,233,163,.28)'); rr(c, -12, -5, 24, 10, 3); c.fillStyle = '#58a6ff'; c.fill(); poly(c, [12, -5, 19, -8, 19, 8, 12, 5], '#dfe6f5'); }
+  if (mood !== 'cheer') { c.translate(4, 34); c.rotate(-1.1); if (beam) poly(c, [16, -5, 60, -22, 60, 22, 16, 5], 'rgba(255,233,163,.28)'); rr(c, -12, -5, 24, 10, 3); c.fillStyle = '#58a6ff'; c.fill(); poly(c, [12, -5, 19, -8, 19, 8, 12, 5], '#dfe6f5'); }
   c.restore();
   c.translate(shake, 0);
   poly(c, [-30, -70, -26, -92, -14, -78], '#7a4e28'); poly(c, [30, -70, 26, -92, 14, -78], '#7a4e28');
@@ -29,6 +29,7 @@ function owl(c, x, y, s, t, mood = 'idle') {
   ell(c, 0, -78, 30, 8, '#16224f'); rr(c, -22, -96, 44, 18, 7); c.fillStyle = '#22306e'; c.fill();
   ell(c, 6, -76, 22, 5, '#0d1638'); starPath(c, 0, -87, 6, 2.6, 5); c.fillStyle = '#ffd24a'; c.fill();
   if (mood === 'sleep' && !still()) for (let i = 0; i < 3; i++) { const k = (t * .5 + i / 3) % 1; c.globalAlpha = 1 - k; circ(c, 30 + k * 18, -84 - k * 30, 2 + k * 4, '#dff0ff'); c.globalAlpha = 1; }
+  if (mood === 'no' && still()) { circ(c, 36, -88, 11, '#e0553f'); drawIcon(c, 'no', 36, -88, 13); }   // with motion reduced the head cannot shake: show a small cross instead
   c.restore();
 }
 
@@ -73,7 +74,11 @@ function magpie(c, x, y, s, t, o = {}) {
     }
     if (o.disguise === 2) { ell(c, hx + 9, hy + 8, 7, 3.2, '#8a5a2a', .5); ell(c, hx + 19, hy + 8, 7, 3.2, '#8a5a2a', -.5); }
     if (o.disguise === 1) { c.save(); c.translate(hx - 2, hy - 13); c.rotate(-.3); c.scale(15, 9); c.beginPath(); SHAPES.leaf(c); c.fillStyle = '#62c26a'; c.fill(); c.restore(); line(c, [hx - 14, hy - 12, hx + 10, hy - 15], '#2e7a3a', 1.5); }
-    if (o.disguise === 4) { c.save(); c.translate(hx + 2, hy - 9); c.rotate(.18); ell(c, 0, 2, 22, 6, '#16224f'); rr(c, -16, -14, 32, 16, 6); c.fillStyle = '#22306e'; c.fill(); ell(c, 8, 4, 16, 4, '#0d1638'); starPath(c, 0, -6, 5, 2.2, 5); c.fillStyle = '#ffd24a'; c.fill(); c.restore(); }
+    if (o.disguise === 4) {   // a guard's cap that is clearly too big, in a lighter blue with a pale rim so it shows against the night
+      c.save(); c.translate(hx + 2, hy - 9); c.rotate(.18); c.scale(1.3, 1.3);
+      ell(c, 0, 2, 22, 6, '#2b3f8f'); rr(c, -16, -14, 32, 16, 6); c.fillStyle = '#3a52ad'; c.fill(); c.lineWidth = 1.5; c.strokeStyle = 'rgba(190,210,255,.9)'; c.stroke();
+      ell(c, 8, 4, 16, 4, '#1b2a6b'); starPath(c, 0, -6, 5, 2.2, 5); c.fillStyle = '#ffd24a'; c.fill(); c.restore();
+    }
     if (o.hat) {
       ell(c, hx, hy - 12, 17, 4, '#3a2a4a'); c.beginPath(); c.arc(hx, hy - 13, 11, Math.PI, 0); c.fillStyle = '#4a3660'; c.fill();
       if (o.flame) { const f = still() ? 0 : Math.sin(t * 20) * 2; ell(c, hx + f * .3, hy - 30, 5, 9 + f, '#ff9a3a'); ell(c, hx, hy - 28, 2.5, 5, '#ffe9a3'); }
@@ -122,6 +127,6 @@ function critter(c, x, y, s, t, kind, sad) {
     c.globalAlpha = .5; circ(c, -13, -52, 4, '#ff9ecb'); circ(c, 13, -52, 4, '#ff9ecb'); c.globalAlpha = 1;
   }
   for (const sx of [-8, 8]) { circ(c, sx, -62, 3.4, kind === 4 ? '#fff' : '#1a1210'); circ(c, sx + (kind === 4 ? 0 : 1), -63, kind === 4 ? 1.8 : 1.1, kind === 4 ? '#111' : '#fff'); }
-  if (sad) { line(c, [-12, -69, -5, -67], '#3a2418', 1.6); line(c, [12, -69, 5, -67], '#3a2418', 1.6); }
+  if (sad) { line(c, [-12, -67, -5, -71], '#3a2418', 1.6); line(c, [12, -67, 5, -71], '#3a2418', 1.6); }   // inner ends up: sad, never angry
   c.restore();
 }

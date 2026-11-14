@@ -17,6 +17,8 @@ function setMute(m) {
   if (AC) m ? AC.suspend() : AC.resume();
   if (!m) audioOn();
 }
+// No lullaby from a tab or an app in the background.
+document.addEventListener('visibilitychange', () => { if (AC && !S.mute) document.hidden ? AC.suspend() : AC.resume(); });
 // One enveloped oscillator note; `to` glides the pitch.
 function tone(f, d = .15, type = 'sine', vol = .2, when = 0, to = 0, attack = .01) {
   if (S.mute || !AC) return;

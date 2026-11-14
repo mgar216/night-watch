@@ -14,7 +14,7 @@ const ease = k => 1 - (1 - k) * (1 - k);
 // Saved career. Ranks follow completed Nights: 2 -> Guard, 4 -> Senior Guard, 7 -> Chief.
 const SAVE = 'nightwatch.v1';
 const S = { lang: -1, mute: false, name: '', night: 1, st: { cam: 0, gate: 0, forge: 0 }, beams: 30, stars: 0,
-  items: [{ t: 'cam', m: 1 }], nest: 0, testStar: 0, briefed: 0, chief: false };
+  items: [{ t: 'cam', m: 1 }], nest: 0, testStar: 0, gateStar: 0, briefed: 0, tinkered: 0, promo: false };
 try { Object.assign(S, JSON.parse(localStorage.getItem(SAVE) || '{}')); } catch (e) { /* private mode: play without saving */ }
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 const rankAt = night => night > 7 ? 3 : night > 4 ? 2 : night > 2 ? 1 : 0;
@@ -24,7 +24,7 @@ function setLang(i) {
   document.documentElement.lang = LANGS[i];
   document.title = t('title');
 }
-setLang(S.lang >= 0 ? S.lang : Math.max(0, LANGS.indexOf((navigator.language || 'en').slice(0, 2))));
+setLang(LANGS[S.lang] ? S.lang : Math.max(0, LANGS.indexOf((navigator.language || 'en').slice(0, 2))));
 
 // DOM helpers: scenes build their overlay from small HTML snippets.
 function add(html, parent = ui) {
@@ -42,6 +42,8 @@ function toast(text) {
   say(text);
   setTimeout(() => n.remove(), 1600);
 }
+// Restart the small "no" shake on an element (a full bar, an empty try).
+function nudge(el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
 // Timers that die with the scene, so a late callback never touches the next screen.
 let timers = [];
 function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
@@ -119,7 +121,8 @@ cv.addEventListener('pointerdown', e => { audioOn(); if (scene && scene.down) sc
 addEventListener('pointermove', e => { if (scene && scene.move) scene.move(...ptr(e)); });
 addEventListener('pointerup', e => { if (scene && scene.up) scene.up(...ptr(e)); });
 addEventListener('pointercancel', e => { if (scene && scene.up) scene.up(...ptr(e), true); });
-addEventListener('keydown', e => { audioOn(); if (scene && scene.key && !/INPUT/.test(e.target.tagName)) scene.key(e); });
+// While a dialog is open the keys belong to its buttons, not to the scene underneath.
+addEventListener('keydown', e => { audioOn(); if (scene && scene.key && !$('.veil') && !/INPUT/.test(e.target.tagName)) scene.key(e); });
 addEventListener('contextmenu', e => e.preventDefault());
 ui.addEventListener('pointerdown', () => audioOn());
 addEventListener('click', () => audioOn(), true);   // iOS only unlocks sound on a completed tap

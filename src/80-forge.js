@@ -34,7 +34,7 @@ function forgeStars(tiles, few) {
 scenes.forge = {
   enter() {
     const [goal, few] = FORGE_LV[Math.min(S.night, 7) - 1];
-    Object.assign(this, { goal, few, tiles: [], sec: 0, shown: 0, crackT: 0, wonT: 0, run: true });
+    Object.assign(this, { goal, few, tiles: [], sec: 0, crackT: 0, wonT: 0, run: true });
     this.tray = shuffle([...FWORDS]).slice(0, 6).map(v => ({ k: 'w', v }))
       .concat(shuffle(['2', '3', '5', '7', '8', '9', '12', '42', '77', '99']).slice(0, 3).map(v => ({ k: 'n', v })))
       .concat(shuffle(['!', '?', '#', '*', '&', '+', '@', '%']).slice(0, 3).map(v => ({ k: 's', v })));
@@ -42,13 +42,18 @@ scenes.forge = {
     this.panel = add(`<div class="forge"><div class="meter"><div class="val" id="fVal">&nbsp;</div>
       <div class="track"><div class="fill" id="fFill"></div><div class="flag" style="left:${meterPos(goal) * 100}%"></div></div>
       <div style="font-size:.8em">${ic('star', 18)} ${esc(t('goal'))}: ${esc(crackLabel(goal))}</div></div>
-      <div class="slots" id="fSlots" aria-label="${esc(t('pass'))}"></div><div class="tiles" id="fTray"></div>
+      <div class="slots" id="fSlots" role="group" aria-label="${esc(t('pass'))}"></div><div class="tiles" id="fTray"></div>
       <button class="btn gold" id="fTry">${ic('lock', 26)}${esc(t('tryIt'))}</button></div>`);
     const tileHtml = (x, i) => `<button class="tile ${x.k === 'w' ? '' : x.k}" data-i="${i}">${x.k === 'w' ? ic(x.v, 30) + `<span>${esc(t(x.v))}</span>` : `<b>${esc(x.v)}</b>`}</button>`;
     this.tileHtml = tileHtml;
     $('#fTray').innerHTML = this.tray.map(tileHtml).join(''); paintIcons($('#fTray'));
-    $('#fTray').onclick = e => { const b = e.target.closest('.tile'); if (b && this.run && this.tiles.length < 8) { this.tiles.push(this.tray[+b.dataset.i]); sfx.tile(this.tiles.length); this.refresh(); } };
-    $('#fSlots').onclick = e => { const b = e.target.closest('.tile'); if (b && this.run) { this.tiles.splice(+b.dataset.i, 1); sfx.click(); this.refresh(); } };
+    $('#fTray').onclick = e => {
+      const b = e.target.closest('.tile');
+      if (!b || !this.run || this.crackT) return;   // no changes while the hacker is busy with the last try
+      if (this.tiles.length >= 8) { sfx.empty(); nudge($('#fSlots')); return; }   // the bar is full: show it
+      this.tiles.push(this.tray[+b.dataset.i]); sfx.tile(this.tiles.length); this.refresh();
+    };
+    $('#fSlots').onclick = e => { const b = e.target.closest('.tile'); if (b && this.run && !this.crackT) { this.tiles.splice(+b.dataset.i, 1); sfx.click(); this.refresh(); } };
     $('#fTry').onclick = () => this.tryIt();
     this.refresh();
     if (!S.st.forge) owlSay(t('forgeIntro'), { html: this.goalsHtml([false, false, false]), acts: [{ label: t('go'), cls: 'go', icon: 'play' }] });
@@ -65,11 +70,11 @@ scenes.forge = {
     say($('#fVal').textContent);
   },
   tryIt() {
-    if (!this.run || this.crackT || !this.tiles.length) { if (!this.tiles.length) { const b = $('#fTry'); b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); } return; }
+    if (!this.run || this.crackT || !this.tiles.length) { if (!this.tiles.length) nudge($('#fTry')); return; }
     if (this.sec >= this.goal) {
       this.run = false; this.wonT = V.t; sfx.slam();
-      const on = forgeStars(this.tiles, this.few);
-      later(() => stationWin('forge', on.filter(Boolean).length, t('forgeWin'), this.goalsHtml(on)), 1700);
+      const on = forgeStars(this.tiles, this.few), stars = on.filter(Boolean).length, gain = award('forge', stars);
+      later(() => stationWin('forge', stars, gain, t('forgeWin'), this.goalsHtml(on)), 1700);
       return;
     }
     // Below the goal: the hacker cracks it in a puff of feathers, the owl gives one idea, and building goes on.
@@ -83,17 +88,17 @@ scenes.forge = {
     later(() => {
       const w = this.tiles.filter(x => x.k === 'w'), uniq = new Set(w.map(x => x.v)).size;
       this.crackT = 0;
-      owlSay(t(!w.length ? 'forgeTipWord' : uniq < w.length ? 'forgeTipSame' : uniq >= 3 && w.length === this.tiles.length ? 'forgeTipMix' : 'forgeTipWord'), { mood: 'talk' });
+      // one idea the child can act on: twins out, or (bar full) small tiles out, or mix kinds, or one more word
+      owlSay(t(uniq < w.length ? 'forgeTipSame' : this.tiles.length >= 8 ? 'forgeTipFull' : uniq >= 3 && w.length === this.tiles.length ? 'forgeTipMix' : 'forgeTipWord'), { mood: 'talk' });
     }, 2300);
   },
   draw() {
     const t0 = V.t, top = 56, aw = wide() ? V.w * .45 : V.w, ah = (wide() ? V.h : this.panel.offsetTop) - top, u = Math.min(aw / 400, ah / 230);
-    drawSky(ctx, t0, 0);
-    this.shown = lerp(this.shown, this.sec, .12);
+    drawSky(ctx, t0);
     const sec = this.sec, won = this.wonT > 0, wk = won ? Math.min(1, (t0 - this.wonT) / .5) : 0;
     const face = won || sec >= 100 * YEAR ? 'sleep' : sec >= YEAR ? 'sweat' : sec >= 3600 ? 'worry' : 'smug';
     ctx.save(); ctx.translate((aw - 400 * u) / 2, top + (ah - 230 * u) / 2); ctx.scale(u, u);
-    line(ctx, [-400, 196, 800, 196], '#5a3a22', 14);
+    line(ctx, [-400, 196, wide() ? aw / (2 * u) + 200 : 800, 196], '#5a3a22', 14);   // in landscape the floor stops where the tile panel begins
     owl(ctx, 24, 190, .5, t0, won ? 'cheer' : 'idle');
     // tiny laptop with a glowing screen
     const busy = this.crackT && !still();

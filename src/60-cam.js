@@ -10,14 +10,21 @@ scenes.cam = {
       friendGap: n === 1 ? 6 : Math.max(2.2, 4.5 - .25 * n), decoy: n >= 4 ? .2 : 0, statics: n >= 6, dark: .18 - .05 * lamps };
     this.fav = n >= 3 ? shuffle([...Array(this.P.feeds).keys()]).slice(0, 2) : [];
     this.feeds = [...Array(this.P.feeds)].map(() => ({ bushes: [rnd(.22, .36), rnd(.62, .78)], mag: null, friend: null, staticT: 0, flashT: 0, wait: 0 }));
+    // The timer is generous: a child who catches every magpie only on its way out with the jar still wins.
     Object.assign(this, { caught: 0, stolen: 0, friendHits: 0, decoyHits: 0, misses: 0, empty: 0, batt: 5, spawnT: 1.2, friendT: 3, staticT: 8,
-      time: this.P.need * this.P.gap * 1.7 + 20, run: false, noT: 0, cur: -1, shakeT: 0 });
+      time: this.P.need * (this.P.gap + 1.3 / this.P.speed + 4), run: false, noT: 0, cur: -1, shakeT: 0 });
     this.total = this.time;
-    hud(() => go('hub'), `<span class="pill" id="pCatch">${ic('pie', 26)}<b>0</b>/${this.P.need}</span>`);
+    hud(() => go('hub'), `<span class="pill" id="pCatch">${ic('pie', 26)}<span><b>0</b>/${this.P.need}</span></span>`, true);
     owlSay(t('camIntro'), { html: picsHtml(['pie', 'torch']), acts: [{ label: t('go'), cls: 'go', icon: 'play', fn: () => { this.run = true; } }] });
   },
+  // Where the status strip goes. On a low landscape screen it moves up into the top bar, so the feeds get the height;
+  // on big screens it grows with the screen.
+  strip() {
+    const low = wide() && V.h <= 520, k = low ? 1 : clamp(V.h / 720, 1, 1.6);   // same limit as the slim top bar in the stylesheet
+    return low ? { k, x: 64, y: 4, w: V.w - 182, top: 60 } : { k, x: 0, y: 62, w: V.w, top: 62 + 50 * k };
+  },
   rect(i) {
-    const n = this.P.feeds, cols = n === 4 ? 2 : n === 9 ? 3 : wide() ? 3 : 2, rows = n / cols, top = 112, pad = 8;
+    const n = this.P.feeds, cols = n === 4 ? 2 : n === 9 ? 3 : wide() ? 3 : 2, rows = n / cols, top = this.strip().top, pad = 8;
     const w = (V.w - pad * (cols + 1)) / cols, h = (V.h - top - pad * (rows + 1)) / rows;
     return [pad + (i % cols) * (w + pad), top + pad + (i / cols | 0) * (h + pad), w, h];
   },
@@ -28,8 +35,10 @@ scenes.cam = {
     f.mag = { x: dir > 0 ? -.14 : 1.14, dir, phase: 'in', state: 'walk', hideT: 0, stops: S.night === 1 ? [pick(f.bushes)] : [...f.bushes], decoy: Math.random() < this.P.decoy, carry: false };
   },
   flash(i) {
-    const f = this.feeds[i], m = f.mag;
-    if (!this.run || i >= this.feeds.length) return;
+    const f = this.feeds[i];
+    if (!this.run || !f) return;   // also covers digit keys above the number of feeds
+    const m = f.mag;
+    if (m && m.state === 'caught') return;   // a second tap on a magpie that was just caught costs nothing
     if (this.batt < 1) { sfx.empty(); this.empty++; this.shakeT = .4; return; }
     this.batt -= 1; f.flashT = .4; sfx.flash();
     const [x, y, w, h] = this.rect(i), exposed = m && m.state === 'walk' && m.x > .03 && m.x < .97 && f.staticT <= 0;
@@ -46,7 +55,10 @@ scenes.cam = {
   finish(won, timeout) {
     if (!this.run) return;
     this.run = false;
-    if (won) return later(() => stationWin('cam', this.stolen === 0 && this.friendHits + this.decoyHits + this.misses <= 2 ? 3 : this.stolen <= 1 ? 2 : 1), 700);
+    if (won) {
+      const stars = this.stolen === 0 && this.friendHits + this.decoyHits + this.misses <= 2 ? 3 : this.stolen <= 1 ? 2 : 1, gain = award('cam', stars);
+      return later(() => stationWin('cam', stars, gain), 700);
+    }
     const tip = timeout ? 'camTipTime' : this.friendHits >= 3 ? 'camTipFriend' : this.decoyHits >= 2 ? 'camTipDecoy' : this.empty >= 3 ? 'camTipBatt' : 'camTipSlow';
     later(() => { const v = owlSay(t('soft') + ' ' + t(tip), { quiet: true, mood: 'idle', html: `<div class="pics" style="font-size:.8em">${ic('jar', 26)}${esc(t('nestOk'))}</div>`,
       acts: [{ label: t('home'), icon: 'home', fn: () => go('hub') }, { label: t('retry'), cls: 'go', icon: 'retry', fn: () => go('cam') }] }); sfx.oops(); return v; }, 600);
@@ -65,7 +77,8 @@ scenes.cam = {
     this.batt = Math.min(5, this.batt + dt / 2.2);
     this.time -= dt; this.shakeT -= dt;
     if (this.time <= 0) return this.finish(false, true);
-    if ((this.spawnT -= dt) <= 0 && this.feeds.filter(f => f.mag).length < P.live) { this.spawn(); this.spawnT = P.gap * rnd(.8, 1.2); }
+    // shadow decoys do not count against the number of magpies on screen, so they never hold real magpies back
+    if ((this.spawnT -= dt) <= 0 && this.feeds.filter(f => f.mag && !f.mag.decoy).length < P.live) { this.spawn(); this.spawnT = P.gap * rnd(.8, 1.2); }
     if ((this.friendT -= dt) <= 0) {
       const f = pick(this.feeds);
       if (!f.friend) f.friend = { kind: pick(['zip', 'leaf', 'flies']), t: 0, y: rnd(.2, .55), dir: pick([1, -1]) };
@@ -99,20 +112,28 @@ scenes.cam = {
   draw() {
     const t0 = V.t, P = this.P;
     ctx.fillStyle = '#070d2a'; ctx.fillRect(0, 0, V.w, V.h);
-    // status strip: owl, battery cells (shape-coded), time bar, jars taken
-    const sy = 62, sx = this.shakeT > 0 && !still() ? Math.sin(t0 * 60) * 4 : 0;
-    owl(ctx, 30, sy + 46, .46, t0, t0 < this.noT ? 'no' : 'idle');
-    drawIcon(ctx, 'torch', 78 + sx, sy + 22, 30);
+    // status strip: owl, battery cells (shape-coded), time bar, jars
+    const st = this.strip(), sw = st.w / st.k, sx = this.shakeT > 0 && !still() ? Math.sin(t0 * 60) * 4 : 0;
+    ctx.save(); ctx.translate(st.x, st.y); ctx.scale(st.k, st.k);
+    owl(ctx, 30, 46, .46, t0, t0 < this.noT ? 'no' : 'idle', false);
+    drawIcon(ctx, 'torch', 78 + sx, 22, 30);
     for (let i = 0; i < 5; i++) {
-      rr(ctx, 98 + i * 20 + sx, sy + 8, 15, 28, 4);
+      rr(ctx, 98 + i * 18 + sx, 8, 14, 28, 4);
       ctx.fillStyle = i < Math.floor(this.batt) ? '#ffd86b' : 'rgba(255,255,255,.14)'; ctx.fill();
-      if (i === Math.floor(this.batt)) { ctx.save(); ctx.clip(); ctx.fillStyle = 'rgba(255,216,107,.55)'; const k = this.batt % 1; ctx.fillRect(98 + i * 20 + sx, sy + 36 - 28 * k, 15, 28 * k); ctx.restore(); }
+      if (i === Math.floor(this.batt)) { ctx.save(); ctx.clip(); ctx.fillStyle = 'rgba(255,216,107,.55)'; const k = this.batt % 1; ctx.fillRect(98 + i * 18 + sx, 36 - 28 * k, 14, 28 * k); ctx.restore(); }
     }
-    const bx = 206, bw = Math.max(40, V.w - bx - 104);
-    rr(ctx, bx, sy + 14, bw, 16, 8); ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.fill();
-    rr(ctx, bx, sy + 14, Math.max(16, bw * this.time / this.total), 16, 8); ctx.fillStyle = '#7fd0ff'; ctx.fill();
-    drawIcon(ctx, 'moon', bx + bw * this.time / this.total, sy + 22, 24);
-    for (let i = 0; i < 3; i++) { ctx.globalAlpha = i < this.stolen ? .25 : 1; drawIcon(ctx, 'jar', V.w - 86 + i * 28, sy + 22, 26); ctx.globalAlpha = 1; if (i < this.stolen) drawIcon(ctx, 'no', V.w - 86 + i * 28, sy + 22, 16); }
+    const bx = 194, jx0 = sw - 78, bw = Math.max(30, jx0 - 20 - bx);
+    rr(ctx, bx, 14, bw, 16, 8); ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.fill();
+    rr(ctx, bx, 14, Math.max(16, bw * this.time / this.total), 16, 8); ctx.fillStyle = '#7fd0ff'; ctx.fill();
+    drawIcon(ctx, 'moon', bx + bw * this.time / this.total, 22, 24);
+    // jars the magpies took sit in their nest and glow faintly: borrowed, never destroyed
+    for (let i = 0; i < 3; i++) {
+      const jx = jx0 + i * 28, taken = i < this.stolen;
+      if (taken) ell(ctx, jx, 37, 14, 6, '#6b4a2e');
+      ctx.globalAlpha = taken ? .45 : 1; drawIcon(ctx, 'jar', jx, taken ? 25 : 22, taken ? 20 : 26); ctx.globalAlpha = 1;
+      if (taken) line(ctx, [jx - 13, 36, jx - 5, 40, jx + 5, 40, jx + 13, 36], '#8a6a44', 3);
+    }
+    ctx.restore();
     if (!scanPat) { const o = document.createElement('canvas'); o.width = 4; o.height = 4; const g = o.getContext('2d'); g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(0, 0, 4, 1); scanPat = ctx.createPattern(o, 'repeat'); }
     this.feeds.forEach((f, i) => {
       const [x, y, w, h] = this.rect(i), by = y + h * .76, s = Math.min(h * .36, w * .34) / 80, m = f.mag;
@@ -129,9 +150,9 @@ scenes.cam = {
       };
       if (m && m.state === 'hide') drawMag();
       f.bushes.forEach((b, j) => {
-        const rustle = m && m.state === 'hide' && Math.abs(m.x - b) < .05 && !still() ? Math.sin(t0 * 30) * 2.5 : 0, r = Math.min(h * .2, w * .13), cx = x + b * w + rustle, cy = by - r * .7;
+        const hiding = m && m.state === 'hide' && Math.abs(m.x - b) < .05, rustle = hiding && !still() ? Math.sin(t0 * 30) * 2.5 : 0, r = Math.min(h * .2, w * .13), cx = x + b * w + rustle, cy = by - r * .7;
         circ(ctx, cx, cy, r, '#1d6a52'); circ(ctx, cx - r * .7, cy + r * .35, r * .7, '#18584a'); circ(ctx, cx + r * .7, cy + r * .3, r * .75, '#237a5c'); circ(ctx, cx + r * .1, cy - r * .55, r * .6, '#2a8a66');
-        if (rustle) { line(ctx, [cx - r * 1.5, cy - r, cx - r * 1.8, cy - r * 1.3], '#bfeee4', 2); line(ctx, [cx + r * 1.5, cy - r, cx + r * 1.8, cy - r * 1.3], '#bfeee4', 2); }
+        if (hiding) { line(ctx, [cx - r * 1.5, cy - r, cx - r * 1.8, cy - r * 1.3], '#bfeee4', 2); line(ctx, [cx + r * 1.5, cy - r, cx + r * 1.8, cy - r * 1.3], '#bfeee4', 2); }   // the marks stay when motion is reduced
       });
       if (m && m.state !== 'hide') drawMag();
       const fr = f.friend;
