@@ -1,0 +1,18 @@
+/* First Light Fishing: additions to the stylesheet it shares with The Night Watch (../src/style.css). */
+.subtitle { margin: .2em 0 0; font-size: max(12px, .9em); font-weight: 800; color: var(--cream); text-shadow: 0 1px 4px #000; pointer-events: none; }
+.bubble.plain::before { display: none; }
+a.btn { text-decoration: none; }
+input[type=range] { width: min(9em, 30vw); height: 48px; accent-color: #f2b93b; touch-action: pan-x; }
+
+/* Difficulty plaques: wood near home, then stone, iron and bone. The material is a texture, the tier is the row of moons. */
+.plaque { display: inline-flex; flex-direction: column; align-items: center; gap: .15em; padding: .45em .8em; border-radius: .7em; text-align: center;
+  font-weight: 800; line-height: 1.15; color: #fff6da; border: 3px solid rgba(0, 0, 0, .35); box-shadow: 0 4px 0 rgba(0, 0, 0, .35); max-width: 100%; }
+.plaque b { font-size: 1.1em; }
+.plaque i { font-style: normal; font-weight: 700; font-size: max(11px, .8em); opacity: .95; }
+.plaque .tierline { font-size: max(11px, .78em); }
+.plaque.wood { background: repeating-linear-gradient(92deg, #8a5a34 0 14px, #7c5030 14px 16px); }
+.plaque.stone { background: radial-gradient(circle at 30% 20%, #8c94a3, #5f6675); }
+.plaque.iron { background: linear-gradient(#4a5160, #2b303b); border-color: #8a94a8; border-style: double; }
+.plaque.bone { background: linear-gradient(#e9e3d2, #bdb5a0); color: #2a2520; border-color: #6a6355; border-style: dashed; }
+.moonrow { display: inline-flex; gap: 1px; }
+.plaque.bone .moonrow { padding: 2px 8px; border-radius: 999px; background: rgba(42, 37, 32, .8); }   /* pale moons need a dark strip on bone */
