@@ -21,7 +21,9 @@ const SAVE = slotKey(slot);
 const S = { lang: -1, mute: false, name: '', night: 1, st: { cam: 0, gate: 0, forge: 0, extra: 0 }, beams: 30, stars: 0,
   items: [{ t: 'cam', m: 1 }], nest: 0, testStar: 0, gateStar: 0, briefed: 0, tinkered: 0, promo: false,
   voice: true, stk: {}, own: {}, hat: '', scarf: '', zhat: '', zscarf: '', boss: 0, fooled: 0,   // owl's voice on; stickers; wardrobe; last Baron Night won
-  day: -1 };   // 1 while the day after a finished Night has not begun (first light, fishing); -1 in a save from before there were days
+  day: -1,     // 1 while the day after a finished Night has not begun (first light, fishing); -1 in a save from before there were days
+  gifts: {},   // gifts of the Legendary fish that the owl has told the player about (src/49-gifts.js)
+  bedN: 3, bed: { d: '', n: 0, more: 0 } };   // bedtime after so many Nights a day (0: never); Nights finished on day d, and Nights a grown-up added
 try { Object.assign(S, JSON.parse(localStorage.getItem(SAVE) || '{}')); } catch (e) { /* private mode: play without saving */ }
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 const rankAt = night => night > 7 ? 3 : night > 4 ? 2 : night > 2 ? 1 : 0;
@@ -44,10 +46,11 @@ function add(html, parent = ui) {
 }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function say(text) { $('#live').textContent = text; }
-function toast(text) {
+function toast(text, ms = 1600) {
   const n = add(`<div class="toast">${esc(text)}</div>`);
+  n.style.animationDuration = ms + 'ms';   // a longer line stays longer
   say(text); speak(text, 'owl', true);
-  setTimeout(() => n.remove(), 1600);
+  setTimeout(() => n.remove(), ms);
 }
 // Restart the small "no" shake on an element (a full bar, an empty try).
 function nudge(el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }

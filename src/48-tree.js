@@ -51,12 +51,14 @@ function roomAt(lx, ly, n = rank()) {
   return 0;
 }
 const moonAt = () => [V.w * .84, V.h * .15, Math.min(V.w, V.h) * .075];
+// What the owl says about tonight's moon when it is tapped: the moon in the game is the real one, and a child can check.
+const moonWord = (p = moonPhase()) => t('moon' + (p < .04 || p > .96 ? 0 : p < .46 ? 1 : p < .54 ? 2 : 3)) + ' ' + t('moonSame');
 // A tap on a menu screen that hits a room or the moon (the secrets). True when the tap was used.
 function menuTap(x, y, T) {
   const [lx, ly] = toTree(T, x, y), room = roomAt(lx, ly), [mx, my, mr] = moonAt();
   if (room) { roomT[room] = V.t; [null, sfx.whee, sfx.sizzle, sfx.wish][room](); return true; }
-  if (Math.hypot(x - mx, y - my) < Math.max(34, mr * 1.5)) { winkT = V.t; sfx.chirp(); return true; }
-  return false;
+  if (Math.hypot(x - mx, y - my) < Math.max(34, mr * 1.5)) { winkT = V.t; sfx.chirp(); ui.querySelectorAll('.toast').forEach(n => n.remove()); toast(moonWord(), 3400); return true; }
+  return giftTap(lx, ly, T);   // the gifts of the Legendary fish answer a tap too
 }
 
 // The two rows of far hills: part of the cached sky, and drawn once more in front of the rising sun at first light.
@@ -67,12 +69,12 @@ function farHills(g, w, h) {
     g.lineTo(w, h); g.fillStyle = col; g.fill();
   }
 }
-// Sky, stars, moon, far hills and the magpies' nest; cached per size, twinkles drawn live.
+// Sky, stars, moon, far hills and the magpies' nest; cached per size and per day (the moon is tonight's real moon), twinkles drawn live.
 let skyCache = null;
 const hash = i => { const x = Math.sin(i * 127.1) * 43758.5453; return x - Math.floor(x); };
 function drawSky(c, t) {
-  const w = V.w, h = V.h;
-  if (!skyCache || skyCache.w !== w || skyCache.h !== h) {
+  const w = V.w, h = V.h, day = Math.floor(Date.now() / 864e5);
+  if (!skyCache || skyCache.w !== w || skyCache.h !== h || skyCache.day !== day) {
     const o = document.createElement('canvas'), d = Math.min(window.devicePixelRatio || 1, 2);
     o.width = w * d; o.height = h * d;
     const g = o.getContext('2d'); g.scale(d, d);
@@ -80,20 +82,26 @@ function drawSky(c, t) {
     gr.addColorStop(0, '#070d2a'); gr.addColorStop(.6, '#1b2a6b'); gr.addColorStop(1, '#2c3f86');
     g.fillStyle = gr; g.fillRect(0, 0, w, h);
     for (let i = 0; i < 90; i++) circ(g, hash(i) * w, hash(i + 200) * h * .7, .6 + hash(i + 400) * 1.3, `rgba(255,255,255,${.35 + hash(i + 600) * .5})`);
-    const [mx, my, mr] = moonAt();
-    glow(g, mx, my, mr * 4, '255,240,200', .35); circ(g, mx, my, mr, '#fff3c9');
+    // the dark part of the moon stays in the sky, a shade lighter than the night; the lit part follows the real phase
+    const [mx, my, mr] = moonAt(), p = moonPhase();
+    glow(g, mx, my, mr * 4, '255,240,200', .12 + .23 * (1 - Math.cos(p * TAU)) / 2); circ(g, mx, my, mr, '#1b2763');
+    g.save(); moonLit(g, mx, my, mr, p); g.clip();
+    circ(g, mx, my, mr, '#fff3c9');
     circ(g, mx - mr * .3, my - mr * .2, mr * .18, '#f0dca0'); circ(g, mx + mr * .25, my + mr * .3, mr * .12, '#f0dca0'); circ(g, mx + mr * .2, my - mr * .4, mr * .09, '#f0dca0');
+    g.restore();
     farHills(g, w, h);
-    skyCache = { w, h, o };
+    skyCache = { w, h, day, o };
   }
   c.drawImage(skyCache.o, 0, 0, w, h);
+  giftSky(c, t);
   for (let i = 0; i < 14; i++) {
     const a = still() ? .6 : .5 + .5 * Math.sin(t * (1 + hash(i) * 2) + i);
     starPath(c, hash(i + 50) * w, hash(i + 90) * h * .6, 2 + a * 3, 1, 4); c.fillStyle = `rgba(255,246,218,${a})`; c.fill();
   }
-  // Secret: a tapped moon winks.
+  // Secret: a tapped moon shows its whole face and winks.
   if (V.t - winkT < 1.6) {
     const [mx, my, mr] = moonAt();
+    circ(c, mx, my, mr, '#fff3c9');
     circ(c, mx - mr * .35, my - mr * .18, mr * .11, '#7a5a1a');
     line(c, [mx + mr * .18, my - mr * .18, mx + mr * .52, my - mr * .18], '#7a5a1a', mr * .1);
     c.beginPath(); c.arc(mx, my + mr * .08, mr * .46, .3, Math.PI - .3); c.lineWidth = mr * .1; c.strokeStyle = '#7a5a1a'; c.stroke();

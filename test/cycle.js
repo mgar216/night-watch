@@ -37,9 +37,15 @@ const wrapper = async () => {
     await sleep(1200);                                 // the owl's first words about the map, if any, are answered
     for (let i = 0; i < 5 && doc().querySelector('.veil .acts .btn'); i++) { const b = doc().querySelectorAll('.veil .acts .btn'); b[b.length - 1].click(); await sleep(300); }
     (await step('the way into the treehouse', () => !doc().querySelector('.veil') && doc().querySelector('#mapGo'))).click();
-    (await step('the evening button', () => doc().querySelector('#hNight'))).click();
+    // a Legendary landed that day goes into the player's logbook just before the evening: its gift must arrive with the Night
+    const night = await step('the evening button', () => doc().querySelector('#hNight')), career = key('firstlight.v1.2');
+    career.log.aurora = { n: 1, best: 4200, seen: 1 }; localStorage.setItem('firstlight.v1.2', JSON.stringify(career));
+    night.click();
     await step('the Night Watch again', () => at('/index.html') && win().location.hash === '#night' && doc().querySelector('.hub'));
     check(!doc().querySelector('#bPlay'), 'the evening leads straight to the Night, not to the home screen');
+    const news = await step('the news of the gift', () => doc().querySelector('.veil.clear #owlText'));
+    check(news.textContent.includes('Аврора') && key('nightwatch.v1.2').gifts.aurora === 1, 'the Legendary caught by day brings its gift to the Night: ' + news.textContent);
+    doc().querySelector('.veil .acts .btn').click(); await sleep(1800);
     check(doc().querySelector('.hud .pill.extra').textContent.includes('3') && !doc().querySelector('.veil'), 'it is still Night 3, and first light does not come twice: ' + doc().querySelector('.hud .pill.extra').textContent);
     // a visit of its own (no #day in the address) starts at the title, and the title leads to the Night Watch home
     f.src = '/fishing/index.html';

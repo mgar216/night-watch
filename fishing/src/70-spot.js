@@ -16,6 +16,7 @@ Object.assign(L, {
   spot_release: ['Release it', 'Отпустить', 'Liberalo'],
   spot_first: ['First catch!', 'Первый улов!', 'Prima cattura!'],
   spot_record: ['New record!', 'Новый рекорд!', 'Nuovo record!'],
+  spot_gift: ['A gift for the treehouse!', 'Подарок для домика на дереве!', 'Un dono per la casa sull\'albero!'],
   spot_paid: ['moon|moons', 'луна|луны|лун', 'luna|lune'],
   spot_tied: ['Tied on', 'Выбрано', 'Montato'],
   spot_c_dawn: ['Dawn', 'Рассвет', 'Alba'], spot_c_day: ['Day', 'День', 'Giorno'], spot_c_dusk: ['Dusk', 'Сумерки', 'Tramonto'],
@@ -856,8 +857,9 @@ Object.assign(scenes.spot, {
     sfx.net(); F.s.legend || res.first ? sfx.fanfare() : sfx.win(); buzz(60);
     const x = this.px(.06), y = this.G.surf;
     burst(x, y - 20, 18, { kind: 'star', colors: ['#ffd86b', '#fff6da', '#8fe3a4'], up: 120 });
+    // a Legendary leaves a gift at the Night Watch treehouse (that game reads this logbook); the card says so the first time
     const marks = (res.first ? `<span class="pill">${ic('star', 22)}${esc(t('spot_first'))}</span>` : '') + (res.record ? `<span class="pill">${ic('star', 22)}${esc(t('spot_record'))}</span>` : '') +
-      `<span class="pill">${ic('moon', 22)}+${esc(plural('spot_paid', res.moons))}</span>`;
+      `<span class="pill">${ic('moon', 22)}+${esc(plural('spot_paid', res.moons))}</span>` + (F.s.legend && res.first ? `<span class="pill">${ic('jar', 22)}${esc(t('spot_gift'))}</span>` : '');
     const v = talk(fmtW(g), { who: '', title: t('f_' + F.id),
       html: `<div class="spot-catch"><div class="pics">${ic('fishI:' + F.id, 170)}</div><div class="marks">${marks}</div></div>`,
       acts: [{ label: t('spot_release'), cls: 'go', icon: 'fish', fn: () => this.releaseFish() }] });

@@ -3,6 +3,8 @@
 //   #smoke                           play Nights 1 to 8 with simulated time (win path and soft-fail path of every station)
 //   #audit                           layout audit of every screen in three languages, plus real keyboard and pointer events
 //   #shot,scene,night,lang,flag,sec,pose  pose one screen for a screenshot (see test/shots.sh); pose is optional:
+//       gifts (every gift of the Legendary fish around the tree), tapgifts (the same, each one just tapped),
+//       news (scene hub, flag 1: the owl tells of a gift), bedset (the grown-ups' bedtime setting; scene bed shows bedtime itself),
 //       stolen (Camera Watch with two jars in the nest), costume (a costumed trickster at the gate), cut (the gate cutscene),
 //       cap (a trickster in the too-big guard cap), oldest (the strongest password in the forge), win (station win dialog),
 //       some (a part-filled album and wardrobe), silly (gadgets on the tree; in a raid: stop inside the replay),
@@ -27,7 +29,7 @@
   // The grown-up question ("6 + 7 = ?"): press the right answer, or a wrong one.
   const answer = right => { const [a, b] = $('#owlText').textContent.match(/\d+/g).map(Number); [...document.querySelectorAll('.veil .acts .btn')].find(x => (+x.textContent === a + b) === right).click(); };
   const reset = n => { Object.assign(S, { night: n, st: { cam: 0, gate: 0, forge: 0, extra: 0 }, beams: 300, stars: 0, items: [{ t: 'cam', m: 1 }], nest: 0, testStar: 0, gateStar: 0, briefed: n, promo: false, tinkered: 2, name: 'Mia',
-    voice: true, stk: {}, own: {}, hat: '', scarf: '', zhat: '', zscarf: '', boss: 0, fooled: 0, day: 0 }); tryOn = null; scenes.tinker.page = 0; };
+    voice: true, stk: {}, own: {}, hat: '', scarf: '', zhat: '', zscarf: '', boss: 0, fooled: 0, day: 0, gifts: {}, bedN: 0, bed: { d: '', n: 0, more: 0 } }); tryOn = null; scenes.tinker.page = 0; };
   const worth = () => S.beams + S.items.reduce((a, i) => a + ITEMS[i.t].cost, 0);   // moonbeams in hand plus moonbeams built into the tree
   const key = (k, target = document.body) => target.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
   const ptr = (type, x, y, target = cv) => target.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, bubbles: true, cancelable: true, pointerId: 1 }));
@@ -42,7 +44,11 @@
     if (mode[1] === 'tinker' || mode[1] === 'raid') S.items.push({ t: 'lamp', m: 4 }, { t: 'bell', m: 15 }, { t: 'shield', m: VAULT }, { t: 'banner', m: 18 }, { t: 'flowers', m: 20 }, { t: 'lights', m: 19 }, { t: 'scope', m: 21 });
     if (mode[6] === 'silly' || mode[6] === 'replay') S.items = [{ t: 'peel', m: 0 }, { t: 'tramp', m: 2 }, { t: 'tickle', m: 1 }, { t: 'disco', m: 4 }, { t: 'bubbler', m: 5 }, { t: 'cannon', m: 3 }, { t: 'cam', m: 12 }];
     if (mode[6] === 'some') { for (const id of ['m1', 'm3', 'm6', 'd2', 'd4', 'd5', 't1', 't2', 't4', 't5', 't7', 't9', 't12']) S.stk[id] = id === 't4' || id === 'm6' ? 1 : 2; Object.assign(S.own, { wizard: 1, stripe: 1, party: 1 }); Object.assign(S, { hat: 'wizard', scarf: 'stripe', zhat: 'party' }); }
+    if (mode[6] === 'gifts' || mode[6] === 'tapgifts') { for (const id of GIFTS) S.gifts[id] = 1; S.items.push({ t: 'lamp', m: 15 }, { t: 'bell', m: 16 }); }   // with something on both ground spots, to see that nothing collides
+    if (mode[6] === 'fewgifts') Object.assign(S.gifts, { heron: 1, lanternjaw: 1, bell: 1, wave: 1 });   // gifts come in any order: these four without the pond and the rest
+    if (mode[6] === 'news') localStorage.setItem('firstlight.v1', JSON.stringify({ log: { biscuit: { n: 1 } } }));
     go(mode[1], mode[1] === 'badge' ? { promo: mode[4] === '1', told: true } : mode[1] === 'raid' ? { test: true } : mode[1] === 'story' ? { rank: +mode[4] || 1, then: () => go('home') } : mode[1] === 'boss' ? { then: () => go('hub') } : undefined);
+    localStorage.removeItem('firstlight.v1');
     if (mode[4] !== '1') clickDlg();
     if (mode[1] === 'forge') [0, 1, 2, 6, 9].forEach(i => $('#fTray').children[i].click());
     if (mode[1] === 'tinker' && mode[4] === '2') { scene.hand = 'cam'; scene.marks(); }
@@ -62,6 +68,8 @@
       p3: () => { sim(.5); scene.next(); sim(.5); scene.next(); sim(1.5); },
       try: () => scene.tap('crown'),
       replay: () => { sim(60, () => !scene.endT); scene.rewind(); sim(1.2); },
+      tapgifts: () => { for (const id of GIFTS) giftT[id] = V.t - .35; },
+      bedset: () => { showPlayers(); $('#wBed').click(); answer(true); },
     }[mode[6]];
     if (pose) { pose(); sim(.1); }
     return;
@@ -145,6 +153,30 @@
     check(!localStorage.getItem('firstlight.v1.2'), 'an erased player\'s fishing career is erased too'); $('#wOk').click();
     reset(3); S.day = 1; go('home'); $('#bFish').onclick();
     check(S.day === 0 && $('#bFish').getAttribute('href') === 'fishing/index.html#day', 'the fishing button on the home screen is the day as well, and uses the pending day up');
+    where = 'gifts, moon and bedtime';
+    const newMoon = moonPhase(Date.UTC(2024, 0, 11, 11, 57)), fullMoon = moonPhase(Date.UTC(2024, 0, 25, 17, 54));
+    check(Math.min(newMoon, 1 - newMoon) < .03 && Math.abs(fullMoon - .5) < .03, `the moon's phase matches a known new moon and a known full moon: ${newMoon.toFixed(3)}, ${fullMoon.toFixed(3)}`);
+    check(moonWord(fullMoon).startsWith(t('moon2')) && moonWord(newMoon).startsWith(t('moon0')) && moonWord(.2).startsWith(t('moon1')) && moonWord(.8).startsWith(t('moon3')), 'the owl names the new, growing, full and shrinking moon');
+    reset(3); go('home'); scene.down(...moonAt()); check([...document.querySelectorAll('.toast')].some(n => n.textContent === moonWord()), 'a tapped moon is named by tonight\'s real phase');
+    // a Legendary caught by day: the owl tells the news once at the Night menu, then the gift belongs to the night
+    reset(3); localStorage.setItem('firstlight.v1', JSON.stringify({ log: { aurora: { n: 1 }, perch: { n: 4 }, bell: { n: 0 } } }));
+    go('hub'); check(!!$('.veil') && $('#owlText').textContent === t('gift_aurora') && S.gifts.aurora === 1, 'a Legendary caught by day brings its news to the Night menu');
+    clickDlg(); go('hub'); check(!$('.veil') && Object.keys(S.gifts).join() === 'aurora', 'the news is told once, and only for a Legendary that was caught');
+    localStorage.removeItem('firstlight.v1');
+    for (const id of GIFTS) { S.gifts[id] = 1; const [gx, gy] = giftAt(id, treeArea()); check(gx >= 0 && gx <= V.w && gy >= 0 && gy <= V.h, `the gift ${id} is on the screen: ${gx | 0}, ${gy | 0}`); }
+    go('home'); sim(2); go('hub'); sim(2); go('home');   // every gift is drawn (a script error would be reported by the page)
+    const TG = treeArea(); scene.down(TG.ox + 752 * TG.k, TG.oy + 946 * TG.k); check(V.t - giftT.biscuit < .1, 'the pond answers a tap');
+    // bedtime: after the last Night of the day the Night menu leads to bed; a grown-up can allow one more Night
+    reset(3); S.bedN = 1; closeNight(0); S.promo = false; S.day = 0;
+    go('hub'); check(scene.id === 'bed' && !!$('.veil'), 'after the last Night of the day the Night menu leads to bed, got ' + scene.id);
+    clickDlg(); check(scene.id === 'home', 'good night leads home, got ' + scene.id); $('#bPlay').click(); check(scene.id === 'bed', 'Play at bedtime meets the sleepy owl again, got ' + scene.id);
+    clickDlg(); let kept = 0; $('#bFish').onclick({ preventDefault() { kept = 1; } }); check(kept === 1 && scene.id === 'bed', 'the fishing sleeps at bedtime too');
+    clickDlg(0); answer(false); check(scene.id === 'bed' && !!$('.veil'), 'a wrong answer to the sum keeps bedtime');
+    clickDlg(0); answer(true); check(scene.id === 'hub' && !asleep(), 'a grown-up can allow one more Night, got ' + scene.id);
+    closeNight(0); S.promo = false; check(asleep(), 'after that Night it is bedtime again'); S.bed.d = '2000-1-1'; check(!asleep(), 'a new day starts awake');
+    reset(3); go('badge'); $('#bWho').click(); $('#wBed').click(); answer(true);
+    check(document.querySelectorAll('.veil .acts .btn').length === 6, 'the bedtime setting offers off and one to five Nights');
+    document.querySelectorAll('.veil .acts .btn')[2].click(); check(S.bedN === 2 && $('#wBed').textContent.includes('2'), 'the chosen number of Nights is kept and shown'); $('#wOk').click(); S.bedN = 0;
     where = 'secrets';
     reset(8); go('home'); const TS = treeArea(), [mx, my] = moonAt();
     scene.down(mx, my); check(V.t - winkT < .1, 'a tapped moon winks');
@@ -305,6 +337,9 @@
       reset(2); S.st = { cam: 3, gate: 3, forge: 3, extra: 2 }; go('hub'); look('hub with the extra station');
       reset(5); S.st = { cam: 1, gate: 1, forge: 1, extra: 0 }; S.briefed = 0; go('hub'); look('briefing on the Baron\'s Night'); clickDlg(); look('hub on the Baron\'s Night');
       reset(3); S.day = 1; go('hub'); look('first light'); clickDlg(0);
+      reset(3); S.bedN = 1; S.bed = { d: today(), n: 1, more: 0 }; go('hub'); look('bedtime'); clickDlg(0); look('the grown-up sum at bedtime'); answer(false); clickDlg();
+      reset(3); localStorage.setItem('firstlight.v1', JSON.stringify({ log: { biscuit: { n: 1 } } })); go('hub'); look('news of a gift'); clickDlg(); localStorage.removeItem('firstlight.v1');
+      reset(3); go('badge'); $('#bWho').click(); look('players with the bedtime setting'); $('#wBed').click(); answer(true); look('the bedtime setting'); clickDlg(0); $('#wOk').click();
       // album (every sticker owned: the longest names), wardrobe, certificate, players
       reset(8); for (const id in STK) S.stk[id] = 1;
       for (let p = 0; p < 3; p++) { go('album', { page: p }); look('album page ' + p); }

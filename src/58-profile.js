@@ -59,10 +59,11 @@ function playAs(i, start) {
   try { if (start) localStorage.setItem(slotKey(i), JSON.stringify(start)); localStorage.setItem('nightwatch.slot', i); } catch (e) { return; }   // nothing can be saved here: the one player stays
   location.reload();
 }
-// Erasing a career is for grown-ups: a small sum stands in front of it, and a wrong answer simply closes the question.
-function askGrownUp(then) {
+// Erasing a career and setting bedtime are for grown-ups: a small sum stands in front of them. A wrong answer simply closes
+// the question (`wrong` says where to: the players panel unless told otherwise).
+function askGrownUp(then, wrong = () => showPlayers()) {
   const a = 3 + (Math.random() * 6 | 0), b = 4 + (Math.random() * 5 | 0);
-  owlSay(t('eraseAsk', { a, b }), { quiet: true, mood: 'idle', acts: shuffle([a + b, a + b + 1, a + b - 2]).map(n => ({ label: String(n), fn: n === a + b ? then : () => showPlayers() })) });
+  owlSay(t('eraseAsk', { a, b }), { quiet: true, mood: 'idle', acts: shuffle([a + b, a + b + 1, a + b - 2]).map(n => ({ label: String(n), fn: n === a + b ? then : wrong })) });
   if (document.activeElement) document.activeElement.blur();   // no answer is in focus: a key held or mashed cannot pick one
 }
 function showPlayers() {
@@ -72,7 +73,11 @@ function showPlayers() {
       <button class="btn round" data-del="${i}" aria-label="${esc(t('erase'))}: ${esc(d.name || t('nameDef'))}">${ic('bin', 24)}</button></div>`
       : `<div class="who"><button class="btn" data-new="${i}">${ic('plus', 24)}<span>${esc(t('newPlayer'))}</span></button></div>`;
   }).join('');
-  const v = modal(`<h2>${esc(t('players'))}</h2><div class="whos">${rows}</div><div class="acts"><button class="btn go" id="wOk">${ic('yes', 26)}${esc(t('ok'))}</button></div>`, t('players'));
+  const v = modal(`<h2>${esc(t('players'))}</h2><div class="whos">${rows}</div><div class="acts"><button class="btn" id="wBed">${ic('moon', 24)}${esc(t('bedSet'))}: ${S.bedN || esc(t('bedOff'))}</button>
+    <button class="btn go" id="wOk">${ic('yes', 26)}${esc(t('ok'))}</button></div>`, t('players'));
+  // Bedtime: the sum first, then after how many Nights a day the owl says good night (off, or one to five).
+  $('#wBed', v).onclick = () => { sfx.click(); askGrownUp(() => owlSay(t('bedAsk'), { quiet: true, mood: 'idle',
+    acts: [0, 1, 2, 3, 4, 5].map(n => ({ label: n ? String(n) : t('bedOff'), cls: n === S.bedN ? 'go' : '', fn: () => { S.bedN = n; save(); showPlayers(); } })) })); };
   v.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { sfx.click(); +b.dataset.go === slot ? closeDlg() : playAs(+b.dataset.go); });
   v.querySelectorAll('[data-new]').forEach(b => b.onclick = () => { sfx.pop(); playAs(+b.dataset.new, { lang: S.lang, mute: S.mute, voice: S.voice }); });
   v.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {

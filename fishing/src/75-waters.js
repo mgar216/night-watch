@@ -184,7 +184,8 @@ const amb = { set() {}, hit() {}, stop() {}, tick() {} };
     for (let i = 0; i < n; i++) { c.globalAlpha = sr(.25, .95); c.beginPath(); c.arc(sr(G.w), Math.pow(sr(), 1.5) * y1, (sr() < .12 ? 1.3 : .7) * G.u, 0, TAU); c.fill(); }
     c.globalAlpha = 1;
   }
-  function crescent(c, x, y, r, col) { glowAt(c, x, y, r * 4, '210,220,255', .3); c.save(); c.translate(x, y); c.rotate(-.5); c.scale(r, r); c.beginPath(); SHAPES.moon(c); c.fillStyle = col; c.fill(); c.restore(); }
+  // tonight's real moon: the dark part a shade lighter than the sky, the lit part by the real phase (moonLit in ../src/40-art.js)
+  function crescent(c, x, y, r, col) { glowAt(c, x, y, r * 4, '210,220,255', .3); c.save(); circ(c, x, y, r, 'rgba(150,170,220,.16)'); moonLit(c, x, y, r); c.fillStyle = col; c.fill(); c.restore(); }
   function sun(c, x, y, r, col, rgb) { glowAt(c, x, y, r * 6, rgb, .7); circ(c, x, y, r, col); }
   function cloud(c, x, y, s, col) {
     c.fillStyle = col; c.beginPath();

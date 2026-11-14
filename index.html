@@ -60,6 +60,7 @@ button { font: inherit; color: inherit; }
 
 .veil { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: .7em; background: rgba(6, 10, 32, .55); pointer-events: auto; }
 .veil.day { background: rgba(255, 196, 140, .08); }   /* first light: the sunrise behind the dialog stays bright */
+.veil.clear { background: rgba(6, 10, 32, .16); }     /* news of a gift: the tree and the sky stay in view */
 .dlg { width: min(34em, 100%); max-height: 100%; overflow: auto; padding: .8em; border-radius: 1.4em; background: var(--panel);
   border: 3px solid var(--line); text-align: center; box-shadow: 0 0 40px rgba(255, 200, 80, .25); }
 .dlg h2 { margin: 0 0 .3em; font-size: 1.3em; color: var(--gold); }
@@ -380,8 +381,30 @@ const L = {
   buy: ['Buy', 'Купить', 'Compra'],
   fishing: ['First Light Fishing', 'Рыбалка на рассвете', 'Pesca alle prime luci'],
   dawnT: ['First light', 'Рассвет', 'Prime luci'],
-  dawn1: ['The sun is up and the magpies are asleep. Want to go fishing until the evening?', 'Солнце встало, сороки спят. Пойдёшь на рыбалку до вечера?', 'Il sole è alto e le gazze dormono. Vuoi andare a pescare fino a sera?'],
+  dawn1: ['The sun is up and the magpies are asleep. Want to go fishing until evening?', 'Солнце встало, сороки спят. Пойдёшь на рыбалку до вечера?', 'È spuntato il sole e le gazze dormono. Vuoi andare a pescare fino a sera?'],
   dawnFish: ['Go fishing', 'На рыбалку', 'A pescare'], dawnRest: ['Rest until evening', 'Отдохнуть до вечера', 'Riposare fino a sera'],
+  // gifts from the Legendary fish of First Light Fishing: the owl tells each piece of news once, at the Night menu
+  giftT: ['A gift from the water', 'Подарок от воды', 'Un dono dell\'acqua'],
+  gift_biscuit: ['Grandpa Biscuit has moved into the pond by our tree. Tap the water and say hello!', 'Дедушка Сухарик переехал в пруд у нашего дерева. Тронь воду и поздоровайся!', 'Nonno Biscotto si è trasferito nello stagno accanto al nostro albero. Tocca l\'acqua e salutalo!'],
+  gift_heron: ['The heron of Willow Creek stands by our tree now. Shh, it sleeps on one leg.', 'Цапля с Ивового ручья теперь стоит у нашего дерева. Тише, она спит на одной ноге.', 'L\'airone del Ruscello dei Salici ora sta accanto al nostro albero. Piano, dorme su una zampa sola.'],
+  gift_lanternjaw: ['Old Lanternjaw sent us a lantern. It hangs under the branch and never goes out.', 'Старый Фонарник прислал нам фонарь. Он висит под веткой и никогда не гаснет.', 'Il Vecchio Mascellone ci ha mandato una lanterna. Pende sotto il ramo e non si spegne mai.'],
+  gift_noise: ['The White Noise sent its mist. At night it drifts around the roots of our tree.', 'Белый Шум прислал свой туман. Ночью он стелется у корней нашего дерева.', 'Il Rumore Bianco ha mandato la sua nebbia. Di notte scivola tra le radici del nostro albero.'],
+  gift_millstone: ['The Millstone left a real millstone by the tree. A fine seat for a guard!', 'Жёрнов оставил у дерева настоящий жёрнов. Отличное сиденье для часового!', 'La Macina ha lasciato una vera macina accanto all\'albero. Un bel sedile per una guardia!'],
+  gift_aurora: ['Sister Aurora sent her colours. Look up at the sky!', 'Сестрица Аврора прислала свои краски. Посмотри на небо!', 'Sorella Aurora ha mandato i suoi colori. Guarda il cielo!'],
+  gift_wave: ['The Ninth Wave races across our sky now. Watch for a silver streak!', 'Девятый Вал теперь проносится по нашему небу. Ищи серебряную полоску!', 'La Nona Onda ora corre nel nostro cielo. Cerca una scia d\'argento!'],
+  gift_postman: ['The Abyssal Postman sent lights from the Deep. They float up around our tree.', 'Почтальон Бездны прислал огоньки из глубины. Они тихо поднимаются вокруг нашего дерева.', 'Il Postino degli Abissi ha mandato luci dal profondo. Salgono piano attorno al nostro albero.'],
+  gift_bell: ['The Bellwether left a small bell on our branch. Tap it and it rings.', 'Колокольный Вожак оставил на нашей ветке колокольчик. Тронь его, и он зазвенит.', 'Il Campanaccio ha lasciato una campanella sul nostro ramo. Toccala e suona.'],
+  // bedtime: after so many Nights in one real day (a grown-up sets how many)
+  bedT: ['Good night', 'Спокойной ночи', 'Buona notte'],
+  bed1: ['What a Night, Chief! The jars are safe, and I am sleepy. Good night. See you tomorrow!', 'Вот это ночка, командир! Банки целы, а меня клонит в сон. Спокойной ночи. До завтра!', 'Che notte, Capo! I barattoli sono al sicuro e io ho sonno. Buona notte. A domani!'],
+  bedOk: ['Good night', 'Спокойной ночи', 'Buona notte'], bedMore: ['Grown-ups', 'Для взрослых', 'Per i grandi'],
+  bedSet: ['Bedtime', 'Отбой', 'Nanna'], bedOff: ['off', 'выкл.', 'mai'],
+  bedAsk: ['For grown-ups: after how many Nights in one day does the owl say good night?', 'Для взрослых: после скольких ночей за день сова говорит «спокойной ночи»?', 'Per i grandi: dopo quante Notti in un giorno il gufo dà la buona notte?'],
+  // tonight's real moon, said when the moon is tapped: new, growing, full, shrinking; then the same closing line
+  moon0: ['New moon tonight: you can hardly see it.', 'Сегодня новолуние: луны почти не видно.', 'Stanotte c\'è la luna nuova: quasi non si vede.'],
+  moon1: ['The moon is growing.', 'Луна растёт.', 'La luna cresce.'], moon2: ['Full moon tonight!', 'Сегодня полнолуние!', 'Stanotte c\'è la luna piena!'],
+  moon3: ['The moon is shrinking.', 'Луна убывает.', 'La luna cala.'],
+  moonSame: ['It is the same moon as outside your window!', 'Такая же луна и за твоим окном!', 'È la stessa luna che vedi dalla finestra!'],
   w_party: ['Party hat', 'Праздничный колпак', 'Cappellino da festa'], w_knit: ['Bobble hat', 'Шапка с помпоном', 'Berretto col pompon'],
   w_chef: ['Chef hat', 'Поварской колпак', 'Cappello da cuoco'], w_wizard: ['Wizard hat', 'Шляпа волшебника', 'Cappello da mago'],
   w_crown: ['Crown', 'Корона', 'Corona'], w_stripe: ['Striped scarf', 'Полосатый шарф', 'Sciarpa a righe'],
@@ -585,7 +608,9 @@ const SAVE = slotKey(slot);
 const S = { lang: -1, mute: false, name: '', night: 1, st: { cam: 0, gate: 0, forge: 0, extra: 0 }, beams: 30, stars: 0,
   items: [{ t: 'cam', m: 1 }], nest: 0, testStar: 0, gateStar: 0, briefed: 0, tinkered: 0, promo: false,
   voice: true, stk: {}, own: {}, hat: '', scarf: '', zhat: '', zscarf: '', boss: 0, fooled: 0,   // owl's voice on; stickers; wardrobe; last Baron Night won
-  day: -1 };   // 1 while the day after a finished Night has not begun (first light, fishing); -1 in a save from before there were days
+  day: -1,     // 1 while the day after a finished Night has not begun (first light, fishing); -1 in a save from before there were days
+  gifts: {},   // gifts of the Legendary fish that the owl has told the player about (src/49-gifts.js)
+  bedN: 3, bed: { d: '', n: 0, more: 0 } };   // bedtime after so many Nights a day (0: never); Nights finished on day d, and Nights a grown-up added
 try { Object.assign(S, JSON.parse(localStorage.getItem(SAVE) || '{}')); } catch (e) { /* private mode: play without saving */ }
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 const rankAt = night => night > 7 ? 3 : night > 4 ? 2 : night > 2 ? 1 : 0;
@@ -608,10 +633,11 @@ function add(html, parent = ui) {
 }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function say(text) { $('#live').textContent = text; }
-function toast(text) {
+function toast(text, ms = 1600) {
   const n = add(`<div class="toast">${esc(text)}</div>`);
+  n.style.animationDuration = ms + 'ms';   // a longer line stays longer
   say(text); speak(text, 'owl', true);
-  setTimeout(() => n.remove(), 1600);
+  setTimeout(() => n.remove(), ms);
 }
 // Restart the small "no" shake on an element (a full bar, an empty try).
 function nudge(el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
@@ -897,7 +923,7 @@ function musicTick() {
 }
 // Generated by tools/voice.js. Do not edit by hand.
 // Hashes of the sentences that have a recorded clip in voice/<lang>/<hash>.mp3.
-const VOICE = new Set(["10160g4","108b400","10daaap","10f2c8a","10f9yqo","10kvsgj","10rkfl1","1108kx6","113jig9","115fly1","11f0k15","11g06ab","11gcesx","11iyrnk","11pdf13","11r3n9l","11rkp8h","11xxbpe","125tx6e","126rq71","1289wdh","128e46b","12c64n3","12h8hpd","12hn3wk","12ngc1u","12qfqp6","12vg211","12xnxfv","139lqo","13cxw0w","13gwofr","13hku9k","13i8sht","13iryo7","13o4ati","13o6bi7","13o99lf","13odfc9","13xfc13","13y549v","13z29x4","142vocj","14bsdkr","14icjne","14ji2ga","14li4xg","155oocv","15f8oa","15h2wzn","15iwhy0","15jl6b","15m1iga","15qeo4i","15req7i","162afq5","163zpxx","167ogau","168mp02","168qkee","169isor","16a77c2","16b4s1d","16hl367","16i4i5a","16lkluc","16nbugn","1750j12","1784s08","178vkuc","179attb","17g9z3c","17nhwq","17psvqv","17vtkun","17yfegk","187nsm1","188dq1v","18exoa1","18inq8f","18l3fuv","18o03ln","18te3xh","18v1pkt","193k4hc","19athyc","19gzq9o","19hu2bs","19ix769","19jynme","19sunzu","1a27k3g","1a39msy","1a55ine","1ad9oip","1agtpb4","1ajrgu3","1al3k1i","1amkme9","1apl6rg","1arg9eh","1at3451","1av85vi","1aw225l","1b3w364","1b6g9ic","1bbdjca","1bf3zgb","1bjp96a","1bu0lvx","1bu1gyg","1bzhnzf","1c0wv9v","1c5ctcp","1cfsscx","1ckntow","1clcko1","1cmrcp5","1cnn1zj","1d0i3wr","1d46tm7","1d9reau","1dbq4tq","1dc7gfw","1dc9eho","1dh6zvj","1di9ifl","1dkmevz","1e2c7j6","1e404ct","1e8sxlu","1eek7of","1ej81bx","1el70pk","1emf2jd","1emlzop","1emovfx","1er4ueo","1etlnny","1eysog1","1f7fxpw","1fa6mch","1feb1yh","1fj2amq","1fmkmhm","1ft7z2h","1fullqt","1fw73t8","1g06mva","1g1isr9","1g5fbdq","1g6vr9y","1g7w9tc","1g954t0","1gd13pn","1goi7l7","1gpp0do","1gq6g3j","1gsdor9","1gsw6rd","1gyvaq6","1h02nj2","1h4h6ia","1hchxjq","1hdjbta","1hf1774","1hm4mqk","1hmqli8","1hnc52d","1hoe4ju","1hr88qc","1hv75tv","1hwku2l","1i1nkv9","1i4094","1i5x8k5","1i6eslv","1i7pj4x","1i9plk9","1id4xom","1idpw8o","1imomcd","1itnsne","1j3ibtk","1j7otqn","1je4rs6","1jisnk1","1jnw8sf","1joms4y","1jrcetj","1jsxofn","1jw2xcd","1jx0k90","1k0dlis","1kib9o0","1kjyxz7","1kk1a7x","1kkiece","1kl6fwo","1kx58i8","1kydkr0","1l18p7c","1l5r765","1l68tez","1l8bush","1lcy6oa","1leshph","1lglhpf","1li0yfg","1lqlz8j","1ltudoo","1lz3a8y","1m1lxka","1m62ouh","1m81d1p","1mc9bk0","1mezv75","1mhnqwc","1mjtmmy","1mjvy2g","1mno6qj","1mqn89u","1mqtddz","1mulf4o","1n156gz","1n22bhv","1n8j9tj","1nhajyb","1nhbq9f","1nux5dj","1o0005f","1o1v76i","1o3kcow","1odvax5","1olijfg","1orw0af","1oyyyb0","1p0z9sr","1p1fci","1pfg6by","1phut4c","1pjtlf7","1pszpit","1q4jgaq","1qdm172","1qhlafy","1qhy1k7","1qomkiu","1qq4ns6","1qqrjqa","1qrltde","1qrymck","1r0ktcq","1r5hdt","1r5nix8","1rcfocd","1ri9wzn","1rmjfes","1ro4pfn","1roew1f","1rqjq0b","1rr97df","1s659o1","1s77ak2","1sggvoo","1sh5qti","1spipum","1sr46dv","1t3ojgi","1t69wjq","1t9d035","1tfyrap","1tk75vs","1tuyub9","1tv285z","1txrfqp","1u29x2z","1u5j7k0","1u5ool1","1uabzrq","1ugakq","1usy3mv","1ut0nbo","1uzwgyt","1v3r6f7","1v6vx15","1v8zubq","1vgin9i","1vkb2fz","1vwgxg9","1vxjsqx","1vynqeu","1vzk5qg","1w00vjo","1w20mt6","1w7er79","1w81h6m","1w8arq5","1whbalz","1wm92df","1wpusl9","1wsetti","1wt5r0o","1x9q0ea","1xa40ff","1xbc9yr","1xbpi3q","1xl53wk","1xlca0m","1xnqn7i","1xo4cde","1xqbgmk","1xs4e5j","1xu8t5l","1xy5lle","1y7ddxy","1y9k7bf","1yl26r6","1ywfra","2594nd","26jy8h","29wq4","2ccz3s","2ungtz","2vud1h","2xxh3t","2zh26","2zzdvk","31zies","34rha7","3b9675","3cu9qs","3gy8dw","3m86p2","3z72wn","3z9dg0","49x23g","4crsrs","4idsu8","4jz99u","4l0qhg","4n0rq","4zp832","5455qf","54v0oc","5740vk","58ck7k","599lrb","59qh45","59r5m7","5itn8h","5kl6m0","5o5mgf","5zvdty","6bas9i","6bthzj","6cr2h7","6dypnx","6iju9k","6k2z3t","6l0w9i","6xwdd8","78eqxu","7snmpb","7tmgzy","7wbilr","7wlee5","84o7cj","850rpe","85m4zw","8j9j8r","8jiz0j","8johrk","8jxfsv","8lbsw3","8q1dnv","8wirmi","90jnte","94j2hr","98279p","9srqd1","9yb9eu","9yzd7m","a5r2pg","a6ngdb","altr97","aois3i","apujwg","aqcbxe","aqudzs","atjsae","aueuyq","b32tpe","b4a8ap","b61dsq","b8a9zq","bt1992","bxdji4","c4mmqp","c84v8c","c8y9xr","cfa595","cm27h0","cpstza","crt59f","d4o57a","dgzkp2","dhauv6","dikvz6","dr6pu0","dwj4xa","e16srv","e45i20","ed9w8q","edypm1","ekxn98","emaz5w","epx1b1","erinq","f05x0i","f9jkzr","fk4dcw","fl6fc1","fm51ae","fo24aq","fo939p","fumuym","fxc6tm","g31ljc","g6ev9d","gc1iff","gjrnda","gjzhbx","glewek","gn5999","go164n","gpg8iy","gqzyed","grav71","gwxzpk","gx0oxz","h9c9zs","hcubg","hdkm07","hh62vh","i7j1rf","i8vcg2","i9uc6p","io8k9h","ipz980","iqinxh","ir9z3d","jglek9","jic6s1","jk9aim","jo4l0e","jrjyr1","js3fa3","jvkp1","jxi74t","jy7uo8","k08w6y","k3ujbz","k7bzxz","kfcbps","kiivax","kj0x3","ko5a9a","ko64vk","kqxtpu","kttij7","kycx5d","kyhhgj","kyvqvz","kywj7v","kzjdy7","l6ruau","lazsdu","lece24","lhxs0i","lkvmbo","lttxxv","lxgi34","m6ubhj","mejxyq","mij665","mivwh3","mjiveu","mk2m5b","ml7x5u","mlbek1","mno79y","mvoygg","ng2mu","nnsldm","nodzme","nw0cvr","o37i7u","obyln3","oelrzt","ofiroo","ofocju","ogh4tz","ojadvh","oz63wh","p0rz8j","p55z4w","p63uor","paexxn","pahz4f","pdrgfv","pgg14i","phgilq","pi9mba","pmllti","q2a2jl","q5til","qabme6","qbseas","qkk4o6","qmxqko","qqwknm","qrxbyu","qt0ruy","qu6m30","r2t00g","r6btmc","r9kucz","rgzfua","rxsu5i","rzmslt","s1l0hh","s5ppqx","s7iz6c","s8iejm","sa90xk","scvma4","sg7xmi","sk4ksh","sly3y8","sqdgqo","syjvh6","t7rdg0","tamusg","thw4kr","tjs8dm","tkw7zt","u03yfs","u1asov","u2bkhc","u5vzju","u7xa93","u91n96","uglljp","umfkbs","un7qxt","up63nb","upj3fn","upx4wm","v0ds2v","v7ek5g","vhs7sa","vi2jo","vljdg","vrhakw","w1trr4","w5aem6","w5nhoa","we8ovs","whie2c","wm8vhg","wnnr63","wnzknu","wp4g60","wtk601","x0jysf","x30fr2","x42u99","x66na4","xbkwkd","xedqwj","xi5tkg","xiaawj","xnay7r","xqfl7f","xu0qvz","y0tsw6","y9k26","yeu8wg","yjtqoj","yny96t","yqj24t","yx74b3","z1nom5","zaw4fx","zfnn9f","zglak7","zgs6tj","zhd2ae","zk97hp","zp3q6t","zu0hua","zujnr0","zxdocv","zy104"]);
+const VOICE = new Set(["100ftxb","10160g4","108b400","10daaap","10f2c8a","10f9yqo","10kvsgj","10l1ozr","10rkfl1","10ru54r","1108kx6","113jig9","1142gtp","115fly1","11d7imz","11f0k15","11g06ab","11gcesx","11iyrnk","11pdf13","11pm90d","11r3n9l","11rkp8h","11xxbpe","125tx6e","126rq71","1289wdh","128e46b","12c64n3","12d46v0","12h8hpd","12hn3wk","12ngc1u","12qfqp6","12vg211","12xnxfv","139lqo","13cxw0w","13gwofr","13hku9k","13i8sht","13iryo7","13o4ati","13o6bi7","13o99lf","13odfc9","13q3gww","13xfc13","13y549v","13z29x4","142vocj","1442dlf","14bsdkr","14icjne","14ji2ga","14li4xg","153hrvm","155oocv","15f8oa","15h2wzn","15iwhy0","15jl6b","15m1iga","15qeo4i","15req7i","162afq5","163zpxx","167ogau","168mp02","168qkee","169isor","16a77c2","16b4s1d","16bfy98","16hl367","16i4i5a","16lkluc","16nbugn","1726pvq","1750j12","1784s08","178vkuc","179attb","17g9z3c","17nhwq","17psvqv","17vtkun","17yfegk","187nsm1","188dq1v","18exoa1","18inq8f","18jh38g","18l3fuv","18o03ln","18opcvi","18te3xh","18tgq0q","18undm7","18v1pkt","193k4hc","19athyc","19gzq9o","19hu2bs","19ix769","19jynme","19sunzu","1a27k3g","1a39msy","1a55ine","1ad9oip","1agtpb4","1ajrgu3","1al3k1i","1amkme9","1apl6rg","1arg9eh","1at3451","1av85vi","1aw225l","1b3w364","1b6g9ic","1bbdjca","1bjp96a","1bu0lvx","1bu1gyg","1bzhnzf","1c0wv9v","1c5ctcp","1cfsscx","1ckntow","1clcko1","1cmrcp5","1cnn1zj","1d0i3wr","1d46tm7","1d9reau","1dbq4tq","1dc7gfw","1dc9eho","1dh6zvj","1di9ifl","1dkmevz","1e2c7j6","1e404ct","1e8sxlu","1eek7of","1ej81bx","1el70pk","1emf2jd","1emlzop","1emovfx","1er4ueo","1etlnny","1eysog1","1f7fxpw","1fa6mch","1feb1yh","1fj2amq","1fk6yo2","1fmhe1y","1fmkmhm","1ft7z2h","1fullqt","1fw73t8","1fyinco","1g06mva","1g1isr9","1g5fbdq","1g6vr9y","1g7w9tc","1g954t0","1gd13pn","1ghk866","1goi7l7","1gpp0do","1gq6g3j","1gsdor9","1gsw6rd","1gtvj93","1gyvaq6","1h02nj2","1h4h6eq","1h4h6ia","1hchxjq","1hdjbta","1hf1774","1hm4mqk","1hmqli8","1hnc52d","1hoe4ju","1hr88qc","1hv75tv","1hwku2l","1i1nkv9","1i3jj4f","1i4094","1i5x8k5","1i6eslv","1i7pj4x","1i9plk9","1id4xom","1idpw8o","1imomcd","1itnsne","1j3ibtk","1j7otqn","1je4rs6","1jisnk1","1jnw8sf","1joms4y","1jrcetj","1jsxofn","1jw2xcd","1jx0k90","1k0dlis","1kib9o0","1kispa","1kjyxz7","1kk1a7x","1kkiece","1kl6fwo","1ksmgy7","1kx58i8","1kydkr0","1l18p7c","1l5r765","1l68tez","1l8bush","1lcy6oa","1leshph","1lglhpf","1li0yfg","1lqlz8j","1ltudoo","1lxok6e","1lz3a8y","1m1lxka","1m62ouh","1m81d1p","1mc9bk0","1mezv75","1mhnqwc","1mjtmmy","1mjvy2g","1mno6qj","1mqn89u","1mqtddz","1mulf4o","1mwdca4","1mzrti","1n156gz","1n22bhv","1n8j9tj","1nhajyb","1nhbq9f","1nj6d18","1nux5dj","1o0005f","1o1v76i","1o3kcow","1odvax5","1olijfg","1orw0af","1oyyyb0","1p0z9sr","1p1fci","1pfg6by","1phut4c","1pjtlf7","1pszpit","1q4jgaq","1qdm172","1qhlafy","1qhy1k7","1qjiim6","1qomkiu","1qq4ns6","1qqrjqa","1qrltde","1qrymck","1r0ktcq","1r5hdt","1r5nix8","1r8npaq","1rcfocd","1ri9wzn","1rmjfes","1ro4pfn","1roew1f","1rqjq0b","1rr97df","1s659o1","1s77ak2","1sggvoo","1sh5qti","1snwn2","1spipum","1sr46dv","1t3ojgi","1t69wjq","1t9d035","1tfyrap","1tk75vs","1tuyub9","1tv285z","1txrfqp","1u25sqi","1u29x2z","1u5j7k0","1u5ool1","1uabzrq","1ugakq","1usy3mv","1ut0nbo","1ute2a","1uuvh42","1uzeb5t","1uzwgyt","1v3r6f7","1v6vx15","1v8zubq","1vgin9i","1vkb2fz","1vwgxg9","1vxjsqx","1vynqeu","1vzk5qg","1w00vjo","1w20mt6","1w7er79","1w81h6m","1w8arq5","1wdv3ed","1whbalz","1wm92df","1wpusl9","1wsetti","1wspry7","1wt5r0o","1x9q0ea","1xa40ff","1xbc9yr","1xbpi3q","1xiv7i2","1xl53wk","1xlca0m","1xnqn7i","1xo4cde","1xqbgmk","1xs4e5j","1xu8t5l","1xy5lle","1y7ddxy","1y9k7bf","1yl26r6","1ywfra","2594nd","26jy8h","29wq4","2ccz3s","2ev4ae","2ungtz","2vud1h","2xxh3t","2zh26","2zzdvk","31zies","34rha7","3b9675","3cu9qs","3gy8dw","3lbugn","3m86p2","3vcxpn","3z72wn","3z9dg0","49x23g","4crsrs","4idsu8","4jz99u","4l0qhg","4n0rq","4zp832","5455qf","54v0oc","5740vk","57da2b","58ck7k","599lrb","59qh45","59r5m7","5itn8h","5kl6m0","5o5mgf","5zvdty","6bas9i","6bthzj","6cr2h7","6dypnx","6iju9k","6k2z3t","6l0w9i","6xwdd8","70sqn6","78eqxu","7qt60w","7snmpb","7tmgzy","7wbilr","7wlee5","84o7cj","850rpe","85m4zw","8fbsv4","8j9j8r","8jiz0j","8johrk","8jxfsv","8lbsw3","8pp2vc","8q1dnv","8wirmi","90jnte","94j2hr","98279p","9dtix9","9srqd1","9t7093","9yb9eu","9yzd7m","a5r2pg","a6ngdb","altr97","aois3i","apujwg","aqcbxe","aqudzs","atjsae","aueuyq","b2jl57","b32tpe","b4a8ap","b61dsq","b8a9zq","bt1992","bxdji4","c4mmqp","c84v8c","c8y9xr","cfa595","cm27h0","cng80a","cpstza","crt59f","d4o57a","dgzkp2","dhauv6","dikvz6","dr6pu0","dwj4xa","e16srv","e45i20","ed9w8q","edypm1","ekxn98","emaz5w","epx1b1","erinq","ev8s56","exbgk2","f05x0i","f9jkzr","fk4dcw","fl6fc1","fm51ae","fo24aq","fo939p","frb64x","fumuym","fxc6tm","g31ljc","g6ev9d","g9b2dl","gc1iff","gjrnda","gjzhbx","glewek","gn5999","go164n","gpg8iy","gqzyed","grav71","gwxzpk","gx0oxz","h9c9zs","hcubg","hdkm07","hh62vh","hu3tkf","huvqc8","i7j1rf","i8vcg2","i9uc6p","io8k9h","ipz980","iqinxh","ir9z3d","jglek9","jic6s1","jk9aim","jkiquy","jo4l0e","jrjyr1","js3fa3","jvkp1","jxi74t","jy7uo8","k08w6y","k3ujbz","k7bzxz","kfcbps","kg6r5p","kiivax","kj0x3","ko5a9a","ko64vk","kqxtpu","kttij7","kycx5d","kyhhgj","kyvqvz","kywj7v","kz3n41","kzjdy7","l6ruau","lazsdu","lece24","lhxs0i","lkvmbo","lttxxv","lxgi34","m6ubhj","mejxyq","mij665","mivwh3","mjiveu","mk2m5b","ml7x5u","mlbek1","mno79y","mvoygg","n6pz6x","nfsk0e","ng2mu","nnsldm","nodzme","npau64","nw0cvr","nx84me","o14lyz","o37i7u","obyln3","oelrzt","ofiroo","ofocju","ogh4tz","ohlzsp","ohpvpa","ojadvh","os7c8g","oz63wh","p0rz8j","p55z4w","p63uor","p9snzr","paexxn","pahz4f","pdrgfv","pgg14i","phgilq","pi9mba","pmllti","q2a2jl","q5til","qabme6","qbseas","qfo12","qkk4o6","qmxqko","qqwknm","qrxbyu","qt0ruy","qu6m30","r2t00g","r6btmc","r9kucz","rab4au","rgzfua","rtqosb","rxsu5i","rzmslt","s1l0hh","s5ppqx","s7iz6c","s8iejm","sa90xk","scqwp0","scvma4","sg7xmi","sk4ksh","sly3y8","sqdgqo","srjimy","syjvh6","t4tddb","t7rdg0","tamusg","tg0glx","thw4kr","tjs8dm","tkw7zt","u03yfs","u1asov","u29gs7","u2bkhc","u5vzju","u7xa93","u91n96","uglljp","umfkbs","un7qxt","up63nb","upj3fn","upx4wm","v0ds2v","v2wvrd","v7ek5g","v7kdwe","vhs7sa","vi2jo","vljdg","vrhakw","w1trr4","w5aem6","w5nhoa","we8ovs","whie2c","wm8vhg","wnnr63","wnzknu","wp4g60","wtk601","x30fr2","x42u99","x66na4","xbkwkd","xedqwj","xi5tkg","xiaawj","xnay7r","xqfl7f","xu0qvz","y0tsw6","y6i7uu","y9k26","ybdjr","yeu8wg","yjtqoj","yny96t","yqj24t","ywe4ip","yx74b3","z1nom5","zaw4fx","zfnn9f","zglak7","zgs6tj","zhd2ae","zk97hp","zp3q6t","zu0hua","zujnr0","zw8tk7","zxdocv","zy104"]);
 // ---------- Art: every picture is drawn here with canvas shapes; no image files ----------
 function starPath(c, x, y, R, r, n) {
   c.beginPath();
@@ -919,6 +945,16 @@ function glow(c, x, y, r, rgb = '255,216,107', a = .5) {
   const g = c.createRadialGradient(x, y, 0, x, y, r);
   g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`);
   c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2);
+}
+// Tonight's real moon. moonPhase(): 0 new, .25 first quarter, .5 full, .75 last quarter, from the mean length of a lunar
+// month (good to about half a day). moonLit() traces the lit part as it is seen from the north: lit on the right when waxing.
+const moonPhase = (ms = Date.now()) => { const p = ((ms / 864e5 - 10962.76) / 29.530588853) % 1; return p < 0 ? p + 1 : p; };
+function moonLit(c, x, y, r, p = moonPhase()) {
+  const k = Math.min(Math.cos(p * TAU), .84), wax = p < .5;   // never thinner than a clear crescent: the moon is always there to find
+  c.beginPath();
+  c.arc(x, y, r, -Math.PI / 2, Math.PI / 2, !wax);
+  c.ellipse(x, y, Math.abs(k) * r, r, 0, Math.PI / 2, -Math.PI / 2, wax ? k > 0 : k < 0);
+  c.closePath();
 }
 
 // Badge shapes and styles. Each colour always carries its own pattern, so colour is never the only cue.
@@ -1278,12 +1314,14 @@ function roomAt(lx, ly, n = rank()) {
   return 0;
 }
 const moonAt = () => [V.w * .84, V.h * .15, Math.min(V.w, V.h) * .075];
+// What the owl says about tonight's moon when it is tapped: the moon in the game is the real one, and a child can check.
+const moonWord = (p = moonPhase()) => t('moon' + (p < .04 || p > .96 ? 0 : p < .46 ? 1 : p < .54 ? 2 : 3)) + ' ' + t('moonSame');
 // A tap on a menu screen that hits a room or the moon (the secrets). True when the tap was used.
 function menuTap(x, y, T) {
   const [lx, ly] = toTree(T, x, y), room = roomAt(lx, ly), [mx, my, mr] = moonAt();
   if (room) { roomT[room] = V.t; [null, sfx.whee, sfx.sizzle, sfx.wish][room](); return true; }
-  if (Math.hypot(x - mx, y - my) < Math.max(34, mr * 1.5)) { winkT = V.t; sfx.chirp(); return true; }
-  return false;
+  if (Math.hypot(x - mx, y - my) < Math.max(34, mr * 1.5)) { winkT = V.t; sfx.chirp(); ui.querySelectorAll('.toast').forEach(n => n.remove()); toast(moonWord(), 3400); return true; }
+  return giftTap(lx, ly, T);   // the gifts of the Legendary fish answer a tap too
 }
 
 // The two rows of far hills: part of the cached sky, and drawn once more in front of the rising sun at first light.
@@ -1294,12 +1332,12 @@ function farHills(g, w, h) {
     g.lineTo(w, h); g.fillStyle = col; g.fill();
   }
 }
-// Sky, stars, moon, far hills and the magpies' nest; cached per size, twinkles drawn live.
+// Sky, stars, moon, far hills and the magpies' nest; cached per size and per day (the moon is tonight's real moon), twinkles drawn live.
 let skyCache = null;
 const hash = i => { const x = Math.sin(i * 127.1) * 43758.5453; return x - Math.floor(x); };
 function drawSky(c, t) {
-  const w = V.w, h = V.h;
-  if (!skyCache || skyCache.w !== w || skyCache.h !== h) {
+  const w = V.w, h = V.h, day = Math.floor(Date.now() / 864e5);
+  if (!skyCache || skyCache.w !== w || skyCache.h !== h || skyCache.day !== day) {
     const o = document.createElement('canvas'), d = Math.min(window.devicePixelRatio || 1, 2);
     o.width = w * d; o.height = h * d;
     const g = o.getContext('2d'); g.scale(d, d);
@@ -1307,20 +1345,26 @@ function drawSky(c, t) {
     gr.addColorStop(0, '#070d2a'); gr.addColorStop(.6, '#1b2a6b'); gr.addColorStop(1, '#2c3f86');
     g.fillStyle = gr; g.fillRect(0, 0, w, h);
     for (let i = 0; i < 90; i++) circ(g, hash(i) * w, hash(i + 200) * h * .7, .6 + hash(i + 400) * 1.3, `rgba(255,255,255,${.35 + hash(i + 600) * .5})`);
-    const [mx, my, mr] = moonAt();
-    glow(g, mx, my, mr * 4, '255,240,200', .35); circ(g, mx, my, mr, '#fff3c9');
+    // the dark part of the moon stays in the sky, a shade lighter than the night; the lit part follows the real phase
+    const [mx, my, mr] = moonAt(), p = moonPhase();
+    glow(g, mx, my, mr * 4, '255,240,200', .12 + .23 * (1 - Math.cos(p * TAU)) / 2); circ(g, mx, my, mr, '#1b2763');
+    g.save(); moonLit(g, mx, my, mr, p); g.clip();
+    circ(g, mx, my, mr, '#fff3c9');
     circ(g, mx - mr * .3, my - mr * .2, mr * .18, '#f0dca0'); circ(g, mx + mr * .25, my + mr * .3, mr * .12, '#f0dca0'); circ(g, mx + mr * .2, my - mr * .4, mr * .09, '#f0dca0');
+    g.restore();
     farHills(g, w, h);
-    skyCache = { w, h, o };
+    skyCache = { w, h, day, o };
   }
   c.drawImage(skyCache.o, 0, 0, w, h);
+  giftSky(c, t);
   for (let i = 0; i < 14; i++) {
     const a = still() ? .6 : .5 + .5 * Math.sin(t * (1 + hash(i) * 2) + i);
     starPath(c, hash(i + 50) * w, hash(i + 90) * h * .6, 2 + a * 3, 1, 4); c.fillStyle = `rgba(255,246,218,${a})`; c.fill();
   }
-  // Secret: a tapped moon winks.
+  // Secret: a tapped moon shows its whole face and winks.
   if (V.t - winkT < 1.6) {
     const [mx, my, mr] = moonAt();
+    circ(c, mx, my, mr, '#fff3c9');
     circ(c, mx - mr * .35, my - mr * .18, mr * .11, '#7a5a1a');
     line(c, [mx + mr * .18, my - mr * .18, mx + mr * .52, my - mr * .18], '#7a5a1a', mr * .1);
     c.beginPath(); c.arc(mx, my + mr * .08, mr * .46, .3, Math.PI - .3); c.lineWidth = mr * .1; c.strokeStyle = '#7a5a1a'; c.stroke();
@@ -1435,6 +1479,256 @@ function fireflies(c, t, n = 16) {
     const a = still() ? .7 + push * .3 : .45 + .45 * Math.sin(t * 2.5 + i * 1.3);
     glow(c, x, y, 12 + push * 8, '255,230,140', a * .6); circ(c, x, y, 1.8 + push, `rgba(255,246,200,${a})`);
   }
+}
+// ---------- Gifts from the water: what the Legendary fish of the day leave at the treehouse of the night ----------
+// A gift shows once the owl has told the player about it (S.gifts[id] === 1, set in giftNews in src/50-ui.js).
+// Called by the other files:
+//   giftSky(c, t)        from drawSky, over the cached sky and under the twinkling stars: the gifts that live in the sky
+//   giftTree(c, T, t)    from the menu scenes (home, Night menu, first light, bedtime), after drawTree and before the owl:
+//                        the gifts around the tree; T is the tree's transform { k, ox, oy }
+//   giftTap(lx, ly, T)   from menuTap, in tree coordinates: true when a gift answered the tap
+//   giftAt(id, T)        where the gift is on the screen, [x, y], for the sparkle that shows it for the first time
+const GIFTS = ['biscuit', 'heron', 'lanternjaw', 'noise', 'millstone', 'aurora', 'wave', 'postman', 'bell'];
+const giftT = {};   // when each gift was last tapped
+// `#gifts` in the address shows every gift at once, for a grown-up's look at them; nothing of it is saved.
+const giftPeek = location.hash === '#gifts' ? Object.fromEntries(GIFTS.map(id => [id, 1])) : null, giftOn = () => giftPeek || S.gifts;
+// The fish are caught in any order, so every gift looks right on its own. On a small screen the things on the ground keep a
+// readable size: Biscuit is scaled by giftM, the bell, the lantern and the millstone by the larger giftL (the millstone only
+// as far as the room between the slide and the big jar allows), each around its own anchor. All keep clear of the roots,
+// the ladder, both ground spots, the slide, the big jar, the magpies' nest tree and the helper, whose big cap and beak
+// reach far to the left and whose tail hangs over the pond.
+const giftM = T => Math.max(1, .44 / T.k), giftL = T => Math.max(1, .58 / T.k);
+Object.assign(sfx, {
+  splash: () => { tone(240, .12, 'sine', .12, 0, 560); noise(.3, .08, 1300, .05); },
+  toll: () => { tone(196, 2.6, 'sine', .09, 0, 0, .005); tone(235, 1.6, 'sine', .03, 0, 0, .005); tone(392, 1.1, 'sine', .025, 0, 0, .005); },   // one soft, low bell note
+  heron: () => { tone(560, .12, 'triangle', .06, 0, 420); tone(500, .16, 'triangle', .05, .15, 360); },
+});
+// Soft round lights (the mist, the teal lights, the lantern's light) share three gradients made once on a unit circle and
+// scaled where they are drawn, so no frame makes new ones. i: 0 pale mist, 1 teal, 2 warm.
+let giftGlows = null, giftWater = null;
+function giftDot(c, x, y, rx, ry, i, a) {
+  if (!giftGlows) giftGlows = ['225,235,255', '110,235,215', '255,205,120'].map(rgb => {
+    const g = c.createRadialGradient(0, 0, 0, 0, 0, 1);
+    g.addColorStop(0, `rgba(${rgb},1)`); g.addColorStop(.4, `rgba(${rgb},.5)`); g.addColorStop(1, `rgba(${rgb},0)`);
+    return g;
+  });
+  c.save(); c.translate(x, y); c.scale(rx, ry); c.globalAlpha = a; c.fillStyle = giftGlows[i]; c.fillRect(-1, -1, 2, 2); c.restore();
+}
+
+// ----- In the sky (every scene with the night sky) -----
+const GIFT_AURORA = ['120,255,170', '80,215,235', '175,135,255'];   // green, teal, violet
+const GIFT_WAVE = [0, .95, .28, .55, .58, .1, .9, .18, .78, .6];    // five stars in a breaking wave, in a box 1 wide and .45 high
+// The wave constellation sits where the menu screens leave open sky: right of the crown on a wide screen, under the top
+// bar on the left on a tall one. [x, y, size]
+const giftWaveBox = () => { const s = Math.min(V.w, V.h) * .22; return wide() ? [V.w * .42, V.h * .05, s] : [V.w * .04, V.h * .1, s]; };
+// One ribbon of the northern lights: its top edge waves, it is thickest in the middle and thin at both ends; `grow` widens it
+// all round for the soft glow behind it.
+function giftRibbon(c, x0, x1, top, H, A, f, ph, wob, grow) {
+  c.beginPath();
+  for (let i = 0; i <= 28; i++) { const u = i / 28; c.lineTo(lerp(x0, x1, u), top - grow + A * Math.sin(u * f * TAU + ph)); }
+  for (let i = 28; i >= 0; i--) { const u = i / 28; c.lineTo(lerp(x0, x1, u), top + grow + A * Math.sin(u * f * TAU + ph) + H * Math.pow(Math.sin(Math.PI * u), .6) * (.75 + .25 * Math.sin(u * 7 + wob))); }
+}
+function giftSky(c, t) {
+  const g = giftOn(), w = V.w, h = V.h, calm = still(), tt = calm ? 0 : t;
+  if (g.aurora === 1) {
+    // Northern lights: three ribbons, brightest near their lower edge, with a fainter, wider copy behind each one for a soft
+    // glow. They wave slowly and end short of the moon. One gradient per ribbon.
+    const x0 = -w * .05, x1 = w * .74, A = h * .025;
+    for (let r = 0; r < 3; r++) {
+      const H = h * (.11 - .016 * r), top = h * (.1 + .07 * r) - H / 2, f = 1.2 + .45 * r, ph = tt * (.22 + .06 * r) + r * 2.1, wob = tt * .4 + r;
+      const gr = c.createLinearGradient(0, top - 2 * A, 0, top + H + 2 * A), rgb = GIFT_AURORA[r];
+      gr.addColorStop(0, `rgba(${rgb},0)`); gr.addColorStop(.42, `rgba(${rgb},.2)`); gr.addColorStop(.76, `rgba(${rgb},.45)`); gr.addColorStop(1, `rgba(${rgb},0)`);
+      c.fillStyle = gr;
+      c.globalAlpha = .35; giftRibbon(c, x0, x1, top, H, A, f, ph, wob, A); c.fill();
+      c.globalAlpha = 1; giftRibbon(c, x0, x1, top, H, A, f, ph, wob, 0); c.fill();
+    }
+  }
+  if (g.wave === 1) {
+    const [bx, by, s] = giftWaveBox();
+    c.beginPath();
+    for (let i = 0; i < 10; i += 2) c.lineTo(bx + GIFT_WAVE[i] * s, by + GIFT_WAVE[i + 1] * s * .45);
+    c.lineWidth = 1.2; c.strokeStyle = 'rgba(220,232,255,.3)'; c.stroke();
+    for (let i = 0; i < 10; i += 2) {
+      const x = bx + GIFT_WAVE[i] * s, y = by + GIFT_WAVE[i + 1] * s * .45, R = s * (.05 + (calm ? 0 : .008 * Math.sin(t * 1.7 + i)));
+      circ(c, x, y, R * 1.9, 'rgba(220,232,255,.13)'); starPath(c, x, y, R, R * .38, 4); c.fillStyle = '#eef4ff'; c.fill();
+    }
+    // Every 10 to 14 seconds a silver streak crosses the sky (not with motion reduced).
+    const n = Math.floor(t / 12), d = t - n * 12 - 2 * hash(n + 3);
+    if (!calm && d > 0 && d < 1.1) {
+      const u = d / 1.1, dx = -w * .42, dy = h * .12, x = w * (.62 + .2 * hash(n + 5)) + dx * u, y = h * (.03 + .05 * hash(n + 9)) + dy * u;
+      c.globalAlpha = Math.min(1, (1 - u) * 4);
+      line(c, [x - dx * .16, y - dy * .16, x, y], 'rgba(225,235,255,.4)', 2.5); line(c, [x - dx * .06, y - dy * .06, x, y], 'rgba(255,255,255,.85)', 1.5);
+      starPath(c, x, y, 5, 2, 4); c.fillStyle = '#fff'; c.fill(); c.globalAlpha = 1;
+    }
+  }
+}
+
+// ----- Around the tree (menu scenes); all in tree units -----
+// Grandpa Biscuit, facing left with the middle of his body at (x, y): a deep golden sunfish with dark bars, a spiny back fin,
+// the gold crown of a Legendary on his head (as in the fishing game) and long pale whiskers.
+function giftFish(c, x, y, r) {
+  c.save(); c.translate(x, y); c.rotate(r);
+  poly(c, [18, -2, 28, -11, 30, 0, 28, 11, 18, 2], '#b0682a');
+  poly(c, [-6, -13, -3, -21, 0, -14, 3, -21, 6, -14, 9, -20, 12, -11], '#b0682a'); c.lineWidth = 1.2; c.strokeStyle = 'rgba(255,232,180,.8)'; c.stroke();
+  ell(c, 0, 0, 21, 15, '#d99a42'); c.lineWidth = 1.4; c.strokeStyle = 'rgba(255,232,180,.85)'; c.stroke();
+  for (let i = 0; i < 3; i++) line(c, [-4 + i * 7, -13, -6 + i * 7, 13], 'rgba(160,96,36,.85)', 2.6);
+  poly(c, [-17, -8, -17, -15, -14.5, -11, -12, -17, -9.5, -12, -7, -15, -7, -11], '#ffd24a');
+  circ(c, -14, -3, 2.8, '#fff4dc'); circ(c, -14.6, -3, 1.5, '#2a1a0a');
+  line(c, [-20, 2, -25, 6, -27, 12], '#f3e2b8', 1.2); line(c, [-19, 4, -22, 10, -22, 15], '#f3e2b8', 1.2);
+  c.restore();
+}
+// The pond: moonlit water with slow rings and Grandpa Biscuit in its right part, who rises and sinks slowly and leaps when
+// tapped. At the top rank the helper's tail is just above him, so there the leap stays low. lamp: the lantern's light (0 none).
+function giftPond(c, m, tt, now, calm, lamp) {
+  if (!giftWater) { giftWater = c.createLinearGradient(0, 932, 0, 972); giftWater.addColorStop(0, '#3d64b2'); giftWater.addColorStop(1, '#1c357a'); }
+  ell(c, 752, 952, 78, 20, giftWater); c.lineWidth = 2.5; c.strokeStyle = 'rgba(175,208,255,.6)'; c.stroke();
+  if (lamp) giftDot(c, 788, 950, 36, 8, 2, lamp);
+  c.lineWidth = 2; c.strokeStyle = '#e6efff';
+  for (let i = 0; i < 3; i++) {   // the moon's glints
+    c.globalAlpha = calm ? .5 : .35 + .25 * Math.sin(tt * 1.3 + i * 2);
+    c.beginPath(); c.moveTo(712 + i * 14, 943 + i * 6); c.lineTo(728 + i * 8, 943 + i * 6); c.stroke();
+  }
+  c.lineWidth = 1.5; c.strokeStyle = '#c8e1ff';
+  for (let i = 0; i < 2; i++) {
+    const u = calm ? .3 + .35 * i : (tt / 6 + i / 2) % 1, rx = 6 + 30 * u;
+    c.globalAlpha = .5 * (1 - u); c.beginPath(); c.ellipse(i ? 728 : 790, i ? 958 : 953, rx, rx * .27, 0, 0, TAU); c.stroke();
+  }
+  c.globalAlpha = 1;
+  const d = now - (giftT.biscuit || -99), jump = !calm && d < 1.1;
+  c.save(); c.translate(790, 955); c.scale(m, m);
+  c.save(); c.beginPath(); c.rect(-60, -80, 120, 81); c.clip();   // only what is above the water shows
+  if (jump) { const p = d / 1.1, J = rank() === 3 ? 9 : 26; giftFish(c, 9 - 18 * p, 16 - (16 + J) * Math.sin(Math.PI * p), .55 - 1.1 * p); }
+  else giftFish(c, 0, calm ? 0 : 6 + 6 * Math.sin(tt * TAU / 7), 0);
+  c.restore();
+  c.lineWidth = 1.2; c.strokeStyle = '#d9ecff';
+  if (!jump) { c.globalAlpha = .5; c.beginPath(); c.ellipse(0, 0, 23, 3.5, 0, 0, TAU); c.stroke(); }
+  if (!calm) {   // now and then a bubble
+    const b = (tt / 5.3) % 1;
+    if (b < .3) { c.globalAlpha = 1 - b / .3; c.beginPath(); c.arc(-26, -2 - b * 16, 1.6 + b * 4, 0, TAU); c.stroke(); }
+  }
+  if (d < 1.6) {   // the splash: a ring and drops where he leaves the water and where he comes back (with motion reduced a still ring)
+    for (let s = 0; s < (calm ? 1 : 2); s++) {
+      const q = calm ? .3 : d - s * .95, sx = calm ? 0 : s ? -9 : 9;
+      if (q < 0 || q > .6) continue;
+      c.globalAlpha = 1 - q / .6; c.beginPath(); c.ellipse(sx, 1, 8 + 40 * q, 2 + 10 * q, 0, 0, TAU); c.stroke();
+      if (!calm) for (let j = 0; j < 5; j++) circ(c, sx + (j - 2) * 22 * q, -(55 + 12 * (j % 2)) * q + 140 * q * q, 1.6, '#d9ecff');
+    }
+  }
+  c.globalAlpha = 1; c.restore();
+}
+// The heron, feet at (0, 0), facing left: slim and long-legged, about 90 tall. It keeps this size on every screen: larger,
+// its head would hide behind the helper's big cap. up 0: asleep, head on its shoulders and eye shut; 1: neck up, eye open.
+// a: the way the long bill points (PI / 2 down, more is forward). wet: it stands in the pond (a ripple), else on the grass.
+function giftHeron(c, up, a, br, wet) {
+  if (wet) { c.beginPath(); c.ellipse(.5, 0, 8, 2, 0, 0, TAU); c.lineWidth = 1.2; c.strokeStyle = 'rgba(200,225,255,.6)'; c.stroke(); }
+  else ell(c, 1, 0, 11, 2.6, 'rgba(4,8,28,.45)');
+  line(c, [0, 0, .3, -40], '#e2cc94', 2.4);                  // the leg it stands on
+  line(c, [1.5, -45, 6.5, -39, 2.5, -35], '#d3bc86', 2);     // the other one, tucked up
+  poly(c, [7, -44, 13, -35, 3, -40], '#5d6f8a');
+  c.save(); c.translate(2, -57); c.rotate(-.15); c.scale(1, br);
+  ell(c, 0, 0, 9.5, 18, '#8698b3'); c.lineWidth = 1.3; c.strokeStyle = 'rgba(228,238,255,.7)'; c.stroke();
+  ell(c, 2.5, 2, 7, 14.5, '#6a7d9b'); ell(c, -5.5, -2, 3.8, 12, '#e3e9f1');
+  c.restore();
+  const hx = -2.5 - 1.5 * up, hy = -79 - 4 * up, ca = Math.cos(a), sa = Math.sin(a);   // awake, the head rises only as far as the helper's cap leaves room
+  if (up > .05) line(c, [-1, -71, hx + .5, hy + 3], '#e3e9f1', 5 * up);   // the neck
+  line(c, [hx + ca * 5, hy + sa * 5, hx + ca * 15, hy + sa * 15], '#f0c25a', 2.4);
+  circ(c, hx, hy, 6.3, '#eef2f8'); c.lineWidth = 1; c.strokeStyle = 'rgba(140,160,195,.9)'; c.stroke();
+  line(c, [hx + 1, hy - 4.6, hx + 4.5, hy - 4.2, hx + 7, hy - 1.8], '#1d2638', 1.8);   // the black plume
+  if (up > .5) { circ(c, hx - 2.4, hy - .6, 1.7, '#1d2638'); circ(c, hx - 2.7, hy - 1.1, .55, '#fff'); }
+  else line(c, [hx - 4.2, hy - .6, hx - 2.4, hy + .6, hx - .6, hy - .6], '#1d2638', 1.1);
+}
+// A lantern on a short cord from (0, 0): fl makes the flame flicker, f (0..1) flares it after a tap.
+function giftLantern(c, fl, f) {
+  line(c, [0, 0, 0, 13], '#2a1d12', 2);
+  c.beginPath(); c.arc(0, 15.5, 3, 0, TAU); c.lineWidth = 1.6; c.strokeStyle = '#d9c08a'; c.stroke();
+  poly(c, [-7, 18, 7, 18, 14, 25, -14, 25], '#3d3b4c'); c.lineWidth = 1; c.strokeStyle = 'rgba(255,236,190,.7)'; c.stroke();
+  rr(c, -15, 25, 30, 30, 5); c.fillStyle = `rgba(255,214,130,${.6 + .3 * f})`; c.fill();
+  c.lineWidth = 5; c.strokeStyle = 'rgba(255,236,190,.6)'; c.stroke(); c.lineWidth = 3; c.strokeStyle = '#4a3a2a'; c.stroke();
+  line(c, [-5, 26, -5, 54], '#4a3a2a', 1.5); line(c, [5, 26, 5, 54], '#4a3a2a', 1.5);
+  ell(c, 0, 42 - 2 * fl, 4.5 * (1 + .4 * f), 8 * fl * (1 + .3 * f), '#ffad3b'); ell(c, 0, 43, 2.2, 4.5 * fl, '#fff6d0');
+  rr(c, -12, 55, 24, 5, 2); c.fillStyle = '#3d3b4c'; c.fill();
+}
+// A small bronze bell on a cord from (0, 0), with a tiny fish tail for a clapper.
+function giftBell(c) {
+  line(c, [0, 0, 0, 10], '#2a1d12', 2);
+  c.beginPath(); c.arc(0, 11.5, 3, 0, TAU); c.lineWidth = 1.6; c.strokeStyle = '#8a6a34'; c.stroke();
+  c.beginPath(); c.moveTo(-7, 14); c.bezierCurveTo(-15, 14, -14, 34, -20, 46); c.lineTo(20, 46); c.bezierCurveTo(14, 34, 15, 14, 7, 14); c.closePath();
+  c.fillStyle = '#c58e3e'; c.fill(); c.lineWidth = 1.5; c.strokeStyle = 'rgba(255,232,185,.8)'; c.stroke();
+  line(c, [-8, 19, -11, 32, -14, 41], 'rgba(255,240,205,.55)', 2.2);
+  ell(c, 0, 46, 20, 3.5, '#93622a');
+  poly(c, [0, 47, -5.5, 55, 0, 52, 5.5, 55], '#e7a85a');
+}
+// The millstone stands on its edge between the slide and the big jar: grey stone, grooves, a square eye, moss on top.
+function giftMill(c) {
+  ell(c, 0, 0, 24, 3.5, 'rgba(4,8,28,.45)');
+  circ(c, 0, -22, 22, '#8d92a2'); c.lineWidth = 2; c.strokeStyle = 'rgba(228,234,248,.8)'; c.stroke();
+  c.beginPath(); c.arc(0, -22, 15, 0, TAU); c.lineWidth = 1.2; c.strokeStyle = 'rgba(70,74,90,.6)'; c.stroke();
+  for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + .4; line(c, [Math.cos(a) * 7, -22 + Math.sin(a) * 7, Math.cos(a + .5) * 19, -22 + Math.sin(a + .5) * 19], '#6b6f80', 1.6); }
+  rr(c, -5, -27, 10, 10, 1.5); c.fillStyle = '#1b2348'; c.fill(); c.lineWidth = 1.2; c.strokeStyle = 'rgba(228,234,248,.6)'; c.stroke();
+  circ(c, -9, -40, 4.5, '#4f8a43'); circ(c, -2, -43, 5.5, '#5f9a4a'); circ(c, 6, -42, 5, '#4f8a43'); circ(c, 12, -38, 3.8, '#6aa852');
+}
+// The bell tolls by itself every 50 to 80 seconds while a menu screen shows it (quietly: the phone only buzzes for a tap),
+// and at once when tapped.
+let giftBellAt = 0, giftSeen = -9;   // when it tolls next; when a menu screen last drew the gifts
+function giftToll() { giftT.bell = V.t; giftBellAt = V.t + 50 + Math.random() * 30; sfx.toll(); }
+
+function giftTree(c, T, t) {
+  const g = giftOn(), k = T.k, m = giftM(T), mL = giftL(T), calm = still(), tt = calm ? 0 : t, now = V.t;
+  if (g.bell === 1) { if (now - giftSeen > 1) giftBellAt = now + 50 + Math.random() * 30; else if (now > giftBellAt) giftToll(); giftSeen = now; }
+  const lit = g.lanternjaw === 1, fa = Math.max(0, 1 - (now - (giftT.lanternjaw || -99))), fl = calm ? 1 : 1 + .07 * Math.sin(t * 9) + .05 * Math.sin(t * 13.7);
+  c.save(); c.translate(T.ox, T.oy); c.scale(k, k); c.lineCap = c.lineJoin = 'round';
+  if (g.noise === 1) {   // mist: five soft pale ellipses drifting along the ground, in front of the roots
+    const x0 = -T.ox / k - 220, span = V.w / k + 440;
+    for (let i = 0; i < 5; i++) giftDot(c, x0 + (hash(i + 21) * span + tt * (8 + 6 * hash(i + 61))) % span, 916 + 18 * hash(i + 31), 150 + 70 * hash(i + 41), 11 + 6 * hash(i + 51), 0, .1 + .06 * hash(i + 71));
+  }
+  if (g.millstone === 1) { const s = Math.min(1.45, mL); c.save(); c.translate(228, 930); c.scale(s, s); giftMill(c); c.restore(); }   // wider would touch the slide or the jar
+  if (g.biscuit === 1) giftPond(c, m, tt, now, calm, lit ? (.3 + .25 * fa) * fl : 0);
+  if (g.heron === 1) {   // asleep on one leg; awake at first light; a tap: it lifts its head and looks around for a second and a half
+    const d = now - (giftT.heron || -99), look = d < 1.5, dawn = scene === scenes.dawn;
+    const up = Math.max(dawn ? 1 : 0, look ? (calm ? 1 : Math.min(1, d / .2, (1.5 - d) / .25)) : 0);
+    const a = look && !calm ? 2.02 + .26 * Math.sin(d * 7) : up ? 2.15 : 2.05;
+    c.save(); c.translate(690, 962); giftHeron(c, up, a, up < .5 ? 1 + .03 * Math.sin(tt * 1.7) : 1, g.biscuit === 1); c.restore();
+  }
+  if (lit) {   // the lantern under the lower right branch: warm light all around it; a tap flares it for a second
+    const r = 150 * mL * (1 + .2 * fa);
+    giftDot(c, 790, 668 + 40 * mL, r, r, 2, (.42 + .3 * fa) * fl);
+    c.save(); c.translate(790, 668); c.scale(mL, mL); giftLantern(c, fl, fa); c.restore();
+  }
+  if (g.bell === 1) {   // the bell under the lower left branch: it swings when it tolls, and one faint ring spreads from it
+    const d = now - (giftT.bell || -99);
+    c.save(); c.translate(340, 650); c.scale(mL, mL); c.rotate(calm || d > 3 ? 0 : .3 * Math.sin(d * 7) * Math.exp(-d * 1.5)); giftBell(c); c.restore();
+    if (d < (calm ? 1.2 : 1.8)) {
+      const u = calm ? .3 : d / 1.8;
+      c.globalAlpha = .55 * (1 - u); c.beginPath(); c.arc(340, 650 + 30 * mL, (24 + 110 * u) * mL, 0, TAU); c.lineWidth = 3; c.strokeStyle = '#ffe2a8'; c.stroke(); c.globalAlpha = 1;
+    }
+  }
+  c.restore();
+  // Slow teal lights rise from the ground around the tree and fade near the crown (screen space, like the fireflies).
+  if (g.postman === 1) for (let i = 0; i < 7; i++) {
+    const u = calm ? .12 + .76 * hash(i + 91) : (t / (24 + 10 * hash(i + 81)) + hash(i + 91)) % 1, a = calm ? .7 : Math.sin(Math.PI * u);
+    const x = T.ox + (150 + 700 * hash(i + 101) + (calm ? 0 : 22 * Math.sin(t * .45 + i * 1.7))) * k, y = T.oy + (925 - 660 * u) * k;
+    giftDot(c, x, y, 18, 18, 1, a * .55); c.globalAlpha = a; circ(c, x, y, 2.6, '#d2fff6'); c.globalAlpha = 1;
+  }
+}
+
+// A tap on the menu screen, in tree units. The heron is checked before the pond it stands in.
+function giftTap(lx, ly, T) {
+  const g = giftOn(), mL = giftL(T), r = Math.max(60, 26 / T.k), e = Math.max(16, 12 / T.k), px = (lx - 752) / (78 + e), py = (ly - 952) / (20 + e);
+  let id = '';
+  if (g.heron === 1 && Math.hypot(lx - 690, ly - 917) < r) id = 'heron';
+  else if (g.biscuit === 1 && px * px + py * py < 1) id = 'biscuit';
+  else if (g.lanternjaw === 1 && Math.hypot(lx - 790, ly - 668 - 40 * mL) < r) id = 'lanternjaw';
+  else if (g.bell === 1 && Math.hypot(lx - 340, ly - 650 - 30 * mL) < r) id = 'bell';
+  if (!id) return false;
+  if (id === 'bell') { giftToll(); buzz(20); }
+  else { giftT[id] = V.t; (id === 'heron' ? sfx.heron : id === 'biscuit' ? sfx.splash : sfx.puff)(); }
+  return true;
+}
+function giftAt(id, T) {
+  const mL = giftL(T), p = { biscuit: [790, 948], heron: [690, 917], lanternjaw: [790, 668 + 40 * mL], noise: [500, 925], millstone: [228, 930 - 22 * Math.min(1.45, mL)], postman: [500, 700], bell: [340, 650 + 30 * mL] }[id];
+  if (p) return [T.ox + p[0] * T.k, T.oy + p[1] * T.k];
+  if (id === 'wave') { const [x, y, s] = giftWaveBox(); return [x + s * .5, y + s * .2]; }
+  return wide() ? [V.w * .45, V.h * .12] : [V.w * .1, V.h * .2];   // the northern lights, where the crown leaves them open
 }
 // ---------- Shared screens: owl dialog, home, hub (Night menu), badge ceremony ----------
 const wide = () => V.w >= V.h * 1.15;   // the same limit as `min-aspect-ratio: 23/20` in the stylesheet
@@ -1563,8 +1857,10 @@ scenes.home = {
     $('#bSnd', n).onclick = () => { setMute(!S.mute); sfx.click(); go('home'); };
     $('#bVoice', n).onclick = () => { S.voice = !S.voice; save(); sfx.click(); go('home'); if (S.voice) speak(t('win')); };
     $('#bBadge', n).onclick = () => { sfx.click(); go('badge', { from: 'home' }); };
-    $('#bFish', n).onclick = () => { S.day = 0; save(); };   // going fishing from here is the day as well: first light does not ask again that evening
-    for (const [id, sc] of [['#bAlbum', 'album'], ['#bWear', 'wear'], ['#bPie', 'pie']]) $(id, n).onclick = () => { sfx.pop(); go(sc, { from: 'home' }); };
+    // at bedtime the fishing and the magpie game sleep too; the album and the wardrobe stay open for a quiet look
+    $('#bFish', n).onclick = e => { if (asleep()) { e.preventDefault(); go('bed'); } else { S.day = 0; save(); } };   // going fishing from here is the day as well: first light does not ask again that evening
+    for (const [id, sc] of [['#bAlbum', 'album'], ['#bWear', 'wear'], ['#bPie', 'pie']]) $(id, n).onclick = () => { sfx.pop(); sc === 'pie' && asleep() ? go('bed') : go(sc, { from: 'home' }); };
+    this.zz = asleep();
     n.querySelectorAll('[data-l]').forEach(b => b.onclick = () => { setLang(+b.dataset.l); sfx.chirp(); go('home'); });
   },
   update() { snore(this); },
@@ -1576,8 +1872,8 @@ scenes.home = {
   },
   draw() {
     const T = treeArea(), t0 = V.t;
-    drawSky(ctx, t0); drawTree(ctx, T, t0);
-    treeOwl(ctx, T, t0, t0 < this.cheer ? 'cheer' : dozing() ? 'sleep' : 'idle');
+    drawSky(ctx, t0); drawTree(ctx, T, t0); giftTree(ctx, T, t0);
+    treeOwl(ctx, T, t0, t0 < this.cheer ? 'cheer' : this.zz || dozing() ? 'sleep' : 'idle');
     helper(T, t0);
     const zx = 500 + Math.sin(t0 * .9) * 330, zy = 230 + Math.sin(t0 * 1.8) * 90;
     zip(ctx, T.ox + zx * T.k, T.oy + zy * T.k, Math.max(.6, T.k * 1.6), t0, Math.cos(t0 * .9) > 0 ? 1 : -1);
@@ -1596,6 +1892,7 @@ scenes.hub = {
   sky: true,
   enter() {
     if (S.promo) return go('badge', { promo: true });   // a ceremony that a reload interrupted still takes place
+    if (asleep()) return go('bed');                      // enough Nights for one day: the owl says good night
     if (S.day) return go('dawn');                        // first light comes once between two Nights
     hud(() => go('home'), `<button class="btn round" id="bBadge" aria-label="${esc(t('badgeTitle'))}">${ic('rank:' + rank(), 34)}</button>`);
     $('#bBadge').onclick = () => { sfx.click(); go('badge', { from: 'hub' }); };
@@ -1610,18 +1907,20 @@ scenes.hub = {
     n.querySelectorAll('.card').forEach(b => b.onclick = () => { sfx.pop(); go(b.dataset.s); });
     $('#bTinker', n).onclick = () => { sfx.pop(); go('tinker'); };
     $('#bRaid', n).onclick = () => { sfx.alarm(); boss ? go('boss', { then: () => go('raid') }) : go('raid'); };
-    if (S.briefed < S.night) {
+    // News first (a gift from a Legendary fish of the day), then the Night's briefing.
+    giftNews(() => {
+      if (S.briefed >= S.night) return;
       const back = S.nest > 0, b = Math.min(S.night, 8);
       S.briefed = S.night; S.nest = 0; save();
       owlSay(t('b' + b) + (isBoss(S.night) ? ' ' + t('bBoss') : ''), { title: t('night', { n: S.night }), html: picsHtml(BRIEF_PICS[b - 1].concat(isBoss(S.night) ? ['stk:m6'] : [])),
         acts: [{ label: t('go'), cls: 'go', icon: 'play', fn: () => { if (back) { toast(t('jarsBack')); sfx.chirp(); } } }] });
-    }
+    });
   },
   update() { snore(this); },
   down(x, y) { menuTap(x, y, treeArea()); },
   draw() {
     const T = treeArea(), t0 = V.t;
-    drawSky(ctx, t0); drawTree(ctx, T, t0);
+    drawSky(ctx, t0); drawTree(ctx, T, t0); giftTree(ctx, T, t0);
     treeOwl(ctx, T, t0, dozing() ? 'sleep' : 'idle');
     helper(T, t0);
     zip(ctx, T.ox + (500 + Math.sin(t0 * .7) * 300) * T.k, T.oy + (200 + Math.sin(t0 * 1.4) * 60) * T.k, Math.max(.6, T.k * 1.6), t0, Math.cos(t0 * .7) > 0 ? 1 : -1);
@@ -1653,13 +1952,50 @@ scenes.dawn = {
     const r = Math.min(V.w, V.h) * .08, sx = V.w * (wide() ? .9 : .15), sy = V.h * (wide() ? .8 - .22 * k : .27 - .13 * k);
     glow(ctx, sx, sy, r * 3.4, '255,238,180', .6 * k); circ(ctx, sx, sy, r, '#fff4cf');
     farHills(ctx, V.w, V.h);
-    drawTree(ctx, T, t0);
+    drawTree(ctx, T, t0); giftTree(ctx, T, t0);
     treeOwl(ctx, T, t0, 'cheer');
     helper(T, t0);
   },
 };
 // The browser's Back button brings this page back as it was left: on the morning screen, with its question already answered.
 addEventListener('pageshow', e => { if (e.persisted && scene === scenes.dawn) go('hub'); });
+
+// ----- Gifts from the water: the Legendary fish of the day leave gifts at the treehouse (the fishing game shares this
+// site's storage). The owl tells each piece of news once, at the Night menu; from then on the gift is part of the night
+// (src/49-gifts.js draws it). -----
+function giftsEarned() {
+  try { const log = (JSON.parse(localStorage.getItem('firstlight.v1' + (slot ? '.' + (slot + 1) : '')) || '{}') || {}).log || {}; return GIFTS.filter(id => log[id] && log[id].n > 0); } catch (e) { return []; }
+}
+function giftNews(then) {
+  const id = giftsEarned().find(g => !S.gifts[g]);
+  if (!id) return then();
+  S.gifts[id] = 1; save();
+  // The veil of this dialog is almost clear. When the owl has spoken, a sparkle shows where to look, and the rest waits a moment.
+  owlSay(t('gift_' + id), { title: t('giftT'), mood: 'cheer', acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => {
+    const [x, y] = giftAt(id, treeArea());
+    sfx.sparkle(); burst(x, y, 26, { speed: 200, size: 9, kind: 'star', colors: ['#ffd86b', '#fff6da', '#9fe8ff'] });
+    later(() => giftNews(then), 1400);
+  } }] }).classList.add('clear');
+}
+
+// ----- Bedtime: after so many Nights in one real day the owl says good night until tomorrow. A grown-up sets how many
+// (in the players panel; 0 switches it off) and can allow one more Night. The watch's day turns at four in the morning. -----
+const today = () => { const d = new Date(Date.now() - 144e5); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+const asleep = () => S.bedN > 0 && S.bed.d === today() && S.bed.n >= S.bedN + S.bed.more;
+scenes.bed = {
+  enter() {
+    owlSay(t('bed1'), { title: t('bedT'), acts: [
+      { label: t('bedMore'), icon: 'lock', fn: () => askGrownUp(() => { S.bed.more++; save(); go('hub'); }, () => go('bed')) },
+      { label: t('bedOk'), cls: 'go', icon: 'moon', fn: () => go('home') }] });
+  },
+  draw() {
+    const T = treeArea(), t0 = V.t;
+    drawSky(ctx, t0); drawTree(ctx, T, t0); giftTree(ctx, T, t0);
+    treeOwl(ctx, T, t0, 'sleep'); helper(T, t0);
+    ctx.fillStyle = 'rgba(4,8,28,.4)'; ctx.fillRect(0, 0, V.w, V.h);   // the lights are low
+    fireflies(ctx, t0, 5);
+  },
+};
 
 // The Night ends after the raid: stars, moonbeams, maybe a promotion, then the Tinker Treehouse, then first light.
 // closeNight() counts and saves it the moment the raid is over; the owl's word about it may come later (after a replay).
@@ -1668,6 +2004,8 @@ function closeNight(stolen) {
   S.stars += stars; S.beams += 15 + stars * 10; S.nest = stolen; S.night++; S.st = { cam: 0, gate: 0, forge: 0, extra: 0 };
   S.promo = rank() > old;   // kept in the save, so closing the page here cannot skip the ceremony
   S.day = 1;                // nor the day that follows the Night
+  if (S.bed.d !== today()) S.bed = { d: today(), n: 0, more: 0 };
+  S.bed.n++;                // Nights finished today, for bedtime
   save();
   return stars;
 }
@@ -1950,10 +2288,11 @@ function playAs(i, start) {
   try { if (start) localStorage.setItem(slotKey(i), JSON.stringify(start)); localStorage.setItem('nightwatch.slot', i); } catch (e) { return; }   // nothing can be saved here: the one player stays
   location.reload();
 }
-// Erasing a career is for grown-ups: a small sum stands in front of it, and a wrong answer simply closes the question.
-function askGrownUp(then) {
+// Erasing a career and setting bedtime are for grown-ups: a small sum stands in front of them. A wrong answer simply closes
+// the question (`wrong` says where to: the players panel unless told otherwise).
+function askGrownUp(then, wrong = () => showPlayers()) {
   const a = 3 + (Math.random() * 6 | 0), b = 4 + (Math.random() * 5 | 0);
-  owlSay(t('eraseAsk', { a, b }), { quiet: true, mood: 'idle', acts: shuffle([a + b, a + b + 1, a + b - 2]).map(n => ({ label: String(n), fn: n === a + b ? then : () => showPlayers() })) });
+  owlSay(t('eraseAsk', { a, b }), { quiet: true, mood: 'idle', acts: shuffle([a + b, a + b + 1, a + b - 2]).map(n => ({ label: String(n), fn: n === a + b ? then : wrong })) });
   if (document.activeElement) document.activeElement.blur();   // no answer is in focus: a key held or mashed cannot pick one
 }
 function showPlayers() {
@@ -1963,7 +2302,11 @@ function showPlayers() {
       <button class="btn round" data-del="${i}" aria-label="${esc(t('erase'))}: ${esc(d.name || t('nameDef'))}">${ic('bin', 24)}</button></div>`
       : `<div class="who"><button class="btn" data-new="${i}">${ic('plus', 24)}<span>${esc(t('newPlayer'))}</span></button></div>`;
   }).join('');
-  const v = modal(`<h2>${esc(t('players'))}</h2><div class="whos">${rows}</div><div class="acts"><button class="btn go" id="wOk">${ic('yes', 26)}${esc(t('ok'))}</button></div>`, t('players'));
+  const v = modal(`<h2>${esc(t('players'))}</h2><div class="whos">${rows}</div><div class="acts"><button class="btn" id="wBed">${ic('moon', 24)}${esc(t('bedSet'))}: ${S.bedN || esc(t('bedOff'))}</button>
+    <button class="btn go" id="wOk">${ic('yes', 26)}${esc(t('ok'))}</button></div>`, t('players'));
+  // Bedtime: the sum first, then after how many Nights a day the owl says good night (off, or one to five).
+  $('#wBed', v).onclick = () => { sfx.click(); askGrownUp(() => owlSay(t('bedAsk'), { quiet: true, mood: 'idle',
+    acts: [0, 1, 2, 3, 4, 5].map(n => ({ label: n ? String(n) : t('bedOff'), cls: n === S.bedN ? 'go' : '', fn: () => { S.bedN = n; save(); showPlayers(); } })) })); };
   v.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { sfx.click(); +b.dataset.go === slot ? closeDlg() : playAs(+b.dataset.go); });
   v.querySelectorAll('[data-new]').forEach(b => b.onclick = () => { sfx.pop(); playAs(+b.dataset.new, { lang: S.lang, mute: S.mute, voice: S.voice }); });
   v.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
@@ -5043,7 +5386,9 @@ scenes.pie = {
   S.briefed = int(S.briefed, 0, S.night); S.testStar |= 0; S.gateStar |= 0; S.boss |= 0; S.fooled |= 0;
   S.name = String(S.name || '').slice(0, 16); S.mute = !!S.mute; S.promo = !!S.promo; S.voice = S.voice !== false;
   S.day = S.day < 0 ? +(S.night > 1) : S.day ? 1 : 0;   // a career from before there were days meets its first morning at once
-  for (const k of ['stk', 'own']) if (!S[k] || typeof S[k] !== 'object' || Array.isArray(S[k])) S[k] = {};
+  for (const k of ['stk', 'own', 'gifts', 'bed']) if (!S[k] || typeof S[k] !== 'object' || Array.isArray(S[k])) S[k] = {};
+  for (const k in S.gifts) if (GIFTS.includes(k)) S.gifts[k] = 1; else delete S.gifts[k];
+  S.bedN = int(S.bedN, 0, 5); S.bed = { d: String(S.bed.d || '').slice(0, 10), n: int(S.bed.n, 0, 99), more: int(S.bed.more, 0, 99) };
   for (const k in S.stk) if (has(STK, k)) S.stk[k] = S.stk[k] === 2 ? 2 : 1; else delete S.stk[k];
   for (const k in S.own) if (has(WEAR, k)) S.own[k] = 1; else delete S.own[k];
   for (const k of ['hat', 'scarf', 'zhat', 'zscarf']) S[k] = has(WEAR, S[k]) && has(S.own, S[k]) && WEAR[S[k]].hat === k.endsWith('hat') ? S[k] : '';   // only things this player owns

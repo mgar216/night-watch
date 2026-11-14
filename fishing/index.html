@@ -60,6 +60,7 @@ button { font: inherit; color: inherit; }
 
 .veil { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: .7em; background: rgba(6, 10, 32, .55); pointer-events: auto; }
 .veil.day { background: rgba(255, 196, 140, .08); }   /* first light: the sunrise behind the dialog stays bright */
+.veil.clear { background: rgba(6, 10, 32, .16); }     /* news of a gift: the tree and the sky stay in view */
 .dlg { width: min(34em, 100%); max-height: 100%; overflow: auto; padding: .8em; border-radius: 1.4em; background: var(--panel);
   border: 3px solid var(--line); text-align: center; box-shadow: 0 0 40px rgba(255, 200, 80, .25); }
 .dlg h2 { margin: 0 0 .3em; font-size: 1.3em; color: var(--gold); }
@@ -546,6 +547,16 @@ function glow(c, x, y, r, rgb = '255,216,107', a = .5) {
   const g = c.createRadialGradient(x, y, 0, x, y, r);
   g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`);
   c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2);
+}
+// Tonight's real moon. moonPhase(): 0 new, .25 first quarter, .5 full, .75 last quarter, from the mean length of a lunar
+// month (good to about half a day). moonLit() traces the lit part as it is seen from the north: lit on the right when waxing.
+const moonPhase = (ms = Date.now()) => { const p = ((ms / 864e5 - 10962.76) / 29.530588853) % 1; return p < 0 ? p + 1 : p; };
+function moonLit(c, x, y, r, p = moonPhase()) {
+  const k = Math.min(Math.cos(p * TAU), .84), wax = p < .5;   // never thinner than a clear crescent: the moon is always there to find
+  c.beginPath();
+  c.arc(x, y, r, -Math.PI / 2, Math.PI / 2, !wax);
+  c.ellipse(x, y, Math.abs(k) * r, r, 0, Math.PI / 2, -Math.PI / 2, wax ? k > 0 : k < 0);
+  c.closePath();
 }
 
 // Badge shapes and styles. Each colour always carries its own pattern, so colour is never the only cue.
@@ -2969,6 +2980,7 @@ Object.assign(L, {
   spot_release: ['Release it', 'Отпустить', 'Liberalo'],
   spot_first: ['First catch!', 'Первый улов!', 'Prima cattura!'],
   spot_record: ['New record!', 'Новый рекорд!', 'Nuovo record!'],
+  spot_gift: ['A gift for the treehouse!', 'Подарок для домика на дереве!', 'Un dono per la casa sull\'albero!'],
   spot_paid: ['moon|moons', 'луна|луны|лун', 'luna|lune'],
   spot_tied: ['Tied on', 'Выбрано', 'Montato'],
   spot_c_dawn: ['Dawn', 'Рассвет', 'Alba'], spot_c_day: ['Day', 'День', 'Giorno'], spot_c_dusk: ['Dusk', 'Сумерки', 'Tramonto'],
@@ -3809,8 +3821,9 @@ Object.assign(scenes.spot, {
     sfx.net(); F.s.legend || res.first ? sfx.fanfare() : sfx.win(); buzz(60);
     const x = this.px(.06), y = this.G.surf;
     burst(x, y - 20, 18, { kind: 'star', colors: ['#ffd86b', '#fff6da', '#8fe3a4'], up: 120 });
+    // a Legendary leaves a gift at the Night Watch treehouse (that game reads this logbook); the card says so the first time
     const marks = (res.first ? `<span class="pill">${ic('star', 22)}${esc(t('spot_first'))}</span>` : '') + (res.record ? `<span class="pill">${ic('star', 22)}${esc(t('spot_record'))}</span>` : '') +
-      `<span class="pill">${ic('moon', 22)}+${esc(plural('spot_paid', res.moons))}</span>`;
+      `<span class="pill">${ic('moon', 22)}+${esc(plural('spot_paid', res.moons))}</span>` + (F.s.legend && res.first ? `<span class="pill">${ic('jar', 22)}${esc(t('spot_gift'))}</span>` : '');
     const v = talk(fmtW(g), { who: '', title: t('f_' + F.id),
       html: `<div class="spot-catch"><div class="pics">${ic('fishI:' + F.id, 170)}</div><div class="marks">${marks}</div></div>`,
       acts: [{ label: t('spot_release'), cls: 'go', icon: 'fish', fn: () => this.releaseFish() }] });
@@ -4341,7 +4354,8 @@ const amb = { set() {}, hit() {}, stop() {}, tick() {} };
     for (let i = 0; i < n; i++) { c.globalAlpha = sr(.25, .95); c.beginPath(); c.arc(sr(G.w), Math.pow(sr(), 1.5) * y1, (sr() < .12 ? 1.3 : .7) * G.u, 0, TAU); c.fill(); }
     c.globalAlpha = 1;
   }
-  function crescent(c, x, y, r, col) { glowAt(c, x, y, r * 4, '210,220,255', .3); c.save(); c.translate(x, y); c.rotate(-.5); c.scale(r, r); c.beginPath(); SHAPES.moon(c); c.fillStyle = col; c.fill(); c.restore(); }
+  // tonight's real moon: the dark part a shade lighter than the sky, the lit part by the real phase (moonLit in ../src/40-art.js)
+  function crescent(c, x, y, r, col) { glowAt(c, x, y, r * 4, '210,220,255', .3); c.save(); circ(c, x, y, r, 'rgba(150,170,220,.16)'); moonLit(c, x, y, r); c.fillStyle = col; c.fill(); c.restore(); }
   function sun(c, x, y, r, col, rgb) { glowAt(c, x, y, r * 6, rgb, .7); circ(c, x, y, r, col); }
   function cloud(c, x, y, s, col) {
     c.fillStyle = col; c.beginPath();

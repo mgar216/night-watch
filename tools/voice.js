@@ -28,7 +28,7 @@ const sentences = new Function(audio.match(/const sentences = [^\n]+/)[0] + '; r
 
 // Which rows are spoken: every row whose English text ends like a sentence, the rows in ALSO, and every name (k_ rows),
 // but not the rows in SKIP (labels, lines of the magpies, lines that carry a free value such as the player's name).
-const SKIP = new Set(['foot', 'go', 'cracked', 'finale', 'eraseAsk', 'giveUp', 'roomNew', 'stkNew', 'bossGo', 'code_done', 'pie_ready',   // labels and titles
+const SKIP = new Set(['foot', 'go', 'cracked', 'finale', 'eraseAsk', 'bedAsk', 'giveUp', 'roomNew', 'stkNew', 'bossGo', 'code_done', 'pie_ready',   // labels, titles, questions for grown-ups
   'please', 'lost', 'mail_hehe', 'pie_mIn', 'pie_mSulk', 'boss_say1', 'boss_say2', 'boss_say3', 'boss_say4']);                             // magpies and the Baron: bubbles and babble
 const ALSO = new Set(['poor']);
 // Rows with a placeholder that only takes a few known values are recorded once for each value.

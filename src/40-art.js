@@ -20,6 +20,16 @@ function glow(c, x, y, r, rgb = '255,216,107', a = .5) {
   g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`);
   c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2);
 }
+// Tonight's real moon. moonPhase(): 0 new, .25 first quarter, .5 full, .75 last quarter, from the mean length of a lunar
+// month (good to about half a day). moonLit() traces the lit part as it is seen from the north: lit on the right when waxing.
+const moonPhase = (ms = Date.now()) => { const p = ((ms / 864e5 - 10962.76) / 29.530588853) % 1; return p < 0 ? p + 1 : p; };
+function moonLit(c, x, y, r, p = moonPhase()) {
+  const k = Math.min(Math.cos(p * TAU), .84), wax = p < .5;   // never thinner than a clear crescent: the moon is always there to find
+  c.beginPath();
+  c.arc(x, y, r, -Math.PI / 2, Math.PI / 2, !wax);
+  c.ellipse(x, y, Math.abs(k) * r, r, 0, Math.PI / 2, -Math.PI / 2, wax ? k > 0 : k < 0);
+  c.closePath();
+}
 
 // Badge shapes and styles. Each colour always carries its own pattern, so colour is never the only cue.
 const SHAPES = {

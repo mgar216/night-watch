@@ -298,6 +298,12 @@ Object.assign(POSES, {
     const redOf = starter => { fresh({ gate: 1 }); equip('grouper', 5, starter); go('spot', { area: 'reef' }); SP.pop.length = 0; toBite('grouper'); SP.strike(); sim(.2); return SP.F.red; };
     const redWeak = redOf('rig'), redStrong = redOf();
     check(redWeak < redStrong - .15, `a line too weak for the fish brings the red line down: ${redWeak.toFixed(2)} against ${redStrong.toFixed(2)}`);
+    // the first catch of a Legendary says that a gift goes to the Night Watch treehouse; an ordinary fish says nothing of the kind
+    fresh(); go('spot', { area: 'pond' }); sim(.3);
+    for (const id of ['perch', 'biscuit']) {
+      toBite(id); SP.strike(); const F = SP.F; F.tired = true; F.lastUsed = 1; F.Lm = 2.5; F.runT = 0; sim(.3); F.netT = .625; SP.netTry();
+      check(SP.st === 'card' && $('.veil .marks').textContent.includes(t('spot_gift')) === (id === 'biscuit'), `the catch card of ${id} ${id === 'biscuit' ? 'tells of' : 'has no'} gift for the treehouse`); clickDlg();
+    }
     await note('visit checked, problems so far: ' + out.errors.length);
 
     // --- every water: its first ordinary fish landed by a careful angler with the tackle of that water ---
