@@ -143,22 +143,3 @@ function sayOther(s, strict, done) {
 }
 // A short buzz of the phone for a catch or a bonk, where the device can do it. Silent mode switches it off too.
 function buzz(ms) { try { if (!S.mute && !quiet && navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* not allowed */ } }
-// Gentle generative lullaby: slow bass notes under a wandering pentatonic melody.
-const PENTA = [261.6, 293.7, 329.6, 392, 440, 523.3, 587.3, 659.3], BASS = [130.8, 110, 87.3, 98];
-let mNext = 0, mStep = 0, mIdx = 3;
-function musicTick() {
-  if (S.mute || !AC || AC.state !== 'running') return;
-  if (mNext < AC.currentTime) mNext = AC.currentTime + .1;
-  while (mNext < AC.currentTime + .6) {
-    const w = mNext - AC.currentTime, st = mStep % 8;
-    if (st === 0) {
-      const b = BASS[(mStep / 8 | 0) % 4];
-      tone(b, 3.3, 'sine', .1, w, 0, .5); tone(b * 1.5, 3.3, 'sine', .05, w, 0, .7);
-    }
-    if (Math.random() < (st % 2 ? .25 : .8)) {
-      mIdx = clamp(mIdx + pick([-2, -1, -1, 0, 1, 1, 2]), 0, 7);
-      tone(PENTA[mIdx], 1.2, 'sine', .045, w, 0, .03);
-    }
-    mNext += .42; mStep++;
-  }
-}

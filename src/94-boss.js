@@ -1,5 +1,6 @@
 // ---------- The Baron's Night: Baron von Shiny's silly three-step plan falls apart, act by act ----------
-// go('boss', { then }) plays an owl intro, three acts and a finale; the result dialog's button calls then() (default: the hub).
+// go('boss', { then }) plays an owl intro, three acts and a finale; the result dialog's button calls then() (default: the hub),
+// after the next chapter of the Baron's story when one is due (src/95-saga.js).
 // Each act asks for one thing. A wrong choice is never a failure: a short funny moment, one tip from the owl, and the same
 // act goes on. Nothing is timed: every act waits for the player.
 // Progress of one animation step: eased, or complete at once when the player asked for reduced motion.
@@ -403,7 +404,7 @@ scenes.boss = {
     burst(V.w / 2, V.h * .35, 40, { colors: ['#ffd86b', '#fff', '#ff9ecb', '#7fd0ff'], speed: 320, life: 1.4, kind: 'star', size: 9 });
     owlSay(t('boss_win'), { title: t('s_boss'), stars: this.stars, mood: 'cheer', quiet: true,
       html: stickerHtml(this.fresh ? 'm6' : '') + `<div class="pics"><span class="pill pop">${ic('beam', 22)}<b>+${this.stars * 10}</b></span></div>`,
-      acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => this.then() }] });
+      acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => sagaAfter(this.then) }] });
   },
   draw() {
     const G = this.geo(), t0 = V.t, k = t0 - this.at, ph = this.ph, [yL, yR] = this.boughs(G);

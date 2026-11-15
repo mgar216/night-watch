@@ -23,7 +23,17 @@ const S = { lang: -1, mute: false, name: '', night: 1, st: { cam: 0, gate: 0, fo
   voice: true, stk: {}, own: {}, hat: '', scarf: '', zhat: '', zscarf: '', boss: 0, fooled: 0,   // owl's voice on; stickers; wardrobe; last Baron Night won
   day: -1,     // 1 while the day after a finished Night has not begun (first light, fishing); -1 in a save from before there were days
   gifts: {},   // gifts of the Legendary fish that the owl has told the player about (src/49-gifts.js)
-  bedN: 3, bed: { d: '', n: 0, more: 0 } };   // bedtime after so many Nights a day (0: never); Nights finished on day d, and Nights a grown-up added
+  bedN: 3, bed: { d: '', n: 0, more: 0 },   // bedtime after so many Nights a day (0: never); Nights finished on day d, and Nights a grown-up added
+  caught: 0, pals: {}, helper: '',          // magpies caught kindly; friends the owl has introduced; the friend who helps in raids (src/57-pals.js)
+  lit: 0,                                   // three-star Nights: each lights a lantern on the Watchwood map of the fishing game
+  grow: 0,                                  // additions to the treehouse that the owl has told of (src/46-life.js)
+  visit: { d: '', done: 0, n: 0 },          // today's visitor: the day, whether the wish was granted, visits so far
+  mem: { d: '', k: '' }, memD: '',          // what happened last, for the day's first words; the day they were last said
+  eye: 0,                                   // owl's eyes for tonight's Gate Check: a good day's fishing brings one
+  flag: '',                                 // the flag the player painted (src/59-flag.js)
+  bday: '', bdayY: 0,                       // birthday as month-day, and the year it was last kept
+  sup: '',                                  // the last day's fishing that was counted (its id), so that supper comes once
+  saga: 0 };                                // chapters of the Baron's story seen; at 3 his museum is open and he raids no more
 try { Object.assign(S, JSON.parse(localStorage.getItem(SAVE) || '{}')); } catch (e) { /* private mode: play without saving */ }
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 const rankAt = night => night > 7 ? 3 : night > 4 ? 2 : night > 2 ? 1 : 0;
@@ -61,6 +71,8 @@ function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
 // Scenes: { enter(arg), update(dt), draw(), down(x,y), move(x,y), up(x,y), key(e), exit() }
 const scenes = {};
 let scene = null;
+// The music follows the scene (src/33-music.js); a scene that is not listed is a station.
+const MOOD = { home: 'night', hub: 'night', tinker: 'night', album: 'night', wear: 'night', badge: 'night', pals: 'night', flag: 'night', story: 'night', saga: 'night', raid: 'raid', boss: 'raid', dawn: 'dawn', bed: 'bed' };
 function go(name, arg) {
   if (scene && scene.exit) scene.exit();
   timers.forEach(clearTimeout); timers = [];
@@ -69,6 +81,7 @@ function go(name, arg) {
   hush();
   scene = scenes[name];
   scene.id = name;
+  music.mood(MOOD[name] || 'watch');
   scene.enter(arg);
 }
 
@@ -143,8 +156,9 @@ addEventListener('devicemotion', e => {
   grav[0] += (g.x - grav[0]) * .1; grav[1] += (g.y - grav[1]) * .1; grav[2] += (g.z - grav[2]) * .1;
   if (d > 12) scatter();
 });
-cv.addEventListener('pointerdown', e => { audioOn(); lastTouch = V.t; const p = ptr(e); swipe = [p[0], p[1], V.t]; if (scene && scene.down) scene.down(...p); });
-addEventListener('pointermove', e => { if (scene && scene.move) scene.move(...ptr(e)); });
+// (the event comes along as a last argument, for a scene that must tell one finger from another: the flag's painter)
+cv.addEventListener('pointerdown', e => { audioOn(); lastTouch = V.t; const p = ptr(e); swipe = [p[0], p[1], V.t]; if (scene && scene.down) scene.down(...p, e); });
+addEventListener('pointermove', e => { if (scene && scene.move) scene.move(...ptr(e), e); });
 addEventListener('pointerup', e => {
   const p = ptr(e);
   if (swipe && V.t - swipe[2] < .4 && Math.hypot(p[0] - swipe[0], p[1] - swipe[1]) > Math.min(V.w, V.h) * .35) scatter();

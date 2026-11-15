@@ -101,6 +101,8 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
 .who > .btn:first-child { flex: 1; min-width: 0; justify-content: flex-start; }
 .who > .btn:first-child span { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .who.me > .btn:first-child { background: #f2b93b; color: #3a2400; border-color: #fff3c4; }
+.bday { gap: 1em; }
+.bday select { font: inherit; font-weight: 800; min-width: 3.6em; min-height: 48px; margin-left: .3em; border-radius: .6em; border: 2px solid #8fa4d8; background: #fff; color: #1b2550; }
 #print { display: none; }
 @media print {
   @page { size: landscape; margin: 10mm; }
@@ -186,6 +188,7 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
   .hud .pill { padding: .1em .45em; font-size: .82em; }
   .hud .btn.round { width: 48px; height: 48px; }
   .gatebtns .btn { font-size: 1.1em; gap: .3em; padding: .3em .6em; }
+  .tbar .helper > span { display: none; }   /* the Tinker Treehouse's bar: the helper's picture only, so that the test button keeps its words */
 }
 /* phones and anything lower: smaller tiles keep the Password Forge scene large */
 @media (max-height: 700px) {
@@ -204,6 +207,11 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
 /* A phone on its side: station bars drop the extra pills, and the Tinker palette becomes a two-column strip on the right. */
 @media (min-aspect-ratio: 23/20) and (max-height: 520px) {
   .hud.slim .extra, .hud.slim #pStars, .hud.slim #pBeams { display: none; }
+  .whos { display: grid; grid-template-columns: 1fr 1fr; }   /* the players two by two, so that the settings under them stay on the screen */
+  /* the Password Forge: the bar keeps to one row and scrolls sideways when it holds more tiles than fit (a second row lay
+     under the tray, out of sight and out of reach); auto margins keep a short row in the middle */
+  .slots { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; }
+  .slots .tile { flex: none; } .slots > :first-child { margin-left: auto; } .slots > :last-child { margin-right: auto; }
   .palette { left: auto; top: 4.6em; width: 15.6em; align-content: flex-start; border-top: 0; border-left: 2px solid var(--line); overflow-y: auto; }   /* three columns: a page of nine fits without scrolling */
   .pal { flex: 1 0 28%; min-height: 52px; }
   /* the gate reference card stands as a narrow column at the right edge, clear of the visitor's speech bubble */
@@ -430,6 +438,7 @@ function go(name, arg) {
   hold.on = false;
   scene = scenes[name];
   scene.name = name; scene.arg = arg;   // `name`, not `id`: a scene may keep an id of its own (the fishing scene's is its water)
+  music.mood(name === 'spot' ? 'water' : 'day');   // at a spot the water's own sounds lead
   scene.enter(arg);
 }
 
@@ -525,6 +534,91 @@ function frame(ms) {
     drawPortrait();
   }
   requestAnimationFrame(frame);
+}
+// ---------- Music: generated in the browser, quiet, never needed to play. Shared with First Light Fishing. ----------
+// Both games call musicTick() five times a second once their sound has started (it schedules the next notes with tone(),
+// never more than about .6 seconds ahead), and music.mood(name) whenever the scene changes:
+//   night  the menus of the Night Watch (lullaby)      watch  inside a station (the same, thinner)
+//   raid   magpies are coming                           dawn   first light
+//   bed    bedtime                                      party  a birthday, a finale
+//   day    the fishing map, title and treehouse         water  at a fishing spot (the water's own sounds lead)
+// A new mood starts with the next bar: the notes already played ring out, and two moods never play at once. A name
+// that is not listed plays the night. It uses only what both games have (AC, tone(), noise(), S.mute, clamp, pick), and
+// only inside functions, because the fishing game loads this file before its own sound.
+// Every tune keeps to a five-note scale with no half steps in it, over one soft chord per bar, and stays quiet (bass up
+// to .1, tunes up to .05), so the music sits under the effects and the owl.
+const PENTA = [261.6, 293.7, 329.6, 392, 440, 523.3, 587.3, 659.3];   // C major pentatonic (the code station and the spy game play it too)
+const musBass = [130.8, 110, 87.3, 98];                                // C A F G, one per bar: the lullaby's chords
+let musNext = 0, musSt = 0, musBar = 0, musIdx = 3, musCur = 'night', musWant = 'night', musWait = 0;
+// The next note of a wandering tune: a step or two up or down the scale, kept between the indexes lo and hi.
+const musWalk = (lo = 0, hi = 7) => PENTA[musIdx = clamp(musIdx + pick([-2, -1, -1, 0, 1, 1, 2]), lo, hi)];
+// A mood is [seconds per step, steps per bar, play(step in the bar, seconds from now)]. No bar is longer than 3.4 seconds,
+// so a new mood is heard within four.
+const MUS = {
+  // the lullaby: a bass note and its fifth swell each bar under a slow tune that wanders on most steps
+  night: [.42, 8, (st, w) => {
+    if (!st) { const b = musBass[musBar % 4]; tone(b, 3.3, 'sine', .1, w, 0, .5); tone(b * 1.5, 3.3, 'sine', .05, w, 0, .7); }
+    if (Math.random() < (st % 2 ? .25 : .8)) tone(musWalk(), 1.2, 'sine', .045, w, 0, .03);
+  }],
+  // a station: the same, thinner, so that it does not distract: no fifth, half the tune, nothing high
+  watch: [.42, 8, (st, w) => {
+    if (!st) tone(musBass[musBar % 4], 3.3, 'sine', .09, w, 0, .5);
+    if (Math.random() < (st % 2 ? .1 : .4)) tone(musWalk(0, 5), 1.2, 'sine', .04, w, 0, .05);
+  }],
+  // magpies are coming: a tiptoe bass (root, fifth, octave, fifth, all short) under plucked notes that land mostly
+  // between its steps; in every fourth bar the tune stops and peeks with a little slide up. The chords go Am Dm G C, so
+  // each round ends in a major key: cheeky, never dark.
+  raid: [.32, 8, (st, w) => {
+    if (!(st % 2)) tone([110, 73.4, 98, 130.8][musBar % 4] * [1, 1.5, 2, 1.5][st / 2], .2, 'triangle', .1, w, 0, .005);
+    if (musBar % 4 === 3) { if (st === 5) tone(440, .4, 'sine', .05, w, 523.3, .03); }
+    else if (Math.random() < (st % 2 ? .6 : .35)) tone(musWalk(), .3, 'triangle', .05, w, 0, .005);
+  }],
+  // first light: over a soft bass and its octave, four notes climb in each bar (C Am F G), and a round later an octave
+  // higher, as the sun gets up; now and then a bird chirps
+  dawn: [.4, 8, (st, w) => {
+    const k = musBar % 4;
+    if (!st) { tone(musBass[k], 3.1, 'sine', .08, w, 0, .6); tone(musBass[k] * 2, 3.1, 'sine', .03, w, 0, .9); }
+    if (!(st % 2)) tone(PENTA[[0, 2, 3, 1][k] + st / 2] * (musBar & 4 ? 2 : 1), 1.6, 'triangle', .032, w, 0, .08);
+    if (st === 5 && Math.random() < .4) { tone(1046.5, .06, 'sine', .03, w, 1318.5, .005); tone(1174.7, .07, 'sine', .03, w + .1, 1396.9, .005); }
+  }],
+  // bedtime: very slow and quieter; every other bar three long notes fall down the scale
+  bed: [.8, 4, (st, w) => {
+    if (!st) { tone(musBass[musBar % 4], 3.1, 'sine', .06, w, 0, .9); musIdx = pick([4, 5, 6, 7]); }
+    if (!(musBar % 2) && st < 3) tone(PENTA[musIdx - st], 2, 'sine', .028, w, 0, .15);
+  }],
+  // a birthday or a finale: oom-pah (C F G C) under a bouncy tune in a skipping rhythm; every fourth bar ends with a whee
+  party: [.25, 8, (st, w) => {
+    const k = musBar % 4;
+    if (!(st % 4)) tone([130.8, 87.3, 98, 130.8][k], .3, 'triangle', .1, w, 0, .01);
+    else if (st % 4 === 2) for (const f of [[261.6, 329.6], [220, 261.6], [196, 293.7], [261.6, 329.6]][k]) tone(f, .15, 'triangle', .03, w, 0, .01);
+    if ('x.xx.xx.'[st] === 'x') tone(musWalk(2, 7), .25, 'triangle', .045, w, 0, .01);
+    if (k === 3 && st === 6) tone(523.3, .5, 'sine', .045, w, 1046.5, .02);
+  }],
+  // the fishing day: a light morning tune in G major pentatonic at a walking pace; the bass steps from root to fifth
+  day: [.34, 8, (st, w) => {
+    const r = [98, 82.4, 110, 146.8][musBar % 4];   // G Em Am D
+    if (!(st % 4)) tone(st ? r * 1.5 : r, .9, 'sine', .08, w, 0, .05);
+    if (Math.random() < (st % 2 ? .3 : .7)) tone(musWalk() * 1.5, .5, 'triangle', .04, w, 0, .02);
+  }],
+  // at a fishing spot the water's own sounds lead: one soft low note, six to ten seconds apart
+  water: [.5, 6, (st, w) => {
+    if (--musWait > 0) return;
+    musWait = 12 + (Math.random() * 9 | 0);   // in half-second steps
+    tone(pick([146.8, 164.8, 196, 220]), 3, 'sine', .05, w, 0, .8);   // D E G A, from the day's scale, below its tune
+  }],
+};
+const music = { mood(name) { musWant = Object.prototype.hasOwnProperty.call(MUS, name) ? name : 'night'; } };
+function musicTick() {
+  if (S.mute || !AC || AC.state !== 'running') return;
+  const now = AC.currentTime;
+  if (musNext < now) musNext = now + .1;   // after a pause the music goes on from now; it never catches up
+  while (musNext < now + .6) {
+    if (!musSt && musCur !== musWant) { musCur = musWant; musBar = musWait = 0; }
+    const [step, steps, play] = MUS[musCur];
+    play(musSt, musNext - now);
+    musNext += step;
+    if (++musSt >= steps) { musSt = 0; musBar++; }
+  }
 }
 // ---------- Art: every picture is drawn here with canvas shapes; no image files ----------
 function starPath(c, x, y, R, r, n) {
@@ -847,6 +941,7 @@ function audioOn() {
       AC = new (window.AudioContext || window.webkitAudioContext)();
       master = AC.createGain(); master.gain.value = S.vol * .6; master.connect(AC.destination);
       emit('audio');   // the ambience starts as soon as there is a context
+      setInterval(musicTick, 200);   // and the day's tune (../src/33-music.js, shared with The Night Watch)
     }
     if (AC.state === 'suspended') AC.resume();
   } catch (e) { AC = null; }
@@ -1130,6 +1225,7 @@ css(`
 .map-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 1px; margin-top: .3em; }
 .map-leg { display: inline-flex; align-items: center; justify-content: center; gap: .3em; margin-top: .2em; font-size: max(11px, .85em); }
 #mapAll[aria-pressed=true] { background: #f2b93b; border-color: #fff3c4; }
+.pill.lan-all { background: #f2b93b; border-color: #fff3c4; color: #2a1c05; }
 `);
 
 Object.assign(L, {
@@ -1147,6 +1243,10 @@ Object.assign(L, {
   map_here: ['You are at {p}.', 'Ты здесь: {p}.', 'Sei qui: {p}.'],
   map_hint: ['Tap a place to walk there.', 'Нажми на место, и пойдём туда.', 'Tocca un posto per andarci.'],
   map_new: ['A new way is open: {a}!', 'Открылся новый путь: {a}!', 'Si è aperta una nuova strada: {a}!'],
+  // lanterns: one lights up for every Night of the Night Watch without a lost jar
+  lan_pill: ['Lanterns lit', 'Горят фонари', 'Lanterne accese'],
+  lan_on: ['This lantern lit up on a Night when no jar was lost!', 'Этот фонарь зажёгся в ночь, когда не пропала ни одна банка!', 'Questa lanterna si è accesa in una Notte senza barattoli persi!'],
+  lan_off: ['Keep every jar safe one Night, and a lantern lights up here!', 'Сбереги ночью все банки — и здесь загорится фонарь!', 'Tieni al sicuro tutti i barattoli per una Notte, e qui si accende una lanterna!'],
 });
 
 // Boat paints (S.look.boat, the paint goods' `col`): plain wood, red, blue, green, yellow, violet. Shared with the shop and the waters.
@@ -1284,7 +1384,7 @@ function mapGo(id) {
 }
 function mapUpdateTrip(dt) {
   const rt = mapRt;
-  rt.d += rt.speed * (rt.legs[rt.li].water ? 1.15 : 1) * dt;
+  rt.d += rt.speed * (rt.legs[rt.li].water ? 1.15 : 1) * (lanFast(rt.legs[rt.li]) ? 1.4 : 1) * dt;
   while (rt.d >= rt.legs[rt.li].len) {
     rt.d -= rt.legs[rt.li].len;
     if (++rt.li >= rt.legs.length) return mapArrive();
@@ -1902,6 +2002,72 @@ function mapDrawMe(c, t) {
   chief(c, x, y, s, t, { dir: mapMe.dir, pose: moving ? 'walk' : 'stand' });
 }
 
+// ----- Lanterns on the ways: every Night of The Night Watch without a lost jar lights one (that game's save, `lit`) -----
+// 24 posts stand beside the ways: the way to the pond first, then outward ring by ring, so the light spreads to every water.
+// A post stands 12 units to one side of its way, at a share of its length ([from, to, share, side]: side 1 is on the right
+// going from `from` to `to`). Each post lights its own stretch: the part of its way that is nearer to it than to any other
+// post of that way. The Chief walks (or paddles) a lit stretch 1.4 times as fast.
+const LAN = [['tree', 'pond', .75, 1], ['tree', 'js', .45, -1], ['tree', 'jw', .7, -1], ['tree', 'jn', .8, 1], ['jw', 'creek', .5, 1],
+  ['tree', 'js', .8, 1], ['jw', 'jh', .25, 1], ['pond', 'je', .4, -1], ['jn', 'ice', .15, 1], ['js', 'jsh', .35, 1], ['pond', 'je', .8, -1],
+  ['jw', 'jh', .85, 1], ['js', 'jsh', .8, -1], ['jn', 'ice', .45, 1], ['je', 'mill', .45, 1], ['jh', 'falls', .45, 1], ['jsh', 'land', .5, -1],
+  ['jn', 'ice', .68, 1], ['jh', 'chapel', .2, 1], ['land', 'reef', .3, 1], ['jh', 'chapel', .5, 1], ['land', 'reef', .65, 1],
+  ['jh', 'chapel', .8, 1], ['reef', 'deep', .7, 1]].map(([a, b, f, side], i) => {
+  const e = MAP_EDGES.find(q => q.a === a && q.b === b), g = mapLeg(e.pts), d = f * g.len, p = e.pts;
+  let j = 0;
+  while (j < g.cum.length - 2 && g.cum[j + 1] <= d) j++;
+  const dx = p[j * 2 + 2] - p[j * 2], dy = p[j * 2 + 3] - p[j * 2 + 1], l = Math.hypot(dx, dy), k = (d - g.cum[j]) / l;
+  return { i, e, x: p[j * 2] + dx * k - dy / l * side * 12, y: p[j * 2 + 1] + dy * k + dx / l * side * 12 };
+});
+const LAN_WAY = {};   // 'from|to' -> the posts of that way, either way round
+for (const q of LAN) for (const k of [q.e.a + '|' + q.e.b, q.e.b + '|' + q.e.a]) (LAN_WAY[k] || (LAN_WAY[k] = [])).push(q);
+let lanOn = 0, lanMsg = null;   // how many posts are lit (read each time the map opens); the last toast a post showed
+const lanLit = q => q.i < lanOn;
+// The stretch under the Chief is lit when the nearest post of the way being walked is lit.
+function lanFast(leg) {
+  let best = null, bd = 1e9;
+  for (const q of LAN_WAY[leg.from + '|' + leg.to] || []) { const d = Math.hypot(q.x - mapMe.x, q.y - mapMe.y); if (d < bd) { bd = d; best = q; } }
+  return !!best && lanLit(best);
+}
+// A post: pole, roof and lantern. Lit: a flame, short rays and a soft glow; unlit: an empty grey lantern with a crossbar.
+// With every post lit each one sparkles now and then (a still star with reduced motion). Larger on the whole map, so it shows.
+// The posts are drawn in every frame of the map, so nothing here makes an array: the rays' directions are a table.
+const LAN_RAY = new Float64Array([-2.3, -.84, -3, -.14, 2.6, .54].flatMap(a => [Math.cos(a), Math.sin(a)]));
+function lanDraw(c, t) {
+  const S2 = mapSprites(), calmly = still(), s = Math.max(1, .5 / mapCam.k), all = lanOn >= LAN.length;
+  c.lineCap = c.lineJoin = 'round';
+  for (const q of LAN) {
+    const x = q.x, y = q.y, ly = y - 25 * s, on = lanLit(q);
+    if (on) mapGlow(c, S2.lamp, x, ly, 36 * s, calmly ? .62 : .56 + .08 * Math.sin(t * 2 + q.i));
+    ell(c, x, y, 7 * s, 2.4 * s, q.e.kind === 'water' ? 'rgba(232,246,255,.6)' : 'rgba(0,0,0,.25)');   // a shadow, or a ring of water round a post in the sea
+    c.beginPath(); c.moveTo(x, y); c.lineTo(x, ly + 6 * s); c.lineWidth = 2.8 * s; c.strokeStyle = '#4a3020'; c.stroke();
+    rr(c, x - 5 * s, ly - 6 * s, 10 * s, 12 * s, 2 * s); c.fillStyle = on ? '#ffe9a3' : '#6b717d'; c.fill();
+    c.lineWidth = 1.6 * s; c.strokeStyle = on ? '#7a4e22' : '#2f333c'; c.stroke();
+    c.beginPath(); c.moveTo(x - 7.5 * s, ly - 5 * s); c.lineTo(x, ly - 12 * s); c.lineTo(x + 7.5 * s, ly - 5 * s); c.closePath(); c.fillStyle = on ? '#7a4e22' : '#3d424c'; c.fill();
+    if (!on) { c.beginPath(); c.moveTo(x - 5 * s, ly); c.lineTo(x + 5 * s, ly); c.lineWidth = 1.2 * s; c.strokeStyle = '#2f333c'; c.stroke(); continue; }
+    ell(c, x, ly + 1.5 * s, 2.6 * s, 4 * s, '#ff9a3a'); ell(c, x, ly + 2.5 * s, 1.2 * s, 2 * s, '#fff3c4');
+    c.beginPath();
+    for (let r = 0; r < 12; r += 2) { const cx = LAN_RAY[r], cy = LAN_RAY[r + 1]; c.moveTo(x + cx * 11 * s, ly + cy * 11 * s); c.lineTo(x + cx * 16 * s, ly + cy * 16 * s); }
+    c.lineWidth = 1.8 * s; c.strokeStyle = '#ffe9a3'; c.stroke();
+    if (!all) continue;
+    const k = (t * .25 + mapHash(q.i + 900)) % 1, a = calmly ? 1 : k < .16 ? Math.sin(k / .16 * Math.PI) : 0;
+    if (a > .02) { c.globalAlpha = a; starPath(c, x + 11 * s, ly - 13 * s, 5.5 * s, 1.6 * s, 4); c.fillStyle = '#fffbe8'; c.fill(); c.globalAlpha = 1; }
+  }
+}
+// A tap on a post that is nearer than `beat` (the nearest place's distance): what lit it, or what would. True when it took
+// the tap. A new word replaces the last one.
+function lanTap(x, y, beat) {
+  const s = Math.max(1, .5 / mapCam.k);
+  let best = null, bd = Math.min(beat, Math.max(26, 16 * s * mapCam.k));
+  for (const q of LAN) { const d = Math.hypot(mapSX(q.x) - x, mapSY(q.y - 20 * s) - y); if (d < bd) { bd = d; best = q; } }
+  if (!best) return false;
+  const on = lanLit(best);
+  if (on) sfx.sparkle(); else sfx.click();
+  if (lanMsg) lanMsg.remove();
+  toast(t(on ? 'lan_on' : 'lan_off'), 3000);
+  lanMsg = ui.lastElementChild;
+  return true;
+}
+
 // ----- The scene -----
 scenes.map = {
   enter() {
@@ -1919,7 +2085,10 @@ scenes.map = {
     this.sig = sig;
     mapFit();
     mapAim(-1);
-    hud(() => go('home'), `<button class="btn round" id="mapAll" aria-pressed="${mapCam.all}" aria-label="${esc(t(mapCam.all ? 'map_me' : 'map_all'))}">${ic('mapI', 30)}</button>`, { home: true });
+    lanOn = Math.min(LAN.length, clamp(nwSave.lit | 0, 0, 999));
+    const lanAll = lanOn >= LAN.length;
+    hud(() => go('home'), `<button class="btn round" id="mapAll" aria-pressed="${mapCam.all}" aria-label="${esc(t(mapCam.all ? 'map_me' : 'map_all'))}">${ic('mapI', 30)}</button>` +
+      `<span class="pill${lanAll ? ' lan-all' : ''}" id="lanPill" role="img" aria-label="${esc(t('lan_pill'))}: ${lanOn}/${LAN.length}">${ic(lanAll ? 'lanAll' : 'lamp', 22)}<b>${lanOn}/${LAN.length}</b></span>`, { home: true });
     $('#mapAll').onclick = mapToggle;
     add(`<div class="bar map-bar"><button class="btn go" id="mapGo"></button></div>`);
     $('#mapGo').onclick = () => { if (S.at === 'tree') { sfx.pop(); go('hub'); } else mapFish(S.at); };
@@ -1957,6 +2126,7 @@ scenes.map = {
     }
     c.save(); c.translate(ox, oy); c.scale(k, k);
     mapLife(c, V.t);
+    lanDraw(c, V.t);
     c.restore();
     mapPlaques(c);
     mapDrawMe(c, V.t);
@@ -1972,12 +2142,13 @@ scenes.map = {
     const d = mapDrag;
     mapDrag = null;
     if (!d || d.moved || cancelled) return;
-    // a plaque or a place under the finger (the nearest place within reach)
+    // a plaque, or what is nearest under the finger: a place within reach, or a lantern post nearer still
     let id = '';
     for (let i = mapHits.length - 1; i >= 0 && !id; i--) { const h = mapHits[i]; if (h.id && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) id = h.id; }
     if (!id) {
       let best = mapCam.all ? 30 : 46;
       for (const p of MAP_PLACES) { const [sx, sy] = mapScreen(p), dd = Math.hypot(sx - x, sy - 12 - y); if (dd < best) { best = dd; id = p; } }
+      if (lanTap(x, y, id ? best : 1e9)) return;
     }
     if (id) mapTap(id);
   },
@@ -2001,6 +2172,8 @@ ICON.mapFish0 = c => {
   c.beginPath(); c.moveTo(.4, 0); c.lineTo(.95, -.5); c.lineTo(.95, .5); c.closePath(); c.ellipse(-.15, 0, .75, .5, 0, 0, TAU);
   c.fillStyle = 'rgba(0,0,0,.25)'; c.fill(); c.setLineDash([.16, .12]); c.lineWidth = .1; c.strokeStyle = 'rgba(255,255,255,.7)'; c.stroke(); c.setLineDash([]);
 };
+// The lantern pill once every post is lit: the lamp with a star.
+ICON.lanAll = c => { ICON.lamp(c); starPath(c, .6, -.62, .42, .16, 4); c.fillStyle = '#fff'; c.fill(); c.lineWidth = .07; c.strokeStyle = '#b07a00'; c.stroke(); };
 // ---------- The fish: 85 species in nine waters, each water a small world of its own ----------
 // Every species is written with `fishDef(area, id, names, notes, stats, extra)`, which hands the contract's props to defFish.
 // stats, in this order: [rar, minGrams, maxGrams, size, depth, act, food, move, bite, fakes, stam, pull, speed, jump, dive, pay]
@@ -2716,6 +2889,21 @@ ICON.fishI = (c, id, mode) => {
 // Prices follow the fish: the ordinary catches of one water pay for the next water's kit (a rod, a line, a reel)
 // in roughly 15 to 25 catches. `tier` is the angler rank that opens a thing in the shop.
 // `art` is only read by the icon below.
+Object.assign(L, {
+  // lures from the Night Watch: one for each silly gadget that stands on the treehouse (nwlSync below); names, then where they come from
+  nwl_peel: ['Banana-peel spinner', 'Банановая вертушка', 'Rotante buccia di banana'],
+  nwl_peelD: ['A gift from the banana peel on the treehouse. Yours while it stays there.', 'Подарок от банановой кожуры на домике. Твоя, пока кожура на месте.', 'Un regalo della buccia di banana sulla casa sull\'albero. È tuo finché la buccia resta lì.'],
+  nwl_tramp: ['Springy hopper', 'Прыгунок на пружинке', 'Saltarello a molla'],
+  nwl_trampD: ['A gift from the trampoline on the treehouse. Yours while it stays there.', 'Подарок от батута на домике. Твой, пока батут на месте.', 'Un regalo del tappeto elastico sulla casa sull\'albero. È tuo finché il tappeto resta lì.'],
+  nwl_tickle: ['Tickle-feather fly', 'Муха-щекоталка', 'Mosca solletico'],
+  nwl_tickleD: ['A gift from the tickle feather on the treehouse. Yours while it stays there.', 'Подарок от пера-щекоталки на домике. Твоя, пока перо на месте.', 'Un regalo della piuma del solletico sulla casa sull\'albero. È tua finché la piuma resta lì.'],
+  nwl_bubbler: ['Bubble popper', 'Пузырьковый поппер', 'Popper a bolle'],
+  nwl_bubblerD: ['A gift from the bubble machine on the treehouse. Yours while it stays there.', 'Подарок от машинки для пузырей на домике. Твой, пока машинка на месте.', 'Un regalo della macchina delle bolle sulla casa sull\'albero. È tuo finché la macchina resta lì.'],
+  nwl_cannon: ['Confetti spoon', 'Блесна-конфетти', 'Ondulante a coriandoli'],
+  nwl_cannonD: ['A gift from the confetti cannon on the treehouse. Yours while it stays there.', 'Подарок от пушки с конфетти на домике. Твоя, пока пушка на месте.', 'Un regalo del cannone di coriandoli sulla casa sull\'albero. È tuo finché il cannone resta lì.'],
+  nwl_disco: ['Disco spinner', 'Диско-вертушка', 'Rotante da discoteca'],
+  nwl_discoD: ['A gift from the disco ball on the treehouse. Yours while it stays there.', 'Подарок от диско-шара на домике. Твоя, пока шар на месте.', 'Un regalo della palla da discoteca sulla casa sull\'albero. È tuo finché la palla resta lì.'],
+});
 
 // Rods: a power line (reach, and tiring a fish) and a finesse line (a wider safe band, a better hook hold).
 defItem('rod0', ['Hazel rod', 'Ореховая удочка', 'Canna di nocciolo'], ['Your first rod. Bends nicely, forgives a lot.', 'Твоя первая удочка. Гнётся мягко, прощает многое.', 'La tua prima canna. Si piega bene e perdona molto.'],
@@ -2829,6 +3017,18 @@ defLure('squallspoon', ['Squall spoon', 'Шквальная блесна', 'Ondu
   5, 500, 3, 1, 2, 'shiny', { s: 'spoon', col: '#ffe36b' }, { lit: true, craft: 'stormKeeper' });
 defLure('candle', ['Chapel candle', 'Свеча часовни', 'Candela della cappella'], ['A small light that sinks and waits. Patience.', 'Маленький огонёк тонет и ждёт. Терпение.', 'Una piccola luce che affonda e aspetta. Pazienza.'],
   7, 900, 2, 2, 0, 'glow', { s: 'candle', col: '#fff3c4' }, { glow: true, lit: true, craft: 'bellTolls' });
+// Lures from the Night: every silly gadget that stands on the Night Watch's treehouse (nwSave.items) puts its own novelty lure
+// in the tackle box, free and never used up, for as long as it stands there. Each fishes exactly like the shop lure it copies
+// (`like`), at tier 0 and without a price: free things never get a buy button, so none of them is for sale.
+const NWL = [['peel', 'spinner', '#ffd93b'], ['tramp', 'jig', '#58a6ff'], ['tickle', 'nymph', '#ff9ecb'], ['bubbler', 'popper', '#7fc8ff'], ['cannon', 'spoon', '#a47be8'], ['disco', 'lampspin', '#dfe6f5']]
+  .map(([g, like, col]) => { const o = ITEMS[like]; defLure('nwl_' + g, L['nwl_' + g], L['nwl_' + g + 'D'], 0, 0, 0, o.depth, o.act, o.food, { s: o.art.s, col }, { free: true, glow: o.glow, lit: o.lit, nw: g, like }); return ITEMS['nwl_' + g]; });
+// Puts in the lures whose gadget is on the tree and takes out the others: once at load, before the boot repair (which ties the
+// worm back on when the rig's lure has gone), and again by a test. The other game's save may hold anything: only `t` is read.
+function nwlSync() {
+  const on = new Set((Array.isArray(nwSave && nwSave.items) ? nwSave.items : []).map(x => x && x.t));
+  for (const it of NWL) if (on.has(it.nw)) ITEMS[it.id] = it; else delete ITEMS[it.id];
+}
+nwlSync();
 
 // Expedition gear. The shop only offers a thing once it can be used (see `offered` in 80-hub.js).
 defItem('boat', ['The boat', 'Лодка', 'La barca'], ['Takes you out to Stormbreak Reef and the Lantern Deep.', 'Отвезёт тебя к Штормовому рифу и в Фонарную бездну.', 'Ti porta alla Scogliera delle Tempeste e all\'Abisso delle Lanterne.'],
@@ -2884,6 +3084,20 @@ const LURE_SHAPE = {
   lantern: (c, a) => { line(c, [0, -.95, 0, -.55], '#8a94a8', .06); ell(c, 0, -.05, .42, .5, a.col); ell(c, 0, -.05, .2, .26, '#fff'); rr(c, -.25, .42, .5, .14, .05); c.fillStyle = '#16323a'; c.fill(); lureHook(c, 0, .56, .9); },
   candle: (c, a) => { rr(c, -.25, -.25, .5, .9, .08); c.fillStyle = a.col; c.fill(); ell(c, 0, -.48, .13, .22, '#ff9a3a'); ell(c, 0, -.44, .06, .11, '#fff3c4'); line(c, [-.35, .65, .35, .65], '#8a94a8', .08); lureHook(c, 0, .65, .8); },
 };
+// What each gadget adds to its lure's picture, then the sticker every lure from the Night carries: a gold treehouse on a night-blue dot.
+const NWL_ART = {
+  peel: c => { ell(c, -.25, -.28, .2, .07, '#fff3a8', -.5); line(c, [.03, -.43, .13, -.56], '#8a6a1a', .09); },
+  tramp: c => line(c, [-.24, .06, -.1, .4, .04, .12, .18, .44, .32, .16, .46, .48], '#dfe6f5', .07),
+  tickle: c => { c.save(); c.translate(.62, -.48); c.rotate(.9); ell(c, 0, 0, .15, .42, '#ff9ecb'); line(c, [0, -.4, 0, .5], '#d8508a', .05); c.restore(); },
+  bubbler: c => { c.lineWidth = .06; c.strokeStyle = '#fff'; for (const [x, y, r] of [[.45, -.6, .16], [.8, -.82, .1], [.12, -.8, .08]]) { c.beginPath(); c.arc(x, y, r, 0, TAU); c.stroke(); } },
+  cannon: c => [['#ff8a7a', .45, -.72], ['#ffd24a', .85, -.62], ['#6fdc95', .1, -.85], ['#58a6ff', -.3, .7], ['#ff9ecb', .9, .6]].forEach(([col, x, y], i) => { c.save(); c.translate(x, y); c.rotate(i); c.fillStyle = col; c.fillRect(-.08, -.08, .16, .16); c.restore(); }),
+  disco: c => { for (const [x, y, col] of [[-.38, -.2, '#ff8a7a'], [-.25, -.28, '#ffd24a'], [-.12, -.36, '#58a6ff']]) circ(c, x, y, .05, col); for (const [x, y, r] of [[-.05, -.72, .17], [-.6, .5, .13]]) { starPath(c, x, y, r, r * .3, 4); c.fillStyle = '#fff'; c.fill(); } },
+};
+function nwlArt(c, g) {
+  NWL_ART[g](c);
+  circ(c, -.72, -.72, .27, '#1b2a6b'); c.lineWidth = .06; c.strokeStyle = '#ffd86b'; c.stroke();
+  poly(c, [-.85, -.6, -.85, -.73, -.72, -.86, -.59, -.73, -.59, -.6], '#ffd86b');
+}
 const GOODS_ART = {
   rod: (c, it) => {
     const a = it.art;
@@ -2918,6 +3132,7 @@ const GOODS_ART = {
     if (it.lit) glow(c, 0, 0, 1, '255,216,107', .6);
     (LURE_SHAPE[a.s] || LURE_SHAPE.ball)(c, a);
     if (it.lit && a.s !== 'candle' && a.s !== 'lantern') { circ(c, .62, -.62, .2, '#fff3c4'); circ(c, .62, -.62, .1, '#ffb02e'); }   // the little lamp of a lit lure
+    if (it.nw) nwlArt(c, it.nw);
   },
   gear: (c, it) => {
     const fx = it.fx;
@@ -6370,7 +6585,7 @@ defTro('wealth', 'item:spinner', 'firstBuy', ['Good Customer', 'Хороший �
 defTro('wealth', 'moon', 'fullPurse', ['Full Purse', 'Полный кошелёк', 'Borsellino pieno'], ['Have 1000 moons in your purse at once.', 'Накопи в кошельке 1000 лун.', 'Metti insieme 1000 lune nel borsellino.'],
   { moons: 50, on: 'moons', ok: () => S.moons >= 1000 });
 defTro('wealth', 'item:minnow', 'lureLibrary', ['Lure Library', 'Библиотека приманок', 'Biblioteca di esche'], ['Own 10 different lures.', 'Собери 10 разных приманок.', 'Colleziona 10 esche diverse.'],
-  { item: 'minnow', on: ['buy', 'catch'], ok: () => Object.values(ITEMS).filter(i => i.kind === 'lure' && (i.free || owns(i.id))).length >= 10 });   // 'catch': a lure may arrive as a trophy's reward
+  { item: 'minnow', on: ['buy', 'catch'], ok: () => Object.values(ITEMS).filter(i => i.kind === 'lure' && (i.free && !i.nw || owns(i.id))).length >= 10 });   // 'catch': a lure may arrive as a trophy's reward; lures from the Night are only lent
 defTro('wealth', 'item:rodp4', 'fullyRigged', ['Fully Rigged', 'Полный арсенал', 'Attrezzatura completa'], ['Own every rod.', 'Собери все удочки.', 'Colleziona tutte le canne.'],
   { moons: 1000, on: 'buy', ok: () => Object.values(ITEMS).every(i => i.kind !== 'rod' || owns(i.id)) });
 defTro('wealth', 'cake', 'oldBiscuit', ['Old Biscuit', 'Старый Сухарик', 'Vecchio Biscotto'], ['Beat your own record with {biscuit}.', 'Побей свой рекорд: {biscuit}.', 'Batti il tuo record: {biscuit}.'],
@@ -6466,7 +6681,8 @@ ICON.ach = (c, id) => {
   const look = obj(S.look);
   S.look = { col: int(look.col, 0, 5), hat: has(WEAR, look.hat) && WEAR[look.hat].hat ? look.hat : '', boat: int(look.boat, 0, 5) };
   const log = obj(S.log); S.log = {};
-  for (const id in log) if (has(SPECIES, id)) { const e = obj(log[id]); S.log[id] = { n: int(e.n, 0, 1e6), best: int(e.best, 0, 1e7), seen: e.seen ? 1 : 0, id: e.id ? 1 : 0, fast: e.fast ? 1 : 0, lure: has(ITEMS, e.lure) ? e.lure : undefined, depth: e.depth === undefined ? undefined : int(e.depth, 0, 2) }; }
+  // (a favourite lure that was lent by a gadget of the Night Watch and has gone with it becomes the shop lure it copied)
+  for (const id in log) if (has(SPECIES, id)) { const e = obj(log[id]); S.log[id] = { n: int(e.n, 0, 1e6), best: int(e.best, 0, 1e7), seen: e.seen ? 1 : 0, id: e.id ? 1 : 0, fast: e.fast ? 1 : 0, lure: has(ITEMS, e.lure) ? e.lure : (NWL.find(it => it.id === e.lure) || {}).like, depth: e.depth === undefined ? undefined : int(e.depth, 0, 2) }; }
   const own = obj(S.own); S.own = { rod0: 1, line0: 1, reel0: 1 };
   for (const id in own) if (has(ITEMS, id)) S.own[id] = int(own[id], 0, 999);
   const ach = obj(S.ach); S.ach = {};
@@ -6482,7 +6698,14 @@ ICON.ach = (c, id) => {
 })();
 resize();
 // After a good day's fishing the map says, once, that evening is near; the treehouse then leads back to the Night Watch.
-on('catch', () => { dayCatch++; });
+// The day leaves a note for the owl in the shared storage (how many fish, and which day it was): three fish or more are
+// supper, and supper sharpens the owl's eyes for tonight's Gate Check. At the third fish the note's id moves on by one, so
+// that a note the owl read too early (a look at the Night Watch and back) still becomes supper.
+const dayId = Date.now();
+on('catch', () => {
+  dayCatch++;
+  if (day) try { localStorage.setItem('firstlight.day' + (nwSlot ? '.' + (nwSlot + 1) : ''), JSON.stringify({ id: dayId + (dayCatch >= 3), n: dayCatch })); } catch (e) { /* nothing can be saved here */ }
+});
 on('enter', d => { if (day && d && d.home && dayCatch >= 5 && !dayTold) { dayTold = true; toast(t('day_low'), 3200); } });
 // By day (from the Night Watch) the Chief is already on the way: no title screen, straight to the map.
 go(day ? 'map' : 'home');

@@ -1,4 +1,10 @@
 // ---------- Station two: Gate Check (two checks before trust: the password AND the badge) ----------
+// The owl's eye: an almond eye with an owl's amber iris.
+ICON.eyeI = c => {
+  c.beginPath(); c.moveTo(-.95, 0); c.quadraticCurveTo(0, -.95, .95, 0); c.quadraticCurveTo(0, .95, -.95, 0); c.closePath();
+  c.fillStyle = '#fff6da'; c.fill(); c.lineWidth = .12; c.strokeStyle = '#2a1c05'; c.stroke();
+  circ(c, 0, 0, .36, '#f2a93b'); circ(c, 0, 0, .17, '#2a1c05'); circ(c, .12, -.13, .08, '#fff');
+};
 const GSYM = ['moon', 'berry', 'star', 'leaf', 'acorn', 'mushroom', 'feather', 'flower'];
 // Build tonight's queue. Friends always have both right; every trickster has at least one thing wrong.
 function gateQueue(n, pass, badge) {
@@ -43,22 +49,47 @@ scenes.gate = {
       patience: n >= 3 ? (15 - Math.min(n, 8) * .8) * (count('bell') ? 1.35 : 1) : 1e9 });
     hud(() => go('hub'), `<span class="pill" id="pGate">${ic('yes', 20)}<span><b>0</b>/${this.q.length}</span></span>`);
     const lab = s => `<span class="lab">${ic(s, 34)}${esc(t(s))}</span>`;
-    add(`<div class="ref"><span class="lab">${esc(t('pass'))}</span>${this.pass.map(lab).join('')}<span class="sep"></span>
+    this.ref = add(`<div class="ref"><span class="lab">${esc(t('pass'))}</span>${this.pass.map(lab).join('')}<span class="sep"></span>
       <span class="lab">${ic(`badge:${this.badge.shape}:${this.badge.style}`, 40)}${esc(t('badge'))}</span></div>`);
     const b = add(`<div class="bar gatebtns"><button class="btn go" id="bIn">${ic('yes', 30)}${esc(t('letIn'))}</button>
       <button class="btn no" id="bOut">${ic('no', 30)}${esc(t('shoo'))}</button></div>`);
     $('#bIn', b).onclick = () => this.decide(true);
     $('#bOut', b).onclick = () => this.decide(false);
+    // the owl's eye: a round button beside the reference card while there is an eye to use (added before the dialog, so it is inert
+    // under it). It stands alone in the overlay, which lets taps through to the canvas: the button takes its own taps back.
+    this.eyeB = S.eye > 0 ? add(`<button class="btn round gold" id="bEye" style="position:absolute;pointer-events:auto" aria-label="${esc(t('eye_btn'))}">${ic('eyeI', 34)}</button>`) : null;
+    if (this.eyeB) { this.eyeB.onclick = () => this.eyeUse(); this.resize(); }
     owlSay(t('gateIntro'), { html: picsHtml([`badge:${this.badge.shape}:${this.badge.style}`, ...this.pass]), acts: [{ label: t('go'), cls: 'go', icon: 'play', fn: () => { this.run = true; this.at = V.t; } }] });
   },
   key(e) { if (e.key === 'ArrowLeft') this.decide(true); if (e.key === 'ArrowRight') this.decide(false); },
+  // One close look of the owl's at the visitor who waits: the wrong thing gets a ring (the badge first), a friend gets two ticks.
+  // The owl only points; the Chief still decides. Between visitors a tap does nothing and costs nothing; a second tap repeats the words.
+  eyeUse() {
+    const v = this.q[this.i];
+    if (!this.run || this.state !== 'ask' || S.eye < 1) return;
+    if (!v.eye) {
+      const same = k => v.badge && v.badge[k] === this.badge[k];
+      v.eye = !same('shape') || !same('style') ? 'badge' : v.pass.join() !== this.pass.join() ? 'pass' : 'ok';
+      S.eye--; save(); sfx.sparkle();
+      if (!S.eye && this.eyeB) { this.eyeB.remove(); this.eyeB = null; }
+    }
+    say(t('eye_' + v.eye)); speak(t('eye_' + v.eye));
+  },
+  // The eye's button stands beside the reference card: under it in portrait, to its left in landscape. There it covers
+  // neither the visitor nor the password bubble nor the two answers.
+  resize() {
+    if (!this.eyeB) return;
+    const r = this.ref.getBoundingClientRect(), u = ui.getBoundingClientRect(), st = this.eyeB.style;
+    if (wide()) { st.left = r.left - u.left - 60 + 'px'; st.top = r.top - u.top + 'px'; }
+    else { st.left = r.right - u.left - 52 + 'px'; st.top = r.bottom - u.top + 8 + 'px'; }
+  },
   decide(letIn) {
     if (!this.run || this.state !== 'ask') return;
     const v = this.q[this.i], ok = letIn === v.friend;
     v.letIn = letIn; this.state = 'out'; this.at = V.t;
     if (ok) {
       this.correct++; this.streak++;
-      letIn ? sfx.yes() : sfx.squawk();
+      if (letIn) sfx.yes(); else { sfx.squawk(); pieCaught(); }   // a trickster turned away kindly counts towards a new friend
       burst(V.w / 2, this.gy() - 80, letIn ? 14 : 10, letIn ? { speed: 160 } : { kind: 'feather', color: '#8fd08a', speed: 150 });
       // Five right in a row earns a bonus star, once per Night: a reward for steady checking, not for speed.
       const bonus = this.streak === 5 && S.gateStar !== S.night;
@@ -154,5 +185,15 @@ scenes.gate = {
       const ew = ctx.measureText(extra).width + 20, ex = clamp(x + 30 * s, 6, V.w - ew - 6), ey = gy - 40 * s;
       rr(ctx, ex, ey, ew, fs + 14, 10); ctx.fillStyle = '#fff6da'; ctx.fill(); ctx.fillStyle = '#2a1c05'; ctx.textAlign = 'left'; ctx.fillText(extra, ex + 10, ey + fs + 4);
     }
+    if (!v.eye) return;
+    // The owl's close look: a gold ring round the wrong thing, or a tick on each when all is right; its words lie on the ground by the gate.
+    const pu = still() ? 0 : Math.sin(t0 * 5) * 2, ring = () => { ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(7,13,42,.7)'; ctx.stroke(); ctx.lineWidth = 4; ctx.strokeStyle = '#ffd86b'; ctx.stroke(); };
+    if (v.eye === 'badge') { ctx.beginPath(); ctx.arc(bx, by, bs * .62 + 8 + pu, 0, TAU); ring(); }
+    else if (v.eye === 'pass') { rr(ctx, lx - 6 - pu, top - 6 - pu, bw + 12 + pu * 2, bh + 12 + pu * 2, 18); ring(); }
+    else for (const [tx, ty] of [[bx + bs * .55, by - bs * .55], [lx + bw - 2, top + 2]]) { circ(ctx, tx, ty, 12, '#3fae5e'); drawIcon(ctx, 'yes', tx, ty, 16); }
+    const msg = t('eye_' + v.eye), mh = fs + 14, mw = ctx.measureText(msg).width + mh + 14, mx = clamp(gx - 20 * g, 6, V.w - mw - 6);
+    rr(ctx, mx, gy + 6, mw, mh, 10); ctx.fillStyle = '#fff6da'; ctx.fill();
+    drawIcon(ctx, 'eyeI', mx + 5 + mh * .4, gy + 6 + mh / 2, mh * .8);
+    ctx.fillStyle = '#2a1c05'; ctx.textAlign = 'left'; ctx.fillText(msg, mx + mh + 6, gy + fs + 11);
   },
 };

@@ -6,7 +6,8 @@
 // inside an <iframe> of the wanted size; the game sees the iframe as its window.
 const http = require('http'), fs = require('fs'), os = require('os'), path = require('path');
 const { execFileSync, spawn } = require('child_process');
-const root = path.join(__dirname, '..'), page = path.join(os.tmpdir(), 'flf-test.html');
+// each run has a page file of its own, so several runs (from copies of the repository) do not get in each other's way
+const root = path.join(__dirname, '..'), page = path.join(os.tmpdir(), `flf-test-${process.pid}.html`);
 const args = process.argv.slice(2), calm = args.includes('calm'), sizes = args.filter(a => /^\d+,\d+$/.test(a));
 const AUDIT = ['360,640', '640,360', '768,1024', '1280,720'];
 const runs = args.includes('audit') ? (sizes.length ? sizes : AUDIT).map(s => ['audit', s]) : [['smoke', '412,800'], ...AUDIT.map(s => ['audit', s])];

@@ -50,9 +50,11 @@ scenes.album = {
     this.page = o.page === undefined ? Math.max(0, STK_SETS.findIndex(set => set.some(id => S.stk[id] === 1))) : o.page;   // open where something is new
     const have = STK_SETS.flat().filter(id => S.stk[id]).length, set = STK_SETS[this.page];
     const bar = add(`<div class="hud"><button class="btn round" id="aBack" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
-      <span class="pill">${ic('album', 24)}<span class="extra">${esc(t('album'))}</span></span><span class="sp"></span>
+      <span class="pill">${ic('album', 24)}<span class="extra">${esc(t('album'))}</span></span>
+      <button class="btn round" id="aPals" aria-label="${esc(t('palsT'))}">${ic('pals', 30)}</button><span class="sp"></span>
       <span class="pill">${ic('star', 22)}<span><b>${have}</b>/${STK_SETS.flat().length}</span></span></div>`);
     $('#aBack', bar).onclick = () => { sfx.click(); go(this.from); };
+    $('#aPals', bar).onclick = () => { sfx.pop(); go('pals', { from: 'album' }); };   // the friendly magpies have a page of their own
     // Portrait: three stickers in a row; landscape: six. The pictures take the room that is left.
     const cols = wide() ? 6 : 3, rows = Math.ceil(set.length / cols);
     const px = clamp(Math.min((Math.min(V.w, 720) - 16) / cols - 22, (V.h - 150) / rows - 46), 40, 110) | 0;

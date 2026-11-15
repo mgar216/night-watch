@@ -1,14 +1,16 @@
 // ---------- Tinker Treehouse and raids: design, test, watch, improve ----------
 // Who comes tonight. Better station results mean fewer raiders; the plan is fixed per Night, so a test raid is a fair prediction.
+// From Night 9 the numbers stay at Night 8's and new tricks come instead (src/91-arc.js).
 function raidPlan(n, st) {
-  const routes = n <= 2 ? ['lt', 'rt'] : n <= 4 ? ['lt', 'rt', 'lb', 'rb'] : ['lt', 'rt', 'lb', 'rb', 'sky'];
-  const branch = Math.min(Math.ceil(n / 2) + (3 - st.cam), 7), gate = Math.min(3 - st.gate + (n >= 4 ? 1 : 0), 3), list = [];
+  const c = Math.min(n, 8), routes = c <= 2 ? ['lt', 'rt'] : c <= 4 ? ['lt', 'rt', 'lb', 'rb'] : ['lt', 'rt', 'lb', 'rb', 'sky'];
+  const branch = Math.min(Math.ceil(c / 2) + (3 - st.cam), 7), gate = Math.min(3 - st.gate + (c >= 4 ? 1 : 0), 3), list = [];
   let at = 1;
   for (let i = 0; i < branch; i++) {
-    list.push({ route: routes[((n >= 6 ? i >> 1 : i) + n) % routes.length], at });   // from Night 6 partners share a route
-    at += n >= 4 && i % 2 === 0 ? (n >= 6 ? .9 : .3) : 3.2;   // later Nights: partners arrive together
+    list.push({ route: routes[((c >= 6 ? i >> 1 : i) + n) % routes.length], at });   // from Night 6 partners share a route
+    at += c >= 4 && i % 2 === 0 ? (c >= 6 ? .9 : .3) : 3.2;   // later Nights: partners arrive together
   }
   for (let i = 0; i < gate; i++) list.push({ route: 'lad', at: 2 + i * 3.5 });
+  arcTricks(n, list);
   return list.sort((a, b) => a.at - b.at);
 }
 const covers = (d, key) => {
@@ -17,12 +19,18 @@ const covers = (d, key) => {
   for (let s = 100; s <= p.len; s += 25) { const [x, y] = routeAt(p, s); if (Math.hypot(x - d.x, y - d.y) < d.r) return true; }
   return false;
 };
-function makeRaid(plan, holds) {
-  const at = it => ({ t: it.t, x: MOUNTS[it.m][0], y: MOUNTS[it.m][1], r: ITEMS[it.t].r, cd: 0 });
-  const R = { t: 0, holds, shield: count('shield'), stolen: 0, reached: {}, covered: {}, beams: [], done: false, zipX: 500, zipY: 150,
+// The chosen helper (src/57-pals.js) and the weather of Night n (src/47-season.js) count in test raids too, so a test stays
+// fair. The raid passes its own Night: when it is over the Night has been counted, and the replay must not run in the
+// weather of the next one.
+function makeRaid(plan, holds, n = S.night) {
+  const P = palPerk(), W = nightWeather(n), cd = it => (ITEMS[it.t].cd || 0) * (P === 'post' && (it.t === 'cam' || it.t === 'bell') ? .8 : 1);
+  const at = it => ({ t: it.t, x: MOUNTS[it.m][0], y: MOUNTS[it.m][1], r: ITEMS[it.t].r * (P === 'lamp' && it.t === 'lamp' || P === 'music' && ITEMS[it.t].silly ? 1.2 : 1), cd: 0, cd0: cd(it) });
+  const R = { t: 0, holds: holds + (P === 'guard' ? 1 : 0), shield: count('shield') + (P === 'garden' ? 1 : 0), spd: 1 - (W.slow || 0), wind: W.k === 'wind',
+    stolen: 0, reached: {}, covered: {}, beams: [], done: false, zipX: 500, zipY: 150,
     cams: S.items.filter(i => i.t === 'cam' || i.t === 'bell').map(at), lamps: S.items.filter(i => i.t === 'lamp').map(at),
-    toys: S.items.filter(i => ITEMS[i.t].silly).map(at), fun: [], puffs: [], laughed: 0,
-    mags: plan.map(p => ({ route: p.route, at: p.at, d: 0, state: 'wait', bonked: new Set(), met: new Set(), fx: null, combo: 0, last: -9, carry: false, dizzy: 0 })) };
+    toys: S.items.filter(i => ITEMS[i.t].silly).map(at), arc: S.items.filter(i => ITEMS[i.t].arc).map(at), fun: [], puffs: [], laughed: 0, mags: plan.map(arcRaider) };
+  R.timed = R.cams.concat(R.arc);   // everything that recharges, for the rings the raid draws in every frame
+  if (P === 'baker' && R.mags.length) R.mags[0].at += 5;   // the first magpie stops for a bun
   for (const k in ROUTES) R.covered[k] = R.cams.some(d => covers(d, k));
   return R;
 }
@@ -35,7 +43,7 @@ function prank(R, m, g, x, y) {
   m.combo = R.t - m.last < 3 ? m.combo + 1 : 1; m.last = R.t;
   R.fun.push({ t: R.t, w: m.combo });
   R.puffs.push({ k: g.t, x: g.x, y: g.y - 20, t: 1.2, n: m.combo });
-  if (m.carry) { m.carry = false; m.state = 'sulk'; R.zipX = x; R.zipY = y - 60; sfx.sparkle(); }   // Zip catches the jar and takes it home
+  if (m.carry) { m.carry = false; m.state = 'sulk'; m.home = 1; R.zipX = x; R.zipY = y - 60; sfx.sparkle(); }   // Zip catches the jar and takes it home
   sfx[{ peel: 'slip', tramp: 'boing', tickle: 'giggle', bubbler: 'bubble', cannon: 'bang', disco: 'disco' }[g.t]]();
   buzz(20);
 }
@@ -43,6 +51,7 @@ const STEP = 1 / 60;   // raids run in fixed steps, so the same design always gi
 function stepRaid(R, dt) {
   R.t += dt;
   for (const d of R.cams) d.cd -= dt;
+  for (const d of R.arc) d.cd -= dt;
   for (const b of R.beams) b.t -= dt;
   for (const b of R.puffs) b.t -= dt;
   R.beams = R.beams.filter(b => b.t > 0); R.puffs = R.puffs.filter(b => b.t > 0);
@@ -59,38 +68,42 @@ function stepRaid(R, dt) {
       m.d = clamp(m.d + dt * a.dir * ({ slip: 300, boing: -260, bang: -300 }[a.k] || 0), 1, p.len - 1);
       if (a.t <= 0) {
         m.fx = null; m.dizzy = { slip: 1, boing: .6, bang: .8, bubble: .6 }[a.k] || 0;
-        if (m.met.size >= 3 && m.state === 'go') { m.state = 'flee'; m.happy = true; R.laughed++; }
+        if (m.met.size >= 3 && m.state === 'go') { m.state = 'flee'; m.happy = true; m.home = 1; R.laughed += m.n; }
       }
     } else if (m.dizzy > 0) m.dizzy -= dt;
-    else m.d += dt * 170 * { go: 1, back: -1.15, flee: -3, sulk: -1.3 }[m.state];
-    if (active || m.dizzy > 0 && m.state !== 'flee' && m.state !== 'sulk') {
+    else m.d += dt * 170 * R.spd * (R.wind && m.kind === 'balloon' ? .6 : 1) * { go: 1, back: -1.15, flee: -3, sulk: -1.3 }[m.state];
+    if (m.kind && active && arcStep(R, m, x, y)) continue;   // a trickster meets the gadget that answers it (src/91-arc.js)
+    // `home` marks a magpie sent home without a jar: it counts as caught kindly when a real raid ends
+    if (!arcIgnores(m, 'cam') && (active || m.dizzy > 0 && m.state !== 'flee' && m.state !== 'sulk')) {
       const cam = R.cams.find(d => d.cd <= 0 && (d.t === 'cam' || m.route === 'lad') && Math.hypot(x - d.x, y - d.y) < d.r);
       if (cam) {
-        cam.cd = ITEMS[cam.t].cd; m.state = 'flee'; m.dizzy = 0; m.carry = false; m.fx = null;
+        cam.cd = cam.cd0;
+        if (m.n > 1) arcSplit(R, m, x, y);   // two in a coat: one is caught, the other walks on
+        else { m.state = 'flee'; m.dizzy = 0; m.carry = false; m.fx = null; m.home = 1; }
         R.beams.push({ x1: cam.x, y1: cam.y - 20, x2: x, y2: y - 20, t: .45, bell: cam.t === 'bell' });
         R.zipX = cam.x; R.zipY = cam.y - 60; cam.t === 'bell' ? sfx.ding() : sfx.flash(); sfx.squawk();
         continue;
       }
     }
-    if (active && !m.fx && m.dizzy <= 0) {
+    if (active && !arcIgnores(m, 'lamp') && !m.fx && m.dizzy <= 0) {
       const lamp = R.lamps.find(l => !m.bonked.has(l) && Math.hypot(x - l.x, y - l.y) < l.r);
       if (lamp) { m.bonked.add(lamp); m.dizzy = 2.2; sfx.bonk(); }
     }
-    if (active && !m.fx && m.dizzy <= 0) {
+    if (active && !arcIgnores(m, 'toy') && !m.fx && m.dizzy <= 0) {
       const g = R.toys.find(q => !m.met.has(q) && Math.hypot(x - q.x, y - q.y) < q.r);
       if (g) {
         prank(R, m, g, x, y);
         // a disco ball and a confetti cannon catch everyone in reach at once
-        if (g.t === 'disco' || g.t === 'cannon') for (const q of R.mags) if (q !== m && (q.state === 'go' || q.state === 'back') && !q.fx && !q.met.has(g)) {
+        if (g.t === 'disco' || g.t === 'cannon') for (const q of R.mags) if (q !== m && (q.state === 'go' || q.state === 'back') && !q.fx && !q.met.has(g) && !arcIgnores(q, 'toy')) {
           const [qx, qy] = routeAt(ROUTES[q.route], q.d);
           if (Math.hypot(qx - g.x, qy - g.y) < g.r) prank(R, q, g, qx, qy);
         }
       }
     }
     if (m.state === 'go' && !m.fx && m.d >= p.len) {
-      R.reached[m.route] = (R.reached[m.route] || 0) + 1;
+      R.reached[m.route] = (R.reached[m.route] || 0) + 1; m.reach = 1;
       if (R.holds > 0) { R.holds--; m.state = 'sulk'; sfx.empty(); }
-      else if (R.shield > 0) { R.shield--; m.state = 'flee'; sfx.boing(); }
+      else if (R.shield > 0) { R.shield--; m.state = 'flee'; m.home = 1; sfx.boing(); }
       else if (R.stolen + R.mags.filter(q => q.carry).length < 3) { m.carry = true; m.state = 'back'; sfx.oops(); }
       else m.state = 'sulk';
     }
@@ -103,17 +116,20 @@ function observe(R) {
   if (!S.items.some(i => !ITEMS[i.t].deco)) return t('o_none');
   const hit = Object.keys(R.reached);
   if (!hit.length) return t(R.laughed ? 'o_silly' : 'o_great');
+  const trick = R.mags.find(m => m.reach && m.trick && !m.fixed);   // a trick that worked comes first: the owl names it and its gadget
+  if (trick) return t('o_' + trick.trick);
   const open = hit.find(r => !R.covered[r]);
   if (open === 'lad' && count('bell')) return t('o_bell');
   return t(open ? 'o_route' : 'o_busy', { r: t('r_' + (open || hit[0])) });
 }
 
-// The palette has two pages: defences and decorations, and the silly gadgets. The last button turns the page.
+// The palette has two pages: defences and decorations, and the silly gadgets; from Night 9 a third one with the new gadgets
+// (src/91-arc.js). The last button turns the page and shows the page that comes next.
 const PALETTE = ['cam', 'lamp', 'bell', 'shield', 'banner', 'flowers', 'scope', 'lights'], SILLY = ['peel', 'tramp', 'tickle', 'bubbler', 'cannon', 'disco'];
 scenes.tinker = {
   enter() {
     Object.assign(this, { hand: null, drag: false, px: 0, py: 0, sx: 0, sy: 0, kb: -1, page: this.page || 0 });
-    const bar = add(`<div class="hud"><button class="btn round go" id="tDone" aria-label="${esc(t('done'))}">${ic('yes', 28)}</button><span class="sp"></span>
+    const bar = add(`<div class="hud tbar"><button class="btn round go" id="tDone" aria-label="${esc(t('done'))}">${ic('yes', 28)}</button><span class="sp"></span>${palPill()}
       <button class="btn gold" id="tTest">${ic('pie', 26)}${esc(t('testRaid'))}</button><span class="pill" id="pBeams">${ic('beam', 22)}<b>${S.beams}</b></span></div>`);
     $('#tDone', bar).onclick = () => { sfx.click(); go('hub'); };
     $('#tTest', bar).onclick = () => { sfx.alarm(); go('raid', { test: true }); };
@@ -123,8 +139,11 @@ scenes.tinker = {
     else if (S.tinkered === 1 && S.night >= 2) { S.tinkered = 2; save(); owlSay(t('sillyIntro'), { html: picsHtml(['party', 'peel', 'tramp', 'disco']) }); }
   },
   fill() {
-    this.pal.innerHTML = (this.page ? SILLY : PALETTE).map(k => `<button class="pal" data-k="${k}" aria-label="${esc(t('i_' + k))}, ${ITEMS[k].cost}">${ic(k, 34)}<span>${ic('beam', 14)}${ITEMS[k].cost}</span></button>`).join('') +
-      `<button class="pal more" id="tPage" aria-label="${esc(t(this.page ? 'guards' : 'silly'))}">${ic(this.page ? 'cam' : 'party', 34)}<span>${ic('skipI', 14)}</span></button>`;
+    const pages = [PALETTE, SILLY].concat(arcNew().length ? [arcNew()] : []);
+    this.page %= pages.length;   // another player's save may have fewer pages
+    const next = (this.page + 1) % pages.length;
+    this.pal.innerHTML = pages[this.page].map(k => `<button class="pal" data-k="${k}" aria-label="${esc(t('i_' + k))}, ${ITEMS[k].cost}">${ic(k, 34)}<span>${ic('beam', 14)}${ITEMS[k].cost}</span></button>`).join('') +
+      `<button class="pal more" id="tPage" aria-label="${esc(t(['guards', 'silly', 'arc_new'][next]))}">${ic(['cam', 'party', 'fan'][next], 34)}<span>${ic('skipI', 14)}</span></button>`;
     paintIcons(this.pal);
     this.pal.querySelectorAll('.pal[data-k]').forEach(b => {
       b.onpointerdown = e => { const k = b.dataset.k; this.hand = this.hand === k && !this.drag ? null : k; this.drag = !!this.hand; [this.sx, this.sy] = [this.px, this.py] = [e.clientX, e.clientY]; sfx.click(); this.marks(); };
@@ -136,7 +155,7 @@ scenes.tinker = {
         this.marks(); b.blur(); e.preventDefault();
       };
     });
-    $('#tPage', this.pal).onclick = () => { sfx.pop(); this.page = 1 - this.page; this.hand = null; this.drag = false; this.fill(); $('#tPage', this.pal).focus({ preventScroll: true }); };
+    $('#tPage', this.pal).onclick = () => { sfx.pop(); this.page = next; this.hand = null; this.drag = false; this.fill(); $('#tPage', this.pal).focus({ preventScroll: true }); };
     this.marks();
   },
   marks() {
@@ -150,7 +169,7 @@ scenes.tinker = {
   // The tree gets whatever the palette leaves free: the space above it, or (low landscape) the space to its left.
   T() { const p = this.pal.getBoundingClientRect(); return p.top > V.h * .5 ? fitTree(0, 60, V.w, p.top - 64) : fitTree(0, 60, p.left, V.h - 64); },
   overPal(x, y) { const p = this.pal.getBoundingClientRect(); return x >= p.left && y >= p.top; },
-  free(type) { return MOUNTS.map((m, i) => i).filter(i => (type === 'shield') === (i === VAULT) && !S.items.some(it => it.m === i)); },
+  free(type) { const at = ITEMS[type].at; return MOUNTS.map((m, i) => i).filter(i => (type === 'shield') === (i === VAULT) && (!at || at.includes(i)) && !S.items.some(it => it.m === i)); },
   near(x, y, list, reach) {
     const T = this.T(), [lx, ly] = toTree(T, x, y);
     let best = -1, bd = Math.max(reach, 44 / T.k);
@@ -219,10 +238,10 @@ scenes.raid = {
     this.test = !!o.test; this.endT = 0; this.acc = 0; this.rp = null;
     this.rooms = rank();   // the Night is counted when the raid ends: a room won by it first shows at the ceremony, not here
     const st = this.test ? { cam: S.st.cam || 2, gate: S.st.gate || 2, forge: S.st.forge || 2 } : S.st;
-    this.plan = raidPlan(S.night, st); this.holds = st.forge - 1;
-    this.R = makeRaid(this.plan, this.holds);
+    this.n = S.night; this.plan = raidPlan(this.n, st); this.holds = st.forge - 1;
+    this.R = makeRaid(this.plan, this.holds, this.n);
     add(`<div class="hud">${this.test ? `<button class="btn round" id="rBack" aria-label="${esc(t('done'))}">${ic('no', 24)}</button>` : ''}
-      <span class="pill">${ic('pie', 24)}${esc(t(this.test ? 'testRaid' : 'raidGo'))}</span><span class="sp"></span></div>`);
+      <span class="pill">${ic('pie', 24)}${esc(t(this.test ? 'testRaid' : 'raidGo'))}</span><span class="sp"></span>${palPill()}</div>`);
     if (this.test) $('#rBack').onclick = () => { sfx.click(); go('tinker'); };   // a practice raid can be left at any time
     if (!this.test) later(() => toast(t('raidGo')), 100);
   },
@@ -233,8 +252,11 @@ scenes.raid = {
     if (this.endT) return;
     this.endT = V.t;
     // What the raid earned is counted and saved now; the replay and the owl's word come after.
-    if (!this.test) this.stars = closeNight(R.stolen);
-    else {
+    if (!this.test) {
+      const kind = R.mags.reduce((a, m) => a + (m.home ? m.n : 0), 0);   // sent home without a jar, or laughing
+      if (kind) pieCaught(kind);
+      this.stars = closeNight(R.stolen, R.laughed);
+    } else {
       this.clean = !Object.keys(R.reached).length && S.items.some(i => !ITEMS[i.t].deco); this.bonus = this.clean && S.testStar !== S.night;
       if (this.bonus) { S.testStar = S.night; S.stars++; S.beams += 10; save(); }
     }
@@ -247,7 +269,7 @@ scenes.raid = {
     if (!fun.length) return false;
     let best = 0, at = 0;
     for (const f of fun) { const w = fun.reduce((a, g) => a + (g.t >= f.t && g.t < f.t + 2.5 ? g.w : 0), 0); if (w > best) { best = w; at = f.t; } }
-    const R = makeRaid(this.plan, this.holds);
+    const R = makeRaid(this.plan, this.holds, this.n);
     quiet = true;
     while (R.t < at - .7 && !R.done) stepRaid(R, STEP);
     quiet = false;
@@ -282,10 +304,10 @@ scenes.raid = {
     const t0 = V.t, R = this.rp ? this.rp.R : this.R, T = fitTree(0, 56, V.w, V.h - 70);
     const carrying = R.mags.filter(m => m.carry).length, party = R.mags.some(m => m.fx && m.fx.k === 'dance');
     drawSky(ctx, t0);
-    drawTree(ctx, T, t0, { zones: true, jars: JARS.length - R.stolen - carrying, nest: R.stolen, rooms: this.rooms });
+    drawTree(ctx, T, t0, { zones: true, jars: JARS.length - R.stolen - carrying, nest: R.stolen, rooms: this.rooms, night: this.n });
     ctx.save(); ctx.translate(T.ox, T.oy); ctx.scale(T.k, T.k);
     owl(ctx, OWL[0], OWL[1], 1.05, t0, R.done ? (R.stolen ? 'idle' : 'cheer') : carrying ? 'no' : party ? 'cheer' : 'sleep');   // the disco ball wakes the owl too
-    for (const d of R.cams) if (d.cd > 0) { ctx.beginPath(); ctx.arc(d.x, d.y - 20, 30, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - d.cd / ITEMS[d.t].cd)); ctx.lineWidth = 6; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+    for (const d of R.timed) if (d.cd > 0) { ctx.beginPath(); ctx.arc(d.x, d.y - 20, 30, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - d.cd / d.cd0)); ctx.lineWidth = 6; ctx.strokeStyle = '#fff'; ctx.stroke(); }
     for (const b of R.beams) {
       ctx.globalAlpha = Math.min(1, b.t * 3);
       if (b.bell) { ctx.lineWidth = 5; ctx.strokeStyle = '#ff9ecb'; for (const r of [40, 70]) { ctx.beginPath(); ctx.arc(b.x1, b.y1, r * (1.45 - b.t), 0, TAU); ctx.stroke(); } }
@@ -299,6 +321,7 @@ scenes.raid = {
       if (b.k === 'cannon') for (let i = 0; i < 14; i++) { const a = hash(i + 3) * TAU, d = 30 + k * (60 + hash(i) * 90); ctx.fillStyle = ['#ff8a7a', '#ffd24a', '#6fdc95', '#58a6ff', '#ff9ecb'][i % 5]; ctx.fillRect(b.x + Math.cos(a) * d - 5, b.y + Math.sin(a) * d * .7 - 5 + k * k * 40, 10, 10); }
       else if (b.k === 'bubbler') for (let i = 0; i < 6; i++) { ctx.lineWidth = 2.5; ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(b.x + Math.sin(i * 2.1 + k * 4) * 26, b.y - k * (50 + i * 18), 6 + i % 3 * 4, 0, TAU); ctx.stroke(); }
       else if (b.k === 'disco') for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + (still() ? 0 : t0 * 3); circ(ctx, b.x + Math.cos(a) * 95, b.y + Math.sin(a) * 60, 16, ['rgba(255,138,122,.55)', 'rgba(255,210,74,.55)', 'rgba(111,220,149,.55)', 'rgba(88,166,255,.55)'][i % 4]); }
+      else if (ARC_PUFF[b.k]) ARC_PUFF[b.k](ctx, b, k);
       else { ctx.lineWidth = 5; ctx.strokeStyle = '#fff6da'; ctx.beginPath(); ctx.arc(b.x, b.y, 20 + k * 50, 0, TAU); ctx.stroke(); }
       if (b.n > 1) {
         ctx.font = '900 46px ui-rounded, "Segoe UI", Roboto, sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(7,13,42,.85)'; ctx.fillStyle = '#ffd86b';
@@ -321,7 +344,7 @@ scenes.raid = {
         else { rot = still() ? .25 : Math.sin(t0 * 9) * .3; dy = still() ? 0 : -Math.abs(Math.sin(t0 * 9)) * 14; }
       }
       ctx.save(); ctx.translate(x, y + dy - 30 * s); ctx.rotate(rot * dir);
-      magpie(ctx, 0, 30 * s, s, t0 + m.at, { dir, carry: m.carry, pose, face });
+      (m.kind ? arcMag : magpie)(ctx, 0, 30 * s, s, t0 + m.at, { dir, carry: m.carry, pose, face, m });   // tricksters: src/91-arc.js
       ctx.restore();
       const hy = y + dy - 88 * s;
       if (a && a.k === 'bubble') { ctx.beginPath(); ctx.arc(x, y + dy - 32 * s, 52 * s, 0, TAU); ctx.fillStyle = 'rgba(190,230,255,.28)'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke(); circ(ctx, x - 20 * s, y + dy - 54 * s, 7 * s, 'rgba(255,255,255,.8)'); }

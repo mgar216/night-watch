@@ -103,8 +103,9 @@ function askName(then) {
 // Secrets on the menu screens: tap the moon, tap a room, swipe or shake the fireflies; after a quiet while the owl dozes off.
 const dozing = () => V.t - lastTouch > 25;
 function snore(sc) { if (dozing() && V.t > (sc.snoreT || 0)) { sc.snoreT = V.t + 3.6; sfx.snore(); } }
-// After the last story the magpies have joined the Night Watch: one of them stands guard by the ladder, in a cap that is far too big.
-function helper(T, t0) { if (rank() === 3) magpie(ctx, T.ox + 745 * T.k, T.oy + 930 * T.k, Math.max(.42, T.k * .95), t0, { dir: -1, disguise: 4, face: 'joy' }); }
+// Everything that lives at the tree on the menu screens, drawn between the tree and the owl: the gifts of the Legendary
+// fish, the friendly magpies, today's visitor.
+function lifeTree(c, T, t) { giftTree(c, T, t); palsTree(c, T, t); visitTree(c, T, t); }
 scenes.home = {
   sky: true,
   enter() {
@@ -140,9 +141,8 @@ scenes.home = {
   },
   draw() {
     const T = treeArea(), t0 = V.t;
-    drawSky(ctx, t0); drawTree(ctx, T, t0); giftTree(ctx, T, t0);
+    drawSky(ctx, t0); drawTree(ctx, T, t0); lifeTree(ctx, T, t0);
     treeOwl(ctx, T, t0, t0 < this.cheer ? 'cheer' : this.zz || dozing() ? 'sleep' : 'idle');
-    helper(T, t0);
     const zx = 500 + Math.sin(t0 * .9) * 330, zy = 230 + Math.sin(t0 * 1.8) * 90;
     zip(ctx, T.ox + zx * T.k, T.oy + zy * T.k, Math.max(.6, T.k * 1.6), t0, Math.cos(t0 * .9) > 0 ? 1 : -1);
     // the big jar by the roots: tap it and it sparkles
@@ -154,7 +154,7 @@ scenes.home = {
 
 // ----- Hub: the Night menu -----
 const BRIEF_PICS = [['jar', 'torch'], ['feather', 'jar'], ['cam', 'cam', 'cam'], ['badge:leaf:0', 'lock'], ['torch', 'torch'], ['cam', 'cam', 'cam'], ['star', 'star', 'star'], ['jar', 'beam']];
-const isBoss = n => n % 5 === 0;   // every fifth Night the Baron comes with a plan of his own
+const isBoss = n => n % 5 === 0 && S.saga < 3;   // every fifth Night the Baron comes with a plan of his own, until his story has ended
 const EXTRA_ICON = { flies: 'fliesFly', mail: 'mailBox', code: 'codeNote' };
 scenes.hub = {
   sky: true,
@@ -162,6 +162,7 @@ scenes.hub = {
     if (S.promo) return go('badge', { promo: true });   // a ceremony that a reload interrupted still takes place
     if (asleep()) return go('bed');                      // enough Nights for one day: the owl says good night
     if (S.day) return go('dawn');                        // first light comes once between two Nights
+    if (S.boss === S.night && S.saga < 3 && S.night >= 10 * (S.saga + 1)) return go('saga', { ch: S.saga + 1 });   // a chapter of the Baron's story that a reload or the home button cut short
     hud(() => go('home'), `<button class="btn round" id="bBadge" aria-label="${esc(t('badgeTitle'))}">${ic('rank:' + rank(), 34)}</button>`);
     $('#bBadge').onclick = () => { sfx.click(); go('badge', { from: 'hub' }); };
     // Three stations open the raid; from Night 2 a fourth, extra one takes turns (dashed card: a bonus, never needed).
@@ -175,22 +176,24 @@ scenes.hub = {
     n.querySelectorAll('.card').forEach(b => b.onclick = () => { sfx.pop(); go(b.dataset.s); });
     $('#bTinker', n).onclick = () => { sfx.pop(); go('tinker'); };
     $('#bRaid', n).onclick = () => { sfx.alarm(); boss ? go('boss', { then: () => go('raid') }) : go('raid'); };
-    // News first (a gift from a Legendary fish of the day), then the Night's briefing.
-    giftNews(() => {
-      if (S.briefed >= S.night) return;
-      const back = S.nest > 0, b = Math.min(S.night, 8);
-      S.briefed = S.night; S.nest = 0; save();
-      owlSay(t('b' + b) + (isBoss(S.night) ? ' ' + t('bBoss') : ''), { title: t('night', { n: S.night }), html: picsHtml(BRIEF_PICS[b - 1].concat(isBoss(S.night) ? ['stk:m6'] : [])),
-        acts: [{ label: t('go'), cls: 'go', icon: 'play', fn: () => { if (back) { toast(t('jarsBack')); sfx.chirp(); } } }] });
-    });
+    // News first (a gift from a Legendary fish, a new friend, an addition to the treehouse), then the day's first words,
+    // then the Night's briefing.
+    giftNews(() => palNews(() => growNews(() => greet(() => this.brief()))));
+  },
+  brief() {
+    if (S.briefed >= S.night) return;
+    const back = S.nest > 0, b = Math.min(S.night, 8), arc = arcBrief(S.night), wx = weatherLine(S.night);   // later Nights bring new tricks; some Nights have weather
+    S.briefed = S.night; S.nest = 0; save();
+    owlSay((arc ? arc.text : t('b' + b)) + (isBoss(S.night) ? ' ' + t('bBoss') : '') + (wx ? ' ' + t(wx) : ''), { title: t('night', { n: S.night }),
+      html: picsHtml((arc ? arc.pics : BRIEF_PICS[b - 1]).concat(isBoss(S.night) ? ['stk:m6'] : [])),
+      acts: [{ label: t('go'), cls: 'go', icon: 'play', fn: () => { if (back) { toast(t('jarsBack')); sfx.chirp(); } } }] });
   },
   update() { snore(this); },
   down(x, y) { menuTap(x, y, treeArea()); },
   draw() {
     const T = treeArea(), t0 = V.t;
-    drawSky(ctx, t0); drawTree(ctx, T, t0); giftTree(ctx, T, t0);
+    drawSky(ctx, t0); drawTree(ctx, T, t0); lifeTree(ctx, T, t0);
     treeOwl(ctx, T, t0, dozing() ? 'sleep' : 'idle');
-    helper(T, t0);
     zip(ctx, T.ox + (500 + Math.sin(t0 * .7) * 300) * T.k, T.oy + (200 + Math.sin(t0 * 1.4) * 60) * T.k, Math.max(.6, T.k * 1.6), t0, Math.cos(t0 * .7) > 0 ? 1 : -1);
     fireflies(ctx, t0, 10);
   },
@@ -220,9 +223,8 @@ scenes.dawn = {
     const r = Math.min(V.w, V.h) * .08, sx = V.w * (wide() ? .9 : .15), sy = V.h * (wide() ? .8 - .22 * k : .27 - .13 * k);
     glow(ctx, sx, sy, r * 3.4, '255,238,180', .6 * k); circ(ctx, sx, sy, r, '#fff4cf');
     farHills(ctx, V.w, V.h);
-    drawTree(ctx, T, t0); giftTree(ctx, T, t0);
+    drawTree(ctx, T, t0); lifeTree(ctx, T, t0);
     treeOwl(ctx, T, t0, 'cheer');
-    helper(T, t0);
   },
 };
 // The browser's Back button brings this page back as it was left: on the morning screen, with its question already answered.
@@ -246,20 +248,63 @@ function giftNews(then) {
   } }] }).classList.add('clear');
 }
 
+// ----- The day's first words: what happened last time, or the birthday. After a good day's fishing there is fish for
+// supper, and with it an owl's eye for tonight's Gate Check. -----
+function remember(k) { S.mem = { d: today(), k }; }
+const dayNo = s => { const [y, m, d] = String(s).split('-').map(Number); return Math.round(Date.UTC(y || 1970, (m || 1) - 1, d || 1) / 864e5); };
+const isBirthday = () => !!S.bday && (today(), S.bday === todayMD);
+// What the day's fishing brought (the fishing game leaves a note in the shared storage): a memory, and from three fish on, supper.
+function supper() {
+  try {
+    const r = JSON.parse(localStorage.getItem('firstlight.day' + (slot ? '.' + (slot + 1) : '')) || 'null');
+    if (!r || !(r.n > 0) || !Number.isSafeInteger(r.id) || r.id < 0 || String(r.id) === S.sup) return false;   // the id is the time the day's fishing began
+    S.sup = String(r.id); remember('fish');
+    if (r.n < 3) return false;
+    S.eye = 1;
+    return true;
+  } catch (e) { return false; }
+}
+function greet(then) {
+  const d = today(), y = +d.split('-')[0], parts = [], fish = supper();
+  const party = isBirthday() && S.bdayY !== y;   // once a year: the party hat for the wardrobe and a few moonbeams, also when the date was set later that day
+  if (party) { S.bdayY = y; S.own.party = 1; S.beams += 30; parts.push(t('bday1'), t('bday2')); }
+  if (S.memD !== d) {
+    const away = S.memD ? dayNo(d) - dayNo(S.memD) : 0;   // days since the last visit to the Night menu
+    S.memD = d;
+    if (!party && away >= 7) parts.push(t('mem_away'));
+    else if (!party && S.mem.k && !fish && L['mem_' + S.mem.k]) parts.push(t('mem_' + S.mem.k));
+  }
+  if (fish) parts.push(t('eye1'));
+  save();
+  if (!parts.length) return then();
+  if (party) { music.mood('party'); sfx.fanfare(); burst(V.w / 2, V.h * .35, 50, { colors: ['#ffd86b', '#ff9ecb', '#7fd0ff', '#6fdc95'], speed: 340, kind: 'star', size: 9, life: 1.5 }); refreshHud(); }
+  owlSay(parts.join(' '), { mood: 'cheer', quiet: party,
+    html: party ? `<div class="pics">${ic('wear:party', 56)}<span class="pill pop">${ic('beam', 22)}<b>+30</b></span></div>` : fish ? picsHtml(['fish', 'fish', 'fish']) : '',
+    acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: then }] });
+}
+
 // ----- Bedtime: after so many Nights in one real day the owl says good night until tomorrow. A grown-up sets how many
 // (in the players panel; 0 switches it off) and can allow one more Night. The watch's day turns at four in the morning. -----
-const today = () => { const d = new Date(Date.now() - 144e5); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+// The watch's day ('Y-M-D') and its month and day ('M-D'). Drawing asks for them in every frame (the birthday, today's
+// visitor), so they are worked out once a second.
+let todayAt = -1, todayS = '', todayMD = '';
+const today = () => {
+  const s = Math.floor(Date.now() / 1e3);
+  if (s !== todayAt) { const d = new Date(Date.now() - 144e5); todayAt = s; todayMD = (d.getMonth() + 1) + '-' + d.getDate(); todayS = d.getFullYear() + '-' + todayMD; }
+  return todayS;
+};
 const asleep = () => S.bedN > 0 && S.bed.d === today() && S.bed.n >= S.bedN + S.bed.more;
 scenes.bed = {
   enter() {
+    remember('bed'); save();   // tomorrow's first words praise the rested watcher
     owlSay(t('bed1'), { title: t('bedT'), acts: [
       { label: t('bedMore'), icon: 'lock', fn: () => askGrownUp(() => { S.bed.more++; save(); go('hub'); }, () => go('bed')) },
       { label: t('bedOk'), cls: 'go', icon: 'moon', fn: () => go('home') }] });
   },
   draw() {
     const T = treeArea(), t0 = V.t;
-    drawSky(ctx, t0); drawTree(ctx, T, t0); giftTree(ctx, T, t0);
-    treeOwl(ctx, T, t0, 'sleep'); helper(T, t0);
+    drawSky(ctx, t0); drawTree(ctx, T, t0); lifeTree(ctx, T, t0);
+    treeOwl(ctx, T, t0, 'sleep');
     ctx.fillStyle = 'rgba(4,8,28,.4)'; ctx.fillRect(0, 0, V.w, V.h);   // the lights are low
     fireflies(ctx, t0, 5);
   },
@@ -267,11 +312,14 @@ scenes.bed = {
 
 // The Night ends after the raid: stars, moonbeams, maybe a promotion, then the Tinker Treehouse, then first light.
 // closeNight() counts and saves it the moment the raid is over; the owl's word about it may come later (after a replay).
-function closeNight(stolen) {
+function closeNight(stolen, laughed = 0) {
   const stars = stolen === 0 ? 3 : stolen === 1 ? 2 : 1, old = rank();
   S.stars += stars; S.beams += 15 + stars * 10; S.nest = stolen; S.night++; S.st = { cam: 0, gate: 0, forge: 0, extra: 0 };
   S.promo = rank() > old;   // kept in the save, so closing the page here cannot skip the ceremony
   S.day = 1;                // nor the day that follows the Night
+  if (stolen === 0) S.lit++;   // a Night without a lost jar lights one lantern on the Watchwood map of the fishing game
+  // (once his museum is open the Baron is no grumbler any more: that Night is remembered for itself)
+  remember(S.boss === S.night - 1 && S.saga < 3 ? 'boss' : S.promo ? 'promo' : laughed ? 'laugh' : stolen === 0 ? 'perfect' : stolen >= 3 ? 'hard' : 'lost');
   if (S.bed.d !== today()) S.bed = { d: today(), n: 0, more: 0 };
   S.bed.n++;                // Nights finished today, for bedtime
   save();
@@ -279,8 +327,9 @@ function closeNight(stolen) {
 }
 function finishNight(stolen, stars = closeNight(stolen)) {
   stolen ? sfx.hoot() : sfx.win();
-  owlSay(stolen ? t('raid1') + ' ' + t('raid2') : t('raid0'), { title: t('night', { n: S.night - 1 }), stars, mood: stolen ? 'idle' : 'cheer', quiet: true,
-    html: `<div class="pics"><span class="pill pop">${ic('beam', 22)}<b>+${15 + stars * 10}</b></span></div>`,
+  // the first lantern comes with a word about what it is for
+  owlSay(stolen ? t('raid1') + ' ' + t('raid2') : t('raid0') + (S.lit === 1 ? ' ' + t('lit1') : ''), { title: t('night', { n: S.night - 1 }), stars, mood: stolen ? 'idle' : 'cheer', quiet: true,
+    html: `<div class="pics"><span class="pill pop">${ic('beam', 22)}<b>+${15 + stars * 10}</b></span>${stolen ? '' : `<span class="pill pop">${ic('lamp', 22)}${esc(t('litNew'))}</span>`}</div>`,
     acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => S.promo ? go('badge', { promo: true }) : go('tinker') }] });
 }
 
@@ -291,6 +340,7 @@ scenes.badge = {
     this.o = o; this.t0 = V.t; this.panel = null;
     const r = rank(), party = this.party = r === 3;   // a Chief always gets the forest-wide celebration
     if (o.promo && !o.told) return go('story', { rank: r, then: () => go('badge', { promo: true, told: true }) });
+    if (party || o.promo) music.mood('party');   // a promotion, or the Chief's forest-wide celebration
     if (o.promo) { sfx.fanfare(); later(() => speak(t('promo', { r: t('rank' + r) }) + (party ? ' ' + t('finaleSay') : '')), 1300); }
     const n = add(`<div class="bar badgebar"><div class="dlg" style="width:min(26em,100%)">
       <h2>${esc(o.promo ? t('promo', { r: t('rank' + r) }) : t('badgeTitle'))}</h2>

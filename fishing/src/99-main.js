@@ -7,7 +7,8 @@
   const look = obj(S.look);
   S.look = { col: int(look.col, 0, 5), hat: has(WEAR, look.hat) && WEAR[look.hat].hat ? look.hat : '', boat: int(look.boat, 0, 5) };
   const log = obj(S.log); S.log = {};
-  for (const id in log) if (has(SPECIES, id)) { const e = obj(log[id]); S.log[id] = { n: int(e.n, 0, 1e6), best: int(e.best, 0, 1e7), seen: e.seen ? 1 : 0, id: e.id ? 1 : 0, fast: e.fast ? 1 : 0, lure: has(ITEMS, e.lure) ? e.lure : undefined, depth: e.depth === undefined ? undefined : int(e.depth, 0, 2) }; }
+  // (a favourite lure that was lent by a gadget of the Night Watch and has gone with it becomes the shop lure it copied)
+  for (const id in log) if (has(SPECIES, id)) { const e = obj(log[id]); S.log[id] = { n: int(e.n, 0, 1e6), best: int(e.best, 0, 1e7), seen: e.seen ? 1 : 0, id: e.id ? 1 : 0, fast: e.fast ? 1 : 0, lure: has(ITEMS, e.lure) ? e.lure : (NWL.find(it => it.id === e.lure) || {}).like, depth: e.depth === undefined ? undefined : int(e.depth, 0, 2) }; }
   const own = obj(S.own); S.own = { rod0: 1, line0: 1, reel0: 1 };
   for (const id in own) if (has(ITEMS, id)) S.own[id] = int(own[id], 0, 999);
   const ach = obj(S.ach); S.ach = {};
@@ -23,7 +24,14 @@
 })();
 resize();
 // After a good day's fishing the map says, once, that evening is near; the treehouse then leads back to the Night Watch.
-on('catch', () => { dayCatch++; });
+// The day leaves a note for the owl in the shared storage (how many fish, and which day it was): three fish or more are
+// supper, and supper sharpens the owl's eyes for tonight's Gate Check. At the third fish the note's id moves on by one, so
+// that a note the owl read too early (a look at the Night Watch and back) still becomes supper.
+const dayId = Date.now();
+on('catch', () => {
+  dayCatch++;
+  if (day) try { localStorage.setItem('firstlight.day' + (nwSlot ? '.' + (nwSlot + 1) : ''), JSON.stringify({ id: dayId + (dayCatch >= 3), n: dayCatch })); } catch (e) { /* nothing can be saved here */ }
+});
 on('enter', d => { if (day && d && d.home && dayCatch >= 5 && !dayTold) { dayTold = true; toast(t('day_low'), 3200); } });
 // By day (from the Night Watch) the Chief is already on the way: no title screen, straight to the map.
 go(day ? 'map' : 'home');

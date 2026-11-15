@@ -8,6 +8,7 @@ function audioOn() {
       AC = new (window.AudioContext || window.webkitAudioContext)();
       master = AC.createGain(); master.gain.value = S.vol * .6; master.connect(AC.destination);
       emit('audio');   // the ambience starts as soon as there is a context
+      setInterval(musicTick, 200);   // and the day's tune (../src/33-music.js, shared with The Night Watch)
     }
     if (AC.state === 'suspended') AC.resume();
   } catch (e) { AC = null; }

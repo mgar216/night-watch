@@ -65,6 +65,7 @@ scenes.forge = {
   refresh() {
     this.sec = crackSeconds(this.tiles);
     $('#fSlots').innerHTML = this.tiles.map(this.tileHtml).join(''); paintIcons($('#fSlots'));
+    $('#fSlots').scrollLeft = 1e4;   // on a phone held sideways the bar is one scrolling row: the newest tile is in view
     $('#fVal').textContent = this.tiles.length ? crackLabel(this.sec) : '\u00a0';
     $('#fFill').style.width = meterPos(this.sec) * 100 + '%';
     say($('#fVal').textContent);

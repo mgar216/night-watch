@@ -58,7 +58,8 @@ function menuTap(x, y, T) {
   const [lx, ly] = toTree(T, x, y), room = roomAt(lx, ly), [mx, my, mr] = moonAt();
   if (room) { roomT[room] = V.t; [null, sfx.whee, sfx.sizzle, sfx.wish][room](); return true; }
   if (Math.hypot(x - mx, y - my) < Math.max(34, mr * 1.5)) { winkT = V.t; sfx.chirp(); ui.querySelectorAll('.toast').forEach(n => n.remove()); toast(moonWord(), 3400); return true; }
-  return giftTap(lx, ly, T);   // the gifts of the Legendary fish answer a tap too
+  // then the things that live at the tree: today's visitor, the friends, the gifts, the additions, the flag
+  return visitTap(lx, ly, T) || palTap(lx, ly, T) || giftTap(lx, ly, T) || growTap(lx, ly, T) || flagTap(lx, ly, T);
 }
 
 // The two rows of far hills: part of the cached sky, and drawn once more in front of the rising sun at first light.
@@ -136,12 +137,14 @@ function drawZone(c, type, x, y) {
   c.setLineDash(dash); c.lineWidth = 4; c.strokeStyle = `rgba(${rgb},.85)`; c.beginPath(); c.arc(x, y, r, 0, TAU); c.stroke(); c.setLineDash([]);
 }
 
-// The big tree, the cabin, jars and everything the player has placed. o: { jars, nest, zones, skip (mount index being dragged) }
+// The big tree, the cabin, jars and everything the player has placed. o: { jars, nest, zones, skip (mount index being dragged),
+// rooms, night (the Night whose weather is drawn: a raid's own) }
 function drawTree(c, T, t, o = {}) {
   c.save(); c.translate(T.ox, T.oy); c.scale(T.k, T.k); c.lineCap = c.lineJoin = 'round';
-  c.fillStyle = '#0c1740'; c.fillRect(-3000, 930, 7000, 3000);
-  ell(c, 500, 935, 380, 26, '#13235a');
-  const leaves = (x, y, r) => { circ(c, x, y, r, '#1f5a3c'); circ(c, x - r * .5, y + r * .3, r * .7, '#1a4c33'); circ(c, x + r * .55, y + r * .2, r * .75, '#246a45'); circ(c, x + r * .1, y - r * .45, r * .6, '#2b7a50'); };
+  const LC = seasonLeaf(), GC = seasonGround();   // the tree follows the real seasons (src/47-season.js)
+  c.fillStyle = GC[0]; c.fillRect(-3000, 930, 7000, 3000);
+  ell(c, 500, 935, 380, 26, GC[1]);
+  const leaves = (x, y, r) => { circ(c, x, y, r, LC[1]); circ(c, x - r * .5, y + r * .3, r * .7, LC[0]); circ(c, x + r * .55, y + r * .2, r * .75, LC[2]); circ(c, x + r * .1, y - r * .45, r * .6, LC[3]); };
   leaves(500, 110, 150); leaves(330, 170, 90); leaves(680, 160, 95);
   const rooms = o.rooms === undefined ? rank() : o.rooms;
   if (rooms >= 3) {   // the observatory in the left crown (clear of the moon on a phone): a drum, a dome with a slit, a telescope
@@ -191,6 +194,9 @@ function drawTree(c, T, t, o = {}) {
   ell(c, 868, 868, 32, 11, '#6b4a2e');
   for (let i = 0; i < nest; i++) jar(c, 852 + i * 16, 853, 11, t + i, .75);
   line(c, [838, 866, 850, 875, 886, 875, 898, 866], '#8a6a44', 5);
+  // What the treehouse has gained (src/46-life.js), the player's flag (src/59-flag.js) and the season's touch, all under
+  // the things the player has placed, which stay in full view.
+  growTree(c, t, T.k); flagDraw(c, t, T.k); seasonTree(c, t, rooms);
   if (o.zones) for (const it of S.items) if (it.m !== o.skip) drawZone(c, it.t, MOUNTS[it.m][0], MOUNTS[it.m][1]);
   for (const it of S.items) if (it.m !== o.skip) drawItem(c, it.t, MOUNTS[it.m][0], MOUNTS[it.m][1], t, T.k);
   // The rooms' jokes, in front of everything: a friend whizzes down the slide, a pancake flips out of the kitchen pipe.
@@ -205,6 +211,7 @@ function drawTree(c, T, t, o = {}) {
     ell(c, 0, 0, 18, 7, '#c98a3a'); ell(c, 0, -2, 16, 5, '#f2c26b'); c.restore();
   }
   c.restore();
+  seasonFx(c, t, o.night);   // petals, leaves, snow, and the rain or wind of tonight (of its own Night for a raid that is over)
 }
 // Drifting fireflies for any scene (screen space).
 function fireflies(c, t, n = 16) {

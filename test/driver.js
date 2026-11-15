@@ -9,11 +9,28 @@
 //       cap (a trickster in the too-big guard cap), oldest (the strongest password in the forge), win (station win dialog),
 //       some (a part-filled album and wardrobe), silly (gadgets on the tree; in a raid: stop inside the replay),
 //       page2 (the gadget page of the palette), cert, players (the two panels of the badge screen), wink (moon and rooms tapped),
-//       p2, p3 (second and third panel of a story; flag is the rank), try (an unowned hat tried on in the wardrobe)
+//       p2, p3 (second and third panel of a story; flag is the rank), try (an unowned hat tried on in the wardrobe),
+//       scene saga: flag is the chapter, p2 and p3 as for a story, sagaend (after chapter 3: the Baron's present),
+//       flagdemo (a test pattern on the treehouse flag, items on spots 19 and 21), flagask (the owl asks before the flag starts again),
+//       hello, bdayhello, supper (scene hub, flag 1: the day's first words, on a birthday, after a good day's fishing),
+//       bdayset (the grown-ups' birthday setting), lit (the end of a Night without a lost jar: a lantern),
+//       spring, summer, autumn, winter (that season, clear weather), rain, wind, snow (summer rain, autumn wind, winter snow),
+//       wgifts (every gift, in winter with snow falling),
+//       grow1, grow2, grow3 (the treehouse's additions), grownews (scene hub, flag 1: the owl tells of the swing),
+//       growjoke (the additions' jokes, mid-way; with grow3), visit (today's visitor with an open wish), visitask (its dialog
+//       open), visitno (a wrong gift chosen), visityes (the wish granted, the thank-you), visitdone (the visitor happy, wish
+//       granted), visicons (every wish and gift picture), bday (the player's birthday, without the day's first words),
+//       spots (items on spots 0, 3 and 6; the Tinker adds 4, 20 and 21). Poses may be joined with '+': gifts+grow3+visit
+//       pals3 (three friends, the second helps), paltap (the same, the helper just tapped), pals6 (all six friends and the
+//       Baron's card), palspots (items on the spots beside the friends' perches: 0, 3, 4, 6, 9, 10, 17, 18), palnews (30 kind
+//       catches and no friend: scene hub, flag 1 shows the owl's news): gifts+pals6+palspots,
+//       tricks (a raid with every trick of Nights 9 to 30, mid-way), gadgets (each trick as it meets its gadget), page3 (the
+//       palette's third page), arcgifts (the new gadgets on the tree with every gift)
 // smoke and audit POST progress lines and one final report to the server in test/smoke.js.
 (async () => {
   const mode = location.hash.slice(1).split(','), run = +new URLSearchParams(location.search).get('run') || 0;
   const out = { run, errors: [] }, seen = new Set();
+  seaForce = { m: 6, w: 'clear' };   // the tests run in a clear summer, whatever the calendar says, so that pictures and raids stay the same all year
   const bad = s => { if (!seen.has(s)) { seen.add(s); out.errors.push(s); } };
   let where = 'start';
   window.onerror = (m, s, l, c, e) => { bad(`SCRIPT ERROR at [${where}]: ${m} @${l}:${c} ${e && e.stack ? e.stack.split('\n').slice(0, 3).join(' < ') : ''}`); };
@@ -29,26 +46,125 @@
   // The grown-up question ("6 + 7 = ?"): press the right answer, or a wrong one.
   const answer = right => { const [a, b] = $('#owlText').textContent.match(/\d+/g).map(Number); [...document.querySelectorAll('.veil .acts .btn')].find(x => (+x.textContent === a + b) === right).click(); };
   const reset = n => { Object.assign(S, { night: n, st: { cam: 0, gate: 0, forge: 0, extra: 0 }, beams: 300, stars: 0, items: [{ t: 'cam', m: 1 }], nest: 0, testStar: 0, gateStar: 0, briefed: n, promo: false, tinkered: 2, name: 'Mia',
-    voice: true, stk: {}, own: {}, hat: '', scarf: '', zhat: '', zscarf: '', boss: 0, fooled: 0, day: 0, gifts: {}, bedN: 0, bed: { d: '', n: 0, more: 0 } }); tryOn = null; scenes.tinker.page = 0; };
+    voice: true, stk: {}, own: {}, hat: '', scarf: '', zhat: '', zscarf: '', boss: 0, fooled: 0, day: 0, gifts: {}, bedN: 0, bed: { d: '', n: 0, more: 0 },
+    // the newer things start quiet: no news of a friend (a Chief already has the guard), no visitor's wish today, the day's first words already said
+    caught: 0, pals: n > 7 ? { guard: 1 } : {}, helper: '', lit: 0, grow: 0, visit: { d: today(), done: 1, n: 0 }, mem: { d: '', k: '' }, memD: today(), eye: 0, flag: '', bday: '', bdayY: 0, sup: '', saga: 0 });
+    tryOn = null; scenes.tinker.page = 0; };
   const worth = () => S.beams + S.items.reduce((a, i) => a + ITEMS[i.t].cost, 0);   // moonbeams in hand plus moonbeams built into the tree
   const key = (k, target = document.body) => target.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
   const ptr = (type, x, y, target = cv) => target.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, bubbles: true, cancelable: true, pointerId: 1 }));
   const tOrig = t;
   t = (k, v) => { if (!L[k]) bad('missing i18n key ' + k); return tOrig(k, v); };
+  // The owl's eye at the gate: no button without an eye; a look between visitors is free; a look at a visitor costs the
+  // eye, rings the right check for every kind of trickster (the badge first) and takes the button away.
+  const eyeChecks = () => {
+    const other = (list, not) => list.find(x => !not.includes(x));
+    const cases = { shape: v => { v.badge.shape = other(SHAPE_KEYS, [v.badge.shape]); }, style: v => { v.badge.style = (v.badge.style + 1) % 4; }, lost: v => { v.badge = null; },
+      both: v => { v.badge.shape = other(SHAPE_KEYS, [v.badge.shape]); v.pass[1] = other(GSYM, v.pass); }, pic: v => { v.pass[2] = other(GSYM, v.pass); },
+      order: v => { [v.pass[0], v.pass[1]] = [v.pass[1], v.pass[0]]; }, short: v => { v.pass.pop(); }, friend: () => {} };
+    const want = { shape: 'badge', style: 'badge', lost: 'badge', both: 'badge', pic: 'pass', order: 'pass', short: 'pass', friend: 'ok' };
+    reset(5); go('gate'); clickDlg(); check(!$('#bEye'), 'no eye button without an eye');
+    for (const k in cases) {
+      reset(5); S.eye = 1; go('gate'); clickDlg(); check(!!$('#bEye'), 'an eye brings its button');
+      $('#bEye').click(); check(S.eye === 1 && !!$('#bEye'), 'a look between visitors does nothing and costs nothing');
+      sim(2, () => scene.state !== 'ask');
+      const v = scene.q[scene.i]; Object.assign(v, { friend: k === 'friend', pass: [...scene.pass], badge: { ...scene.badge } }); cases[k](v);
+      $('#bEye').click();
+      check(v.eye === want[k] && S.eye === 0 && !$('#bEye'), `the owl's eye on a ${k} visitor marks the ${want[k]}: got ${v.eye}, eyes left ${S.eye}`);
+    }
+  };
+  // The treehouse's additions and today's visitor (src/46-life.js).
+  const lifeChecks = () => {
+    where = 'treehouse life';
+    check([59, 60, 119, 120, 199, 200].map(n => { S.stars = n; return growLevel(); }).join() === '0,1,1,2,2,3', 'the treehouse grows at 60, 120 and 200 stars');
+    reset(3); S.stars = 125; go('hub'); check(!!$('.veil.clear') && $('#owlText').textContent === t('grow_0') && S.grow === 1, 'the owl tells of the swing first');
+    clickDlg(); go('hub'); check(!!$('.veil') && $('#owlText').textContent === t('grow_1') && S.grow === 2, 'then of the flower garden');
+    clickDlg(); go('hub'); check(!$('.veil') && S.grow === 2, 'each addition is told once, and only when its stars are there');
+    S.grow = 3; S.bday = today().split('-').slice(1).join('-'); go('home'); const TG = treeArea();
+    [[785, 405], [400, 222], [155, 395]].forEach(([x, y], i) => check(growTap(x, y, TG) && V.t - lifeT[i] < .1, 'addition ' + i + ' answers a tap'));
+    check(growTap(385, 290, { k: .39, ox: 0, oy: 0 }), 'on a phone the garden answers a tap within 24 px of a window box (a target of 48 px)');
+    sim(3);   // the additions, their jokes and the birthday are drawn (a script error would be reported by the page)
+    where = 'today\'s visitor';
+    reset(1); S.visit = { d: '', done: 0, n: 0 }; go('hub'); check(!visitTap(500, 300, treeArea()) && !$('.veil'), 'no visitor on Night 1');
+    const day = String(lifeDay(today())); check(String(lifeDay(today())) === day, 'the visitor of a day is the same on every call that day');
+    let fewest = 99; for (let s = 1; s < 366; s++) fewest = Math.min(fewest, new Set([...Array(10)].map((_, i) => String(lifeDay('2026-1-' + (s + i))))).size);
+    check(fewest >= 4, 'any ten days in a row bring at least four different visits (visitor and wish): ' + fewest);
+    reset(3); S.visit = { d: '', done: 0, n: 0 }; go('hub'); const b0 = S.beams;
+    check(visitTap(500, 300, treeArea()) && document.querySelectorAll('.veil .card').length === 3, 'a tap on the visitor opens its wish with three gifts');
+    const right = LIFE_WISH[lifeDay(today())[1]][1], cards = [...document.querySelectorAll('.veil .card')], s0 = JSON.stringify(S);
+    cards.find(b => b.dataset.k !== right).click();
+    check(JSON.stringify(S) === s0 && $('#owlText').textContent === t('vis_no') && document.querySelectorAll('.veil .card').length === 3, 'a wrong gift changes nothing, and the wish stays open');
+    const good = cards.find(b => b.dataset.k === right); good.click();
+    check(S.beams === b0 + 5 && S.visit.d === today() && S.visit.done === 1 && S.visit.n === 1 && $('#pBeams b').textContent === String(b0 + 5), 'the right gift grants the wish: five moonbeams');
+    good.click(); clickDlg(); check(S.beams === b0 + 5 && visitTap(500, 300, treeArea()) && !$('.veil'), 'a wish pays once; then the visitor only jumps for joy');
+    S.visit.d = '2000-1-1'; check(lifeNow().open, 'a new day brings a new wish, and a missed day loses nothing');
+    try { for (const g of [null, 'x', 7, [], { d: 5, done: 'yes', n: 'many' }, { d: today(), done: 1, n: -4 }]) { S.visit = g; visitTree(ctx, treeArea(), V.t); if (visitTap(500, 300, treeArea()) && closeDlg) closeDlg(); } }
+    catch (e) { check(false, 'garbage in S.visit must not throw: ' + e); }
+  };
+  // Friends (src/57-pals.js): who comes when, who helps, the Friends page, and a save that holds nonsense.
+  const palChecks = () => {
+    reset(4); S.caught = 24; check(palDue() === '', 'no friend before 25 kind catches');
+    PAL_AT.forEach((n, i) => { S.pals = Object.fromEntries(PALS.slice(0, i).map(id => [id, 1])); S.caught = n - 1; const a = palDue(); S.caught = n; check(a === '' && palDue() === PALS[i], `friend ${i + 1} comes at ${n} kind catches, got '${a}' then '${palDue()}'`); });
+    S.pals = {}; S.caught = 999; const got = []; for (let id = palDue(); id && got.length < 9; id = palDue()) { got.push(id); S.pals[id] = 1; }
+    check(got.join() === PALS.join(), 'friends come in their order: ' + got);
+    reset(8); S.pals = {}; check(palDue() === 'guard', 'at the top rank the guard comes at once, without kind catches'); S.pals = { baker: 1 }; check(palDue() === '', 'only while there is no friend yet');
+    reset(3); S.caught = 30; go('hub');
+    check(!!$('.veil.clear') && S.pals.guard === 1 && S.helper === 'guard' && $('#owlText').textContent === t('pal_hi_guard') + ' ' + t('pal_do_guard'), 'a new friend is introduced at the Night menu and helps at once');
+    clickDlg(); go('hub'); check(!$('.veil') && Object.keys(S.pals).join() === 'guard', 'a friend is introduced once');
+    for (const h of ['', 'baron', 'constructor', 'baker', 7, null, {}]) { S.helper = h; check(palPerk() === '' && palPill() === '', 'no help from a helper who is not a friend: ' + JSON.stringify(h)); }
+    S.pals.lamp = 1; S.helper = 'lamp'; check(palPerk() === 'lamp' && palPill().includes(t('pal_p_lamp')), 'the helper brings its help');
+    for (const [p, h] of [[null, 'guard'], ['guard', 'lamp'], [[1, 2], {}], [{ constructor: 1, guard: 'yes', zz: 1 }, 'zz'], [7, 7], [{ guard: 1, music: 1 }, undefined]]) {
+      Object.assign(S, { pals: p, helper: h }); let ok = '';
+      try { const T = treeArea(); palsTree(ctx, T, 1); palPill(); palPerk(); palTap(745, 900, T); palDue(); go('pals', { from: 'album' }); sim(.2); go('home'); sim(.2); } catch (e) { ok = String(e); }
+      check(!ok, 'nonsense in the friends\' save breaks nothing: ' + JSON.stringify([p, h]) + ' ' + ok);
+    }
+    reset(3); Object.assign(S, { pals: { guard: 1, baker: 1 }, helper: 'guard' }); go('pals', { from: 'album' });
+    check(document.querySelectorAll('.stk.none').length === 4 && !$('[data-pal="baron"]') && $('[data-pal="guard"]').getAttribute('aria-pressed') === 'true', 'Friends page: two friends, four question marks, the helper marked, no Baron yet');
+    $('[data-pal="baker"]').click(); check(S.helper === 'baker' && $('[data-pal="baker"]').getAttribute('aria-pressed') === 'true' && $('[data-pal="guard"]').getAttribute('aria-pressed') === 'false', 'a friend\'s card makes it the helper');
+    $('.stk.none').click(); check(S.helper === 'baker', 'a question mark changes nothing');
+    S.saga = 3; go('pals', { from: 'album' }); $('[data-pal="baron"]').click(); check(S.helper === 'baker' && !$('[data-pal="baron"]').hasAttribute('aria-pressed'), 'the Baron has a card but never helps');
+    $('#palBack').click(); check(scene.id === 'album', 'the Friends page leads back to the album, got ' + scene.id);
+    reset(8); go('pals', { from: 'album' });   // a Chief's guard came with the rank, without kind catches: the next friend still needs 60
+    check($('.hud [role="img"]').getAttribute('aria-label') === t('pal_count', { n: 0, m: 60 }), 'the Friends page names the catches that bring the next friend: ' + $('.hud [role="img"]').getAttribute('aria-label'));
+    reset(3); Object.assign(S, { pals: { guard: 1, baker: 1 }, helper: 'guard' }); go('home'); const TH = treeArea();
+    scene.down(TH.ox + 745 * TH.k, TH.oy + 895 * TH.k); check(V.t - (palT.guard || -9) < .1, 'the helper answers a tap');
+    for (const g of GIFTS) S.gifts[g] = 1; palT.guard = -9; scene.down(...giftAt('heron', TH)); check(V.t - (giftT.heron || -9) < .1 && palT.guard === -9, 'the heron beside the helper still answers its own tap');
+    const TS = { k: .32, ox: 0, oy: 17 }; check(!palTap(690, 917, TS) && palTap(760, 905, TS), 'on a phone held sideways the heron keeps its taps and the helper its own');   // there the two tap circles overlap
+  };
 
   if (mode[0] === 'shot') {
     // a screenshot shows the final state of dialogs and toasts, not the first frame of their pop-in
     document.head.appendChild(Object.assign(document.createElement('style'), { textContent: '*, *::before { animation: none !important; transition: none !important; }' }));
     reset(+mode[2] || 1); setLang(+mode[3] || 0);
+    const P = (mode[6] || '').split('+');   // poses may be joined: gifts+grow3+visit
     if (mode[1] === 'hub' && mode[4] === '1') S.briefed = 0;
     if (mode[1] === 'tinker' || mode[1] === 'raid') S.items.push({ t: 'lamp', m: 4 }, { t: 'bell', m: 15 }, { t: 'shield', m: VAULT }, { t: 'banner', m: 18 }, { t: 'flowers', m: 20 }, { t: 'lights', m: 19 }, { t: 'scope', m: 21 });
     if (mode[6] === 'silly' || mode[6] === 'replay') S.items = [{ t: 'peel', m: 0 }, { t: 'tramp', m: 2 }, { t: 'tickle', m: 1 }, { t: 'disco', m: 4 }, { t: 'bubbler', m: 5 }, { t: 'cannon', m: 3 }, { t: 'cam', m: 12 }];
     if (mode[6] === 'some') { for (const id of ['m1', 'm3', 'm6', 'd2', 'd4', 'd5', 't1', 't2', 't4', 't5', 't7', 't9', 't12']) S.stk[id] = id === 't4' || id === 'm6' ? 1 : 2; Object.assign(S.own, { wizard: 1, stripe: 1, party: 1 }); Object.assign(S, { hat: 'wizard', scarf: 'stripe', zhat: 'party' }); }
-    if (mode[6] === 'gifts' || mode[6] === 'tapgifts') { for (const id of GIFTS) S.gifts[id] = 1; S.items.push({ t: 'lamp', m: 15 }, { t: 'bell', m: 16 }); }   // with something on both ground spots, to see that nothing collides
+    if (P.includes('gifts') || P.includes('arcgifts') || mode[6] === 'tapgifts' || mode[6] === 'wgifts') { for (const id of GIFTS) S.gifts[id] = 1; S.items.push({ t: 'lamp', m: 15 }, { t: 'bell', m: 16 }); }   // with something on both ground spots, to see that nothing collides
     if (mode[6] === 'fewgifts') Object.assign(S.gifts, { heron: 1, lanternjaw: 1, bell: 1, wave: 1 });   // gifts come in any order: these four without the pond and the rest
+    if (mode[6] === 'flagdemo') { S.flag = [...Array(96)].map((_, n) => (n % 12 + (n / 12 | 0)) % 8).join(''); if (!S.items.some(it => it.m === 19)) S.items.push({ t: 'lights', m: 19 }, { t: 'scope', m: 21 }); }   // a diagonal rainbow
     if (mode[6] === 'news') localStorage.setItem('firstlight.v1', JSON.stringify({ log: { biscuit: { n: 1 } } }));
-    go(mode[1], mode[1] === 'badge' ? { promo: mode[4] === '1', told: true } : mode[1] === 'raid' ? { test: true } : mode[1] === 'story' ? { rank: +mode[4] || 1, then: () => go('home') } : mode[1] === 'boss' ? { then: () => go('hub') } : undefined);
-    localStorage.removeItem('firstlight.v1');
+    if (mode[6] === 'hello') { S.memD = ''; S.mem = { d: today(), k: 'laugh' }; }                                // the day's first words
+    if (mode[6] === 'bdayhello') { S.memD = ''; S.bday = today().split('-').slice(1).join('-'); }                 // on the birthday
+    if (mode[6] === 'supper') localStorage.setItem('firstlight.day', JSON.stringify({ id: 1, n: 4 }));            // after a good day's fishing
+    const sea = { spring: { m: 3, w: 'clear' }, summer: { m: 6, w: 'clear' }, autumn: { m: 9, w: 'clear' }, winter: { m: 0, w: 'clear' }, rain: { m: 6, w: 'rain' }, wind: { m: 9, w: 'wind' }, snow: { m: 0, w: 'snow' }, wgifts: { m: 0, w: 'snow' } };
+    for (const p of P) if (has(sea, p)) seaForce = sea[p];   // seasons and weather (src/47-season.js): a month and tonight's weather
+    if (mode[6] === 'eye' || mode[6] === 'eyeuse') S.eye = 1;
+    if (mode[6] === 'eyepass' || mode[6] === 'eyeok' || mode[6] === 'eyelost') S.eye = 2;   // two eyes: after one look the button is still there, beside the mark
+    for (const p of P) if (/^grow[1-3]$/.test(p)) Object.assign(S, { grow: +p[4], stars: LIFE_AT[p[4] - 1] });   // the treehouse's additions (src/46-life.js)
+    if (P.includes('growjoke')) Object.assign(S, { grow: 3, stars: 200 });
+    if (P.includes('grownews')) Object.assign(S, { grow: 0, stars: 60 });
+    if (P.some(p => p.startsWith('visit'))) Object.assign(S, { night: Math.max(2, S.night), briefed: Math.max(2, S.night), visit: { d: P.includes('visitdone') ? today() : '', done: +P.includes('visitdone'), n: 0 } });
+    if (P.includes('bday')) S.bday = today().split('-').slice(1).join('-');
+    if (P.includes('spots')) S.items.push({ t: 'lamp', m: 0 }, { t: 'cam', m: 3 }, { t: 'tramp', m: 6 });
+    if (P.includes('pals3') || P.includes('paltap')) Object.assign(S, { pals: { guard: 1, baker: 1, lamp: 1 }, helper: 'baker', caught: 130 });   // friends (src/57-pals.js)
+    if (P.includes('pals6')) Object.assign(S, { pals: Object.fromEntries(PALS.map(id => [id, 1])), helper: 'guard', caught: 333, saga: 3 });
+    if (P.includes('palspots')) S.items.push({ t: 'cam', m: 0 }, { t: 'lamp', m: 3 }, { t: 'bell', m: 4 }, { t: 'flowers', m: 6 }, { t: 'cam', m: 9 }, { t: 'scope', m: 10 }, { t: 'banner', m: 17 }, { t: 'lights', m: 18 });
+    if (P.includes('palnews')) Object.assign(S, { caught: 30, pals: {} });
+    if (P.includes('tricks') || P.includes('page3')) Object.assign(S, { pals: { guard: 1, lamp: 1 }, helper: 'lamp' });   // the helper's pill is in the top bars
+    go(mode[1], mode[1] === 'badge' ? { promo: mode[4] === '1', told: true } : mode[1] === 'raid' ? { test: true } : mode[1] === 'story' ? { rank: +mode[4] || 1, then: () => go('home') } : mode[1] === 'boss' ? { then: () => go('hub') } : mode[1] === 'saga' ? { ch: +mode[4] || 1, then: () => go('hub') } : undefined);
+    localStorage.removeItem('firstlight.v1'); localStorage.removeItem('firstlight.day');
     if (mode[4] !== '1') clickDlg();
     if (mode[1] === 'forge') [0, 1, 2, 6, 9].forEach(i => $('#fTray').children[i].click());
     if (mode[1] === 'tinker' && mode[4] === '2') { scene.hand = 'cam'; scene.marks(); }
@@ -67,11 +183,32 @@
       p2: () => { sim(.5); scene.next(); sim(1.5); },
       p3: () => { sim(.5); scene.next(); sim(.5); scene.next(); sim(1.5); },
       try: () => scene.tap('crown'),
+      sagaend: () => { for (let i = 0; i < 3; i++) { sim(.5); scene.next(); } sim(.5); },
       replay: () => { sim(60, () => !scene.endT); scene.rewind(); sim(1.2); },
       tapgifts: () => { for (const id of GIFTS) giftT[id] = V.t - .35; },
       bedset: () => { showPlayers(); $('#wBed').click(); answer(true); },
-    }[mode[6]];
-    if (pose) { pose(); sim(.1); }
+      bdayset: () => { showPlayers(); $('#wBday').click(); answer(true); },
+      flagask: () => $('#flagNew').click(),
+      // the owl's eye at the gate: used on the first trickster; on one whose badge is right but whose pictures are swapped; on a friend; on a lost badge
+      eyeuse: () => { scene.i = scene.q.findIndex(v => !v.friend); scene.state = 'ask'; scene.at = V.t; $('#bEye').click(); },
+      eyepass: () => { const v = scene.q.find(q => !q.friend); Object.assign(v, { badge: { ...scene.badge }, pass: [scene.pass[1], scene.pass[0], scene.pass[2]] }); scene.i = scene.q.indexOf(v); scene.state = 'ask'; scene.at = V.t; $('#bEye').click(); },
+      eyeok: () => { scene.i = scene.q.findIndex(v => v.friend); scene.state = 'ask'; scene.at = V.t; $('#bEye').click(); },
+      eyelost: () => { const v = scene.q.find(q => !q.friend); v.badge = null; scene.i = scene.q.indexOf(v); scene.state = 'ask'; scene.at = V.t; $('#bEye').click(); },
+      lit: () => { finishNight(0); },
+      visitask: () => visitTap(500, 300, treeArea()),
+      visitno: () => { visitTap(500, 300, treeArea()); [...document.querySelectorAll('.veil .card')].find(b => b.dataset.k !== LIFE_WISH[lifeNow().wish][1]).click(); },
+      visityes: () => { visitTap(500, 300, treeArea()); [...document.querySelectorAll('.veil .card')].find(b => b.dataset.k === LIFE_WISH[lifeNow().wish][1]).click(); },
+      growjoke: () => { lifeT.fill(V.t - 1); lifeWho = 2; },
+      visicons: () => modal(LIFE_WISH.map(w => `<div class="pics">${w.map((id, j) => j ? `<span class="pill">${ic(lifeIc(id), 44)}${esc(t('vis_' + id))}</span>` : `<span class="pill" style="background:#fff6da">${ic(id, 44)}</span>`).join('')}</div>`).join(''), 'icons'),
+      paltap: () => { const T = treeArea(); scene.down(T.ox + 745 * T.k, T.oy + 895 * T.k); sim(.2); },
+      // tricks (src/91-arc.js): every trick at once, mid-way (a second digger already inside the trunk); each trick at the
+      // moment it meets its gadget; the palette's third page; the new gadgets on the tree with every gift (collision test)
+      tricks: () => { go('raid', { test: true }); scene.plan = [{ route: 'sky', at: 0, kind: 'balloon' }, { route: 'rb', at: 0, kind: 'stilts' }, { route: 'lb', at: 0, kind: 'twins' }, { route: 'lad', at: 0, kind: 'dig' }, { route: 'lad', at: 0, kind: 'dig' }]; scene.R = makeRaid(scene.plan, 1); scene.R.mags[4].d = 340; sim(1.6); },
+      gadgets: () => { S.items = [{ t: 'fan', m: 20 }, { t: 'honey', m: 9 }, { t: 'seesaw', m: 6 }, { t: 'drum', m: 14 }]; go('raid', { test: true }); scene.plan = [{ route: 'sky', at: 1.23, kind: 'balloon' }, { route: 'rb', at: 1.98, kind: 'stilts' }, { route: 'lb', at: 2.07, kind: 'twins' }, { route: 'lad', at: .45, kind: 'dig' }]; scene.R = makeRaid(scene.plan, 1); sim(3.3); },
+      page3: () => { go('tinker'); $('#tPage').click(); $('#tPage').click(); },
+      arcgifts: () => S.items.push({ t: 'fan', m: 20 }, { t: 'honey', m: 2 }, { t: 'seesaw', m: 6 }, { t: 'drum', m: 14 }, { t: 'fan', m: 21 }),
+    };
+    for (const p of P) if (has(pose, p)) { pose[p](); sim(.1); }
     return;
   }
 
@@ -128,6 +265,79 @@
     check(observe(g1) === t('o_silly'), 'the owl praises a silly defence');
     const g3 = makeRaid([{ route: 'lt', at: 0 }], 0), m3 = g3.mags[0]; m3.state = 'back'; m3.carry = true; prank(g3, m3, { t: 'tickle', x: 0, y: 0, r: 50 }, 0, 0);
     check(!m3.carry && m3.state === 'sulk' && m3.fx.k === 'giggle', 'a magpie that is tricked drops the jar it carried');
+    // --- Nights 9 to 30: tricksters and the gadgets that answer them (src/91-arc.js) ---
+    where = 'tricks';
+    const plan8 = (n, st) => {   // raidPlan as it was before version 3: Nights 1 to 8 must not change
+      const routes = n <= 2 ? ['lt', 'rt'] : n <= 4 ? ['lt', 'rt', 'lb', 'rb'] : ['lt', 'rt', 'lb', 'rb', 'sky'];
+      const branch = Math.min(Math.ceil(n / 2) + (3 - st.cam), 7), gate = Math.min(3 - st.gate + (n >= 4 ? 1 : 0), 3), list = [];
+      let at = 1;
+      for (let i = 0; i < branch; i++) { list.push({ route: routes[((n >= 6 ? i >> 1 : i) + n) % routes.length], at }); at += n >= 4 && i % 2 === 0 ? (n >= 6 ? .9 : .3) : 3.2; }
+      for (let i = 0; i < gate; i++) list.push({ route: 'lad', at: 2 + i * 3.5 });
+      return list.sort((a, b) => a.at - b.at);
+    };
+    for (let n = 1; n <= 8; n++) for (let i = 0; i < 64; i++) { const st = { cam: i & 3, gate: i >> 2 & 3, forge: i >> 4 }; check(JSON.stringify(raidPlan(n, st)) === JSON.stringify(plan8(n, st)), `the plan of Night ${n} is as before: ${JSON.stringify(st)}`); }
+    const ST3 = { cam: 3, gate: 3, forge: 3 }, design = d => d.map(([t, m]) => ({ t, m }));
+    const tricks = n => raidPlan(n, ST3).filter(p => p.kind).length;
+    check([9, 10, 11, 12].every(n => tricks(n) >= 1 && tricks(n) <= 2) && [...Array(30)].every((x, i) => tricks(i + 1) <= 3 && (i < 8) === !tricks(i + 1)), 'tricksters: none before Night 9, one or two at first, never more than three');
+    check(raidPlan(27, { cam: 0, gate: 0, forge: 0 }).length > raidPlan(27, ST3).length, 'better station results still mean fewer raiders');
+    const raid = (n, items, st = ST3) => { reset(n); S.items = design(items); const q = makeRaid(raidPlan(n, st), st.forge - 1); while (!q.done) stepRaid(q, STEP); return q; };
+    const P0 = palPerk, W0 = nightWeather, WX = [{ k: 'clear', slow: 0 }, { k: 'rain', slow: .15 }, { k: 'wind', slow: .1 }, { k: 'snow', slow: .2 }];
+    const B1 = [['cam', 0], ['cam', 3], ['cam', 7], ['cam', 10], ['cam', 18], ['lamp', 1], ['lamp', 4], ['lamp', 8], ['lamp', 11], ['bell', 15], ['shield', 22]];
+    const U = [['seesaw', 0], ['seesaw', 3], ['seesaw', 6], ['seesaw', 9], ['honey', 2], ['honey', 5], ['fan', 20], ['fan', 21], ['cam', 1], ['cam', 4], ['cam', 7], ['cam', 10], ['cam', 17],
+      ['bell', 15], ['drum', 14], ['lamp', 8], ['lamp', 11], ['lamp', 12], ['lamp', 13], ['shield', 22]];
+    for (const wx of WX) {   // in every weather (src/47-season.js)
+      nightWeather = () => wx;
+      // one sensible design without the new gadgets lets each new trick through on its first Night; its gadget stops it
+      for (const [n, k, g] of [[9, 'balloon', ['fan', 20]], [13, 'stilts', ['honey', 9]], [17, 'twins', ['seesaw', 6]], [21, 'dig', ['drum', 14]]]) {
+        const a = raid(n, B1), b = raid(n, B1.concat([g])), ta = a.mags.find(m => m.trick === k), tb = b.mags.find(m => m.trick === k);
+        check(ta.reach && observe(a) === t('o_' + k), `Night ${n}, ${wx.k}: the ${k} gets in without a ${g[0]}, and the owl names it: ${observe(a)}`);
+        check(!tb.reach && tb.home, `Night ${n}, ${wx.k}: a ${g[0]} sends the ${k} home`);
+      }
+      // three stars at every station and one design with every new gadget: Nights 9 to 30 are clean
+      for (let n = 9; n <= 30; n++) { const q = raid(n, U); check(q.stolen === 0 && !Object.keys(q.reached).length, `Night ${n}, ${wx.k}: the full design keeps every jar: ${JSON.stringify(q.reached)}`); }
+    }
+    nightWeather = W0;
+    // the same raid twice gives the same result (the replay relies on it), with twins that split and laugh
+    const sum = q => JSON.stringify([q.t, q.stolen, q.laughed, q.fun, q.mags.map(m => [m.d, m.state, m.kind, m.n, m.home])]);
+    check(sum(raid(17, B1)) === sum(raid(17, B1)) && sum(raid(27, U)) === sum(raid(27, U)) && raid(17, B1).mags.length > raidPlan(17, ST3).length, 'the same design gives the same raid twice');
+    // the helper friend (src/57-pals.js) and the weather count in every raid
+    const perk = p => { palPerk = () => p; reset(12); S.items = design([['cam', 1], ['bell', 15], ['lamp', 4], ['peel', 0], ['shield', VAULT]]); return makeRaid(raidPlan(12, ST3), 2); };
+    const r0 = perk('');
+    check(perk('guard').holds === 3 && perk('garden').shield === 2 && perk('baker').mags[0].at === r0.mags[0].at + 5 && perk('').holds === 2, 'helpers: the guard holds one more, the garden shields one more, the baker holds the first magpie back');
+    check(perk('lamp').lamps[0].r === ITEMS.lamp.r * 1.2 && perk('music').toys[0].r === ITEMS.peel.r * 1.2 && perk('post').cams.every(d => Math.abs(d.cd0 - ITEMS[d.t].cd * .8) < 1e-9) && r0.cams.every(d => d.cd0 === ITEMS[d.t].cd), 'helpers: lantern, music and post');
+    palPerk = P0; nightWeather = () => ({ k: 'wind', slow: .2 }); S.items = [];
+    const w = makeRaid([{ route: 'lt', at: 0 }, { route: 'lt', at: 0, kind: 'balloon' }], 0);
+    for (let i = 0; i <= 60; i++) stepRaid(w, i ? STEP : 0);
+    check(Math.abs(w.mags[0].d - 136) < .5 && Math.abs(w.mags[1].d - 136 * .6) < .5, `weather: magpies slow down, a balloon drifts at 60% in the wind: ${w.mags[0].d}, ${w.mags[1].d}`);
+    nightWeather = W0;
+    // a real raid counts every magpie sent home kindly (both twins off the seesaw too); a test raid counts nothing
+    reset(17); S.st = { cam: 3, gate: 3, forge: 3, extra: 0 }; S.items = design(U);
+    go('raid', { test: true }); sim(60, () => !scene.endT); check(S.caught === 0, 'a test raid counts no catches');
+    go('raid'); sim(60, () => !scene.endT);
+    check(S.caught === scene.R.mags.length && scene.R.laughed === 2 && scene.R.mags.every(m => m.home), `a real raid counts the magpies sent home: ${S.caught} of ${scene.R.mags.length}`);
+    // the raid scene itself on the first Night of the other tricks and on a mixed Night: played and drawn to its end, kept clean,
+    // the Night counted and a lantern lit
+    for (const n of [9, 13, 21, 30]) {
+      reset(n); S.st = { cam: 3, gate: 3, forge: 3, extra: 0 }; S.items = design(U); go('raid'); sim(90, () => !scene.endT);
+      check(!!scene.endT && scene.R.stolen === 0 && S.night === n + 1 && S.lit === 1 && S.caught > 0, `the raid of Night ${n} is played to its end and kept clean: stolen ${scene.R.stolen}, Night ${S.night}, caught ${S.caught}`);
+    }
+    // briefings, the palette's third page, and the drum only on the trunk or the ground
+    check([1, 5, 8].every(n => arcBrief(n) === null) && [9, 13, 17, 21, 25].every(n => arcBrief(n).pics.length >= 2), 'briefings: none before Night 9, an introduction for every new trick');
+    for (let n = 10; n <= 30; n++) check(/[.!?]$/.test(arcBrief(n).text) && arcBrief(n).pics.every(p => ICON[p.split(':')[0]]), 'a briefing line for Night ' + n);
+    reset(8); check(!arcNew().length, 'no third page before Night 9'); reset(21); check(arcNew().length === 4 && scenes.tinker.free('drum').every(i => ITEMS.drum.at.includes(i)), 'all four gadgets by Night 21, the drum on the trunk or the ground');
+    // every trick that a briefing names comes, on every Night and with every station result (also long after Night 30)
+    for (let n = 9; n <= 120; n++) for (let i = 0; i < 16; i++) {
+      const kinds = raidPlan(n, { cam: i & 3, gate: i >> 2, forge: 3 }).map(p => p.kind).filter(Boolean).sort().join();
+      check(kinds === arcKinds(n).slice().sort().join(), `Night ${n} brings the tricks its briefing names: ${kinds}`);
+    }
+    // a real raid's replay is the same raid: it keeps its own Night's weather, although the Night has been counted by then
+    seaForce = { m: 6 }; const wn = [...Array(40).keys()].find(n => n > 8 && nightWeather(n).k !== 'clear' && nightWeather(n + 1).k === 'clear');
+    reset(wn); S.st = { cam: 3, gate: 3, forge: 3, extra: 0 }; S.items = design([['peel', 0], ['tramp', 2], ['tickle', 1], ['disco', 4], ['bubbler', 5], ['cannon', 3], ['cam', 12]]);
+    go('raid'); sim(120, () => !scene.endT); const real = sum(scene.R);
+    check(S.night === wn + 1 && scene.rewind() === true, `the raid of Night ${wn} (${nightWeather(wn).k}) has a replay`);
+    const rq = scene.rp.R; while (!rq.done) stepRaid(rq, STEP);
+    check(sum(rq) === real && rq.spd === scene.R.spd && rq.spd < 1, `the replay runs in the weather of its own Night: speed ${rq.spd} against ${scene.R.spd}`);
+    scene.skip(); clickDlg(); seaForce = { m: 6, w: 'clear' };
     // --- album and wardrobe ---
     where = 'album and wardrobe';
     check(STK_SETS.flat().length === 24 && STK_SETS.flat().every(id => STK[id] && L['k_' + id]), 'every sticker has a picture and a name');
@@ -169,6 +379,7 @@
     // bedtime: after the last Night of the day the Night menu leads to bed; a grown-up can allow one more Night
     reset(3); S.bedN = 1; closeNight(0); S.promo = false; S.day = 0;
     go('hub'); check(scene.id === 'bed' && !!$('.veil'), 'after the last Night of the day the Night menu leads to bed, got ' + scene.id);
+    check(JSON.parse(localStorage.getItem(SAVE)).mem.k === 'bed', 'bedtime is remembered in the save, for tomorrow\'s first words');
     clickDlg(); check(scene.id === 'home', 'good night leads home, got ' + scene.id); $('#bPlay').click(); check(scene.id === 'bed', 'Play at bedtime meets the sleepy owl again, got ' + scene.id);
     clickDlg(); let kept = 0; $('#bFish').onclick({ preventDefault() { kept = 1; } }); check(kept === 1 && scene.id === 'bed', 'the fishing sleeps at bedtime too');
     clickDlg(0); answer(false); check(scene.id === 'bed' && !!$('.veil'), 'a wrong answer to the sum keeps bedtime');
@@ -177,6 +388,63 @@
     reset(3); go('badge'); $('#bWho').click(); $('#wBed').click(); answer(true);
     check(document.querySelectorAll('.veil .acts .btn').length === 6, 'the bedtime setting offers off and one to five Nights');
     document.querySelectorAll('.veil .acts .btn')[2].click(); check(S.bedN === 2 && $('#wBed').textContent.includes('2'), 'the chosen number of Nights is kept and shown'); $('#wOk').click(); S.bedN = 0;
+    where = 'first words, supper, birthday, lanterns';
+    // the day's first words: what happened last time; once a day
+    reset(3); S.memD = ''; S.mem = { d: today(), k: 'perfect' }; go('hub');
+    check(!!$('.veil') && $('#owlText').textContent === t('mem_perfect') && S.memD === today(), 'the day begins with a memory: ' + ($('#owlText') || {}).textContent);
+    clickDlg(); go('hub'); check(!$('.veil'), 'the first words are said once a day');
+    const yd = new Date(Date.now() - 144e5 - 864e5), yesterday = yd.getFullYear() + '-' + (yd.getMonth() + 1) + '-' + yd.getDate();
+    reset(3); S.memD = '2020-1-1'; S.mem = { d: today(), k: 'lost' }; go('hub');
+    check(!!$('.veil') && $('#owlText').textContent === t('mem_away'), 'after a week without a visit the owl is glad'); clickDlg();
+    reset(3); S.memD = yesterday; S.mem = { d: '2020-1-1', k: 'lost' }; go('hub');
+    check(!!$('.veil') && $('#owlText').textContent === t('mem_lost'), 'a visit yesterday is no time away, however old the last Night is'); clickDlg();
+    reset(3); S.memD = ''; S.mem = { d: today(), k: 'zzz' }; go('hub'); check(!$('.veil') && S.memD === today(), 'an unknown memory says nothing');
+    // what a Night's end leaves to remember, and the lantern of a Night without a lost jar
+    reset(3); closeNight(0); check(S.mem.k === 'perfect' && S.mem.d === today() && S.lit === 1, 'a Night without a lost jar is remembered and lights a lantern: ' + S.mem.k + ' ' + S.lit);
+    reset(5); closeNight(3); check(S.mem.k === 'hard' && S.lit === 0, 'a hard Night is remembered kindly and lights nothing: ' + S.mem.k);
+    closeNight(1); check(S.mem.k === 'lost' && !S.promo, 'a lost jar is remembered: ' + S.mem.k);
+    reset(5); closeNight(1, 2); check(S.mem.k === 'laugh', 'laughing magpies are remembered: ' + S.mem.k);
+    reset(2); closeNight(1); check(S.promo && S.mem.k === 'promo', 'a promotion is remembered: ' + S.mem.k);
+    reset(5); S.boss = 5; closeNight(0); check(S.mem.k === 'boss', 'the Baron is remembered: ' + S.mem.k);
+    for (const k of ['perfect', 'lost', 'hard', 'promo', 'boss', 'laugh', 'fish', 'bed', 'away']) check(!!L['mem_' + k], 'the memory ' + k + ' has its line');
+    reset(3); finishNight(0); check($('.veil .pics').textContent.includes(t('litNew')) && $('#owlText').textContent.endsWith(t('lit1')), 'the first lantern comes with a word about it'); clickDlg();
+    reset(3); S.lit = 4; finishNight(0); check($('.veil .pics').textContent.includes(t('litNew')) && !$('#owlText').textContent.includes(t('lit1')), 'later lanterns come without the explanation'); clickDlg();
+    reset(3); finishNight(2); check(!$('.veil .pics').textContent.includes(t('litNew')) && S.lit === 0, 'a Night with lost jars lights no lantern'); clickDlg();
+    // fish for supper: three fish or more of a day's fishing sharpen the owl's eyes, once
+    reset(3); localStorage.setItem('firstlight.day', JSON.stringify({ id: 77, n: 3 })); go('hub');
+    check(!!$('.veil') && $('#owlText').textContent === t('eye1') && S.eye === 1 && S.sup === '77' && S.mem.k === 'fish', 'three fish are supper: ' + S.eye + ' ' + S.sup);
+    clickDlg(); S.eye = 0; go('hub'); check(!$('.veil') && S.eye === 0, 'one day of fishing is one supper');
+    localStorage.setItem('firstlight.day', JSON.stringify({ id: 78, n: 2 })); go('hub'); check(!$('.veil') && S.eye === 0 && S.sup === '78' && S.mem.k === 'fish', 'two fish are remembered, but are no supper');
+    localStorage.setItem('firstlight.day', '{"id":{"a":1},"n":"x"}'); go('hub'); check(!$('.veil') && S.sup === '78', 'a broken note from the fishing game is ignored'); localStorage.removeItem('firstlight.day');
+    // the birthday: the greeting, the party hat and a few moonbeams, once a year
+    reset(3); S.memD = ''; S.bday = today().split('-').slice(1).join('-'); go('hub');
+    check(isBirthday() && $('#owlText').textContent === t('bday1') + ' ' + t('bday2') && S.own.party === 1 && S.beams === 330 && S.bdayY === +today().split('-')[0], 'the owl keeps the birthday: ' + $('#owlText').textContent);
+    clickDlg(); S.memD = ''; go('hub'); check(!$('.veil') && S.beams === 330, 'the birthday is kept once a year');
+    reset(3); go('hub'); S.bday = today().split('-').slice(1).join('-'); go('hub');   // the date is set after today's first visit
+    check(!!$('.veil') && $('#owlText').textContent === t('bday1') + ' ' + t('bday2') && S.own.party === 1 && S.beams === 330, 'a birthday set later on the day itself is still kept'); clickDlg();
+    reset(3); go('badge'); $('#bWho').click(); $('#wBday').click(); answer(false); check(!!$('#wBday') && S.bday === '', 'a wrong sum sets no birthday');
+    $('#wBday').click(); answer(true); $('#bdD').value = '14'; $('#bdM').value = '3'; $('#bdOk').click();
+    check(S.bday === '3-14' && $('#wBday').textContent.includes('14.3'), 'a grown-up sets the birthday: ' + S.bday);
+    $('#wBday').click(); answer(true); check($('#bdD').value === '14' && $('#bdM').value === '3', 'the setting shows the date that is set'); $('#bdD').value = '0'; $('#bdOk').click();
+    check(S.bday === '', 'the birthday can be taken away again');
+    $('#wBday').click(); answer(true); check(document.activeElement === $('#bdOk'), 'the birthday setting opens with the focus on its button');
+    $('#bdD').value = '31'; $('#bdM').value = '2'; $('#bdOk').click(); check(S.bday === '2-29', 'a day the month does not have becomes its last day: ' + S.bday);
+    S.bday = ''; $('#wOk').click();
+    where = 'seasons and weather';
+    seaForce = { m: 6 }; check(seasonLeaf().join() === '#1a4c33,#1f5a3c,#246a45,#2b7a50' && seasonGround().join() === '#0c1740,#13235a', 'summer keeps the tree as it always was');
+    for (const m of [0, 3, 6, 9]) {   // a winter, spring, summer and autumn month; Nights 1 to 60
+      seaForce = { m }; const wx = []; for (let n = 1; n <= 60; n++) wx.push(nightWeather(n));
+      check(wx.every((w, i) => w.k === nightWeather(i + 1).k && w.slow === nightWeather(i + 1).slow), 'the weather of a Night is always the same, month ' + m);
+      check(wx.slice(0, 3).every(w => w.k === 'clear'), 'Nights 1 to 3 are clear, month ' + m);
+      check(wx.every((w, i) => !i || w.k === 'clear' || wx[i - 1].k === 'clear'), 'never two Nights with weather in a row, month ' + m);
+      check(wx.every(w => w.slow >= 0 && w.slow <= .25), 'weather slows the magpies by a quarter at most, month ' + m);
+      check(wx.every((w, i) => w.k === 'clear' ? weatherLine(i + 1) === '' : has(L, weatherLine(i + 1))), 'every weather has its line for the briefing, month ' + m);
+      const wet = wx.filter(w => w.k !== 'clear').length; check(wet >= 15 && wet <= 25, `about one Night in three has weather, month ${m}: ${wet}`);
+      check(m ? wx.some(w => w.k === 'rain') && !wx.some(w => w.k === 'snow') : wx.some(w => w.k === 'snow') && !wx.some(w => w.k === 'rain'), 'rain falls as snow in winter only, month ' + m);
+    }
+    seaForce = { w: 'wind' }; check(nightWeather(1).k === 'wind' && weatherLine(1) === 'wx_wind', 'a test can force the weather');
+    reset(9); go('home'); for (const m of [0, 3, 6, 9]) for (const w of ['clear', 'rain', 'wind', 'snow']) { seaForce = { m, w }; sim(.5); }   // every season with every weather is drawn
+    seaForce = { m: 6, w: 'clear' };
     where = 'secrets';
     reset(8); go('home'); const TS = treeArea(), [mx, my] = moonAt();
     scene.down(mx, my); check(V.t - winkT < .1, 'a tapped moon winks');
@@ -185,11 +453,14 @@
     lastTouch = V.t - 30; sim(1); check(dozing(), 'the owl dozes off when nobody plays');
     ptr('pointerdown', 5, 5, $('#bPlay')); check(!dozing(), 'a tap on a button counts as playing: the owl wakes');
     scatterT = -9; scatter(); check(V.t - scatterT < .1, 'fireflies scatter on the menu'); go('cam'); clickDlg(); scatterT = -9; scatter(); check(scatterT === -9, 'no scattering inside a station');
+    lifeChecks();
     where = 'speech';
     speak(t('b1')); speak(t('please'), 'pie'); speak('Mia!'); hush(); S.voice = false; go('home'); owlSay(t('win')); clickDlg(); S.voice = true; toast(t('poor'));
     check(sentences(t('b1')).length === 2 && sentences('One. Two! Three').length === 3, 'a line is split into sentences for the voice clips');
     await note('gadgets, album, wardrobe, certificate, players, secrets and speech checked, problems so far: ' + out.errors.length);
 
+    where = 'owl\'s eye'; eyeChecks();
+    where = 'friends'; palChecks();
     // --- full Nights 1..8 ---
     for (let n = 1; n <= 8; n++) {
       reset(n); setLang(n % 3);
@@ -274,7 +545,23 @@
     scene.open(scene.parcels.findIndex(p => !p.pie)); sim(1.7); scene.parcels.forEach((p, i) => { if (p.pie) scene.open(i); }); sim(5.2);
     scene.lock(scene.locks.findIndex(l => l.length === 1)); sim(3.6); check(scene.ph === 'ask3' && scene.miss === 3, 'a weak lock is only a mistake, got ' + scene.ph + ' ' + scene.miss);
     scene.lock(scene.locks.findIndex(l => l.length === 4)); check(S.boss === 10 && scene.stars === 1 && S.stk.m6 === 1, 'three mistakes still beat the Baron, with one star: ' + scene.stars);
-    sim(13.9); await waitDlg('boss result with mistakes'); clickDlg(); check(after === 1, 'the Baron\'s result leads on to the raid');
+    sim(13.9); await waitDlg('boss result with mistakes'); clickDlg();
+    // --- the Baron's story: from Night 10 a chapter comes between his Night and the raid, one per Night; after the third he comes no more ---
+    where = 'the Baron\'s story';
+    check(scene.id === 'saga' && scene.ch === 1 && after === 0, 'on Night 10 the first chapter of the Baron\'s story follows his Night, got ' + scene.id);
+    for (let i = 0; i < 3; i++) { sim(.5); scene.next(); }
+    check(S.saga === 1 && after === 1, `the chapter is saved and the Night goes on to the raid: saga ${S.saga}, then ${after}`);
+    for (const [n, sg, ch] of [[5, 0, 0], [10, 0, 1], [15, 1, 0], [20, 1, 2], [25, 2, 0], [30, 2, 3], [45, 0, 1]]) {
+      reset(n); S.saga = sg; go('home'); let went = 0; sagaAfter(() => { went = 1; });
+      check(ch ? scene.id === 'saga' && scene.ch === ch && !went : went && scene.id === 'home', `after the Baron's Night ${n} with ${sg} chapters seen: ${scene.id} ${scene.ch || ''}`);
+    }
+    reset(30); S.saga = 2; go('saga', { ch: 3, then: () => { after = 2; } }); for (let i = 0; i < 3; i++) { sim(.5); scene.next(); }
+    check(S.saga === 3 && S.beams === 350 && S.own.crown === 1 && !!$('.veil') && after === 1, 'the last chapter ends with the Baron\'s present, saved at once');
+    clickDlg(); check(after === 2 && !isBoss(35) && !isBoss(40), 'after his museum opens the Baron comes no more');
+    reset(30); S.saga = 3; S.boss = 30; closeNight(0); check(S.mem.k === 'perfect', 'once the museum is open the Baron is not remembered as a grumbler: ' + S.mem.k);
+    reset(10); S.boss = 10; go('hub'); check(scene.id === 'saga' && scene.ch === 1, 'a chapter that was cut short comes back at the Night menu, got ' + scene.id);
+    for (let i = 0; i < 3; i++) { sim(.5); scene.next(); }
+    check(scene.id === 'hub' && S.saga === 1, `after it the Night goes on: ${scene.id}, chapters seen ${S.saga}`);
     // --- Be the Magpie: a perfect fake fools the owl once (and brings the sticker), a wrong one is named ---
     where = 'be the magpie'; reset(3); go('pie'); clickDlg(); sim(7); check(scene.ph === 'spied', 'the spy phase ends, got ' + scene.ph);
     scene.shop(); Object.assign(scene.fake, { dis: 2, shape: scene.badge.shape, style: scene.badge.style, pass: [...scene.pass] }); scene.marks(); scene.said = true; scene.check('owl');
@@ -311,6 +598,17 @@
     const look = screen => {
       where = screen;
       if (document.documentElement.scrollWidth > W + 1) flag(screen, document.documentElement, 'page scrolls sideways');
+      // every button that is not under a dialog takes a tap at its middle (the overlay lets taps through to the canvas, so
+      // a button outside the containers that take them back would be dead to a finger and alive to a test's click()).
+      // A tile that a scrolling row has scrolled out of view is not judged.
+      const veil = $('#ui .veil');
+      const scrolledOut = (el, x, y) => { for (let p = el.parentElement; p && p !== ui; p = p.parentElement) { const o = getComputedStyle(p), q = p.getBoundingClientRect(); if ((o.overflowX !== 'visible' || o.overflowY !== 'visible') && (x < q.left || x > q.right || y < q.top || y > q.bottom)) return true; } return false; };
+      for (const el of document.querySelectorAll('#ui button, #ui a.btn')) {
+        const r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+        if (!r.width || el.disabled || veil && !veil.contains(el) || r.left < 0 || r.right > W || r.top < 0 || r.bottom > H || scrolledOut(el, x, y)) continue;
+        const hit = document.elementFromPoint(x, y);
+        if (hit !== el && !el.contains(hit)) flag(screen, el, 'cannot be tapped: ' + (hit ? name(hit) : 'nothing') + ' takes the tap');
+      }
       for (const el of document.querySelectorAll('#ui .btn, #ui .card, #ui .tile, #ui .pal, #ui .pill, #ui .dlg, #ui .ref, #ui .slots, #ui .meter, #ui input, #ui .title, #ui .foot, #ui .bubble, #ui .toast, #ui .goals, #ui .stk, #ui img.cert, #ui .who')) {
         const r = el.getBoundingClientRect();
         if (!r.width && !r.height) continue;
@@ -321,7 +619,7 @@
       }
       const d = $('#ui .dlg');
       if (d && d.scrollHeight > d.clientHeight + 2) flag(screen, d, `dialog needs scrolling (${d.scrollHeight} > ${d.clientHeight})`);
-      const blocks = [...document.querySelectorAll('#ui .hud > *:not(.sp), #ui .ref, #ui .hub .cards, #ui .hub .row, #ui .gatebtns .btn, #ui .forge > *, #ui .palette, #ui .home > .title, #ui .home > .row, #ui .home > .foot, #ui .album > *, #ui .side > *, #ui .replay')].filter(e => e.getBoundingClientRect().width);
+      const blocks = [...document.querySelectorAll('#ui .hud > *:not(.sp), #ui .ref, #ui #bEye, #ui .hub .cards, #ui .hub .row, #ui .gatebtns .btn, #ui .forge > *, #ui .palette, #ui .home > .title, #ui .home > .row, #ui .home > .foot, #ui .album > *, #ui .side > *, #ui .replay')].filter(e => e.getBoundingClientRect().width);
       for (let i = 0; i < blocks.length; i++) for (let j = i + 1; j < blocks.length; j++) {
         const a = blocks[i].getBoundingClientRect(), b = blocks[j].getBoundingClientRect();
         const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left), oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
@@ -345,10 +643,18 @@
       for (let p = 0; p < 3; p++) { go('album', { page: p }); look('album page ' + p); }
       S.stk = {}; go('album'); look('empty album');
       go('wear'); sim(.2); look('wardrobe'); scene.tap('wizard'); look('wardrobe, trying on');
+      // the flag's painting screen: the grid keeps clear of the bar and of the palette (beside it in landscape, above it in portrait)
+      go('flag', { from: 'wear' }); look('flag, the owl\'s first word'); clickDlg(); sim(.2); look('flag painting');
+      const FG = scene.G, FP = $('#flagPal').getBoundingClientRect(), FB = $('#ui .hud').getBoundingClientRect(), FR = [FG.x - 6, FG.y - 6, FG.x + 12 * FG.c + 6, FG.y + 8 * FG.c + 6];
+      check(FG.c >= 22 && FR[0] >= 0 && FR[2] <= W && FR[3] <= H && FR[1] >= FB.bottom - 1 && (wide() ? FP.left >= FR[2] : FP.top >= FR[3]), `flag: the grid (cells of ${FG.c} px) keeps clear of the bar and the palette: ${FR.join()}`);
+      $('#flagNew').click(); look('flag, start again?'); clickDlg(1);
       go('home'); sim(.2); look('home of a Chief');
       go('badge', { from: 'home' }); showCert(); look('certificate'); closeDlg(); showPlayers(); look('players'); $('[data-del]').click(); look('grown-up question'); answer(false); closeDlg();
       // story strips
       for (let r = 1; r <= 3; r++) { go('story', { rank: r, then: () => {} }); for (let i = 0; i < 3; i++) { sim(.6); look(`story ${r}, panel ${i + 1}`); if (i < 2) scene.next(); } }
+      // the Baron's story, and his present after the last chapter
+      for (let ch = 1; ch <= 3; ch++) { go('saga', { ch, then: () => {} }); for (let i = 0; i < 3; i++) { sim(.6); look(`the Baron's story ${ch}, panel ${i + 1}`); scene.next(); } }
+      look('the Baron\'s present'); clickDlg();
       // the extra stations, early and late
       for (const ex of EXTRAS) for (const n of [2, 8]) {
         reset(n); go(ex); look(`${ex} intro n${n}`); clickDlg(); sim(3); look(`${ex} n${n}`);
@@ -358,6 +664,27 @@
       reset(3); go('tinker'); $('#tPage').click(); sim(.2); look('tinker, gadget page');
       S.items = [{ t: 'peel', m: 0 }, { t: 'tickle', m: 1 }, { t: 'disco', m: 2 }, { t: 'peel', m: 3 }, { t: 'tickle', m: 4 }, { t: 'bubbler', m: 5 }, { t: 'bell', m: 15 }];
       go('raid', { test: true }); sim(200, () => !scene.endT); check(scene.rewind() === true && !!scene.rp, 'a raid with antics has a replay'); sim(.3); look('replay'); scene.skip(); look('result of a silly raid'); clickDlg();
+      // tricks of Nights 9 to 30 (src/91-arc.js): the palette's third page and a raid with every trick, with the helper's pill
+      // in both top bars (src/57-pals.js), and the briefing of a trick's first Night and of a mixed Night
+      reset(21); Object.assign(S, { pals: { guard: 1, lamp: 1 }, helper: 'lamp' }); go('tinker'); $('#tPage').click(); $('#tPage').click(); sim(.2); look('tinker, new gadgets page');
+      check(document.querySelectorAll('.pal[data-k]').length === 4 && !!$('.pal[data-k="drum"]'), 'the third page holds the four new gadgets');
+      go('raid', { test: true }); scene.plan = [{ route: 'sky', at: 0, kind: 'balloon' }, { route: 'rb', at: 0, kind: 'stilts' }, { route: 'lb', at: 0, kind: 'twins' }, { route: 'lad', at: 0, kind: 'dig' }]; scene.R = makeRaid(scene.plan, 1); sim(1.6); look('raid with every trick');
+      check(!!$('.hud canvas[data-i^="pal:"]'), 'the raid\'s bar names the helper');
+      reset(17); S.briefed = 0; go('hub'); look('briefing of a new trick'); clickDlg(); reset(25); S.briefed = 0; go('hub'); look('briefing of a mixed Night'); clickDlg();
+      // friends (src/57-pals.js): the owl's news of the first friend, and the Friends page with all six and the Baron
+      reset(3); S.caught = 30; go('hub'); look('news of a friend'); clickDlg();
+      reset(9); Object.assign(S, { pals: Object.fromEntries(PALS.map(id => [id, 1])), helper: 'guard', caught: 333, saga: 3 }); go('pals', { from: 'album' }); sim(.2); look('friends page');
+      // life at the treehouse (src/46-life.js): news of the swing, a visitor's wish, a wrong answer, the thank-you
+      reset(3); S.stars = 60; go('hub'); look('news of the swing'); clickDlg();
+      reset(3); S.visit = { d: '', done: 0, n: 0 }; go('hub'); visitTap(500, 300, treeArea()); look('a visitor\'s wish');
+      const wish = LIFE_WISH[lifeNow().wish][1], wcards = [...document.querySelectorAll('.veil .card')];
+      wcards.find(b => b.dataset.k !== wish).click(); look('a visitor\'s wish, not quite'); wcards.find(b => b.dataset.k === wish).click(); look('a visitor\'s thanks'); clickDlg();
+      // the day's first words, on a birthday, after a good day's fishing; the birthday setting; a Night's end with its lantern
+      reset(3); S.memD = ''; S.mem = { d: today(), k: 'laugh' }; go('hub'); look('first words of the day'); clickDlg();
+      reset(3); S.memD = ''; S.bday = today().split('-').slice(1).join('-'); go('hub'); look('birthday greeting'); clickDlg();
+      reset(3); localStorage.setItem('firstlight.day', JSON.stringify({ id: 5, n: 4 })); go('hub'); localStorage.removeItem('firstlight.day'); look('fish for supper'); clickDlg();
+      reset(3); go('badge', { from: 'home' }); showPlayers(); $('#wBday').click(); answer(true); look('birthday setting'); $('#bdOk').click(); closeDlg();
+      reset(3); go('hub'); finishNight(0); look('a Night\'s end with the first lantern'); clickDlg();
       // Be the Magpie
       go('pie'); look('magpie intro'); clickDlg(); sim(7); look('magpie, after spying'); scene.shop(); sim(.3); look('magpie workshop');
       Object.assign(scene.fake, { dis: 5, pass: [...scene.pass] }); scene.marks(); look('magpie workshop, ready'); $('#pieReady').click(); look('magpie, who checks');
@@ -370,10 +697,10 @@
         go('cam'); look(`cam intro n${n}`); clickDlg(); sim(3); look(`cam n${n}`);
         scene.stolen = 3; scene.finish(false); await sleep(750); look(`cam soft fail n${n}`); clickDlg(0);
         go('cam'); clickDlg(); stationWin('cam', 3, 3); look(`station win n${n}`); clickDlg();
-        go('gate'); look(`gate intro n${n}`); clickDlg(); sim(1.2); look(`gate n${n}`);
+        S.eye = 1; go('gate'); look(`gate intro n${n}`); clickDlg(); sim(1.2); look(`gate n${n}`);   // with the owl's eye: its button is on screen too
         // the password bubble is drawn on the canvas: no part of the overlay may cover it
         scene.draw();
-        for (const el of document.querySelectorAll('#ui .ref, #ui .hud > *:not(.sp)')) {
+        for (const el of document.querySelectorAll('#ui .ref, #ui #bEye, #ui .hud > *:not(.sp)')) {
           const r = el.getBoundingClientRect(), [bx, by, bw, bh] = scene.bubble;
           if (Math.min(r.right, bx + bw) - Math.max(r.left, bx) > 2 && Math.min(r.bottom, by + bh) - Math.max(r.top, by) > 2) flag(`gate n${n}`, el, 'covers the visitor\'s password bubble');
         }
@@ -424,6 +751,24 @@
     key('ArrowRight', document.activeElement); key('ArrowRight', document.activeElement);
     const spot = scene.kb; key('Enter', document.activeElement);
     check(S.items.some(i => i.t === 'cam' && i.m === spot), 'a keyboard-only player can place a camera (Enter on palette, arrows, Enter)');
+    where = 'the treehouse flag'; reset(1); go('home'); sim(.2);
+    const TF = treeArea(), fs = Math.max(1, .5 / TF.k), fpx = TF.ox + (614 + 45 * fs) * TF.k, fpy = TF.oy + (83 + 30 * fs) * TF.k;
+    ptr('pointerdown', fpx, fpy); ptr('pointerup', fpx, fpy, window);
+    check(scene.id === 'flag' && !!$('.veil'), 'a real tap on the flag opens the painting screen, and the owl says the first word');
+    clickDlg(); key('3');
+    const FC = (i, j) => [scene.G.x + (i + .5) * scene.G.c, scene.G.y + (j + .5) * scene.G.c];
+    ptr('pointerdown', ...FC(2, 3)); ptr('pointermove', ...FC(3, 3), window); ptr('pointermove', ...FC(4, 3), window); ptr('pointerup', ...FC(4, 3), window);
+    check(S.flag === FLAG_OWN.slice(0, 38) + '222' + FLAG_OWN.slice(41) && JSON.parse(localStorage.getItem(SAVE)).flag === S.flag && $('[data-c="2"]').getAttribute('aria-pressed') === 'true', 'a drag across three cells paints those three red and saves 96 digits: ' + S.flag);
+    ptr('pointerdown', ...FC(6, 6)); window.dispatchEvent(new PointerEvent('pointermove', { clientX: FC(9, 1)[0], clientY: FC(9, 1)[1], bubbles: true, pointerId: 2 })); ptr('pointerup', ...FC(6, 6), window);
+    check(S.flag[6 * 12 + 6] === '2' && S.flag[1 * 12 + 9] === FLAG_OWN[1 * 12 + 9], 'a second finger on the screen paints nothing: ' + S.flag);
+    key('8'); key('ArrowDown'); key('Enter');
+    check(S.flag[12] === '7' && JSON.parse(localStorage.getItem(SAVE)).flag === S.flag, 'flag keys: 8 picks white, an arrow moves the cursor, Enter paints and saves');
+    $('#flagNew').click(); clickDlg(0);
+    check(S.flag === '' && JSON.parse(localStorage.getItem(SAVE)).flag === '', '"Start again" puts back the Night Watch\'s own flag');
+    $('#flagBack').click(); check(scene.id === 'home', 'the back button of the painting screen returns home');
+    const flagPic = f => { S.flag = f; const cn = document.createElement('canvas'); cn.width = 110; cn.height = 80; const g = cn.getContext('2d'); g.translate(-605, -70); flagDraw(g, 0, 1); return g.getImageData(0, 0, 110, 80).data.join(); }, ownPic = flagPic('');
+    check(['x'.repeat(96), '8'.repeat(96), '0'.repeat(95), '<b>', 7, null].every(f => flagPic(f) === ownPic) && flagPic('2'.repeat(96)) !== ownPic, 'damaged values in S.flag fly as the Night Watch\'s own flag');
+    S.flag = '';
   }
 
   if (mode[0] !== 'smoke' && mode[0] !== 'audit') return;

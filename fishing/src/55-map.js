@@ -8,6 +8,7 @@ css(`
 .map-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 1px; margin-top: .3em; }
 .map-leg { display: inline-flex; align-items: center; justify-content: center; gap: .3em; margin-top: .2em; font-size: max(11px, .85em); }
 #mapAll[aria-pressed=true] { background: #f2b93b; border-color: #fff3c4; }
+.pill.lan-all { background: #f2b93b; border-color: #fff3c4; color: #2a1c05; }
 `);
 
 Object.assign(L, {
@@ -25,6 +26,10 @@ Object.assign(L, {
   map_here: ['You are at {p}.', 'Ты здесь: {p}.', 'Sei qui: {p}.'],
   map_hint: ['Tap a place to walk there.', 'Нажми на место, и пойдём туда.', 'Tocca un posto per andarci.'],
   map_new: ['A new way is open: {a}!', 'Открылся новый путь: {a}!', 'Si è aperta una nuova strada: {a}!'],
+  // lanterns: one lights up for every Night of the Night Watch without a lost jar
+  lan_pill: ['Lanterns lit', 'Горят фонари', 'Lanterne accese'],
+  lan_on: ['This lantern lit up on a Night when no jar was lost!', 'Этот фонарь зажёгся в ночь, когда не пропала ни одна банка!', 'Questa lanterna si è accesa in una Notte senza barattoli persi!'],
+  lan_off: ['Keep every jar safe one Night, and a lantern lights up here!', 'Сбереги ночью все банки — и здесь загорится фонарь!', 'Tieni al sicuro tutti i barattoli per una Notte, e qui si accende una lanterna!'],
 });
 
 // Boat paints (S.look.boat, the paint goods' `col`): plain wood, red, blue, green, yellow, violet. Shared with the shop and the waters.
@@ -162,7 +167,7 @@ function mapGo(id) {
 }
 function mapUpdateTrip(dt) {
   const rt = mapRt;
-  rt.d += rt.speed * (rt.legs[rt.li].water ? 1.15 : 1) * dt;
+  rt.d += rt.speed * (rt.legs[rt.li].water ? 1.15 : 1) * (lanFast(rt.legs[rt.li]) ? 1.4 : 1) * dt;
   while (rt.d >= rt.legs[rt.li].len) {
     rt.d -= rt.legs[rt.li].len;
     if (++rt.li >= rt.legs.length) return mapArrive();
@@ -780,6 +785,72 @@ function mapDrawMe(c, t) {
   chief(c, x, y, s, t, { dir: mapMe.dir, pose: moving ? 'walk' : 'stand' });
 }
 
+// ----- Lanterns on the ways: every Night of The Night Watch without a lost jar lights one (that game's save, `lit`) -----
+// 24 posts stand beside the ways: the way to the pond first, then outward ring by ring, so the light spreads to every water.
+// A post stands 12 units to one side of its way, at a share of its length ([from, to, share, side]: side 1 is on the right
+// going from `from` to `to`). Each post lights its own stretch: the part of its way that is nearer to it than to any other
+// post of that way. The Chief walks (or paddles) a lit stretch 1.4 times as fast.
+const LAN = [['tree', 'pond', .75, 1], ['tree', 'js', .45, -1], ['tree', 'jw', .7, -1], ['tree', 'jn', .8, 1], ['jw', 'creek', .5, 1],
+  ['tree', 'js', .8, 1], ['jw', 'jh', .25, 1], ['pond', 'je', .4, -1], ['jn', 'ice', .15, 1], ['js', 'jsh', .35, 1], ['pond', 'je', .8, -1],
+  ['jw', 'jh', .85, 1], ['js', 'jsh', .8, -1], ['jn', 'ice', .45, 1], ['je', 'mill', .45, 1], ['jh', 'falls', .45, 1], ['jsh', 'land', .5, -1],
+  ['jn', 'ice', .68, 1], ['jh', 'chapel', .2, 1], ['land', 'reef', .3, 1], ['jh', 'chapel', .5, 1], ['land', 'reef', .65, 1],
+  ['jh', 'chapel', .8, 1], ['reef', 'deep', .7, 1]].map(([a, b, f, side], i) => {
+  const e = MAP_EDGES.find(q => q.a === a && q.b === b), g = mapLeg(e.pts), d = f * g.len, p = e.pts;
+  let j = 0;
+  while (j < g.cum.length - 2 && g.cum[j + 1] <= d) j++;
+  const dx = p[j * 2 + 2] - p[j * 2], dy = p[j * 2 + 3] - p[j * 2 + 1], l = Math.hypot(dx, dy), k = (d - g.cum[j]) / l;
+  return { i, e, x: p[j * 2] + dx * k - dy / l * side * 12, y: p[j * 2 + 1] + dy * k + dx / l * side * 12 };
+});
+const LAN_WAY = {};   // 'from|to' -> the posts of that way, either way round
+for (const q of LAN) for (const k of [q.e.a + '|' + q.e.b, q.e.b + '|' + q.e.a]) (LAN_WAY[k] || (LAN_WAY[k] = [])).push(q);
+let lanOn = 0, lanMsg = null;   // how many posts are lit (read each time the map opens); the last toast a post showed
+const lanLit = q => q.i < lanOn;
+// The stretch under the Chief is lit when the nearest post of the way being walked is lit.
+function lanFast(leg) {
+  let best = null, bd = 1e9;
+  for (const q of LAN_WAY[leg.from + '|' + leg.to] || []) { const d = Math.hypot(q.x - mapMe.x, q.y - mapMe.y); if (d < bd) { bd = d; best = q; } }
+  return !!best && lanLit(best);
+}
+// A post: pole, roof and lantern. Lit: a flame, short rays and a soft glow; unlit: an empty grey lantern with a crossbar.
+// With every post lit each one sparkles now and then (a still star with reduced motion). Larger on the whole map, so it shows.
+// The posts are drawn in every frame of the map, so nothing here makes an array: the rays' directions are a table.
+const LAN_RAY = new Float64Array([-2.3, -.84, -3, -.14, 2.6, .54].flatMap(a => [Math.cos(a), Math.sin(a)]));
+function lanDraw(c, t) {
+  const S2 = mapSprites(), calmly = still(), s = Math.max(1, .5 / mapCam.k), all = lanOn >= LAN.length;
+  c.lineCap = c.lineJoin = 'round';
+  for (const q of LAN) {
+    const x = q.x, y = q.y, ly = y - 25 * s, on = lanLit(q);
+    if (on) mapGlow(c, S2.lamp, x, ly, 36 * s, calmly ? .62 : .56 + .08 * Math.sin(t * 2 + q.i));
+    ell(c, x, y, 7 * s, 2.4 * s, q.e.kind === 'water' ? 'rgba(232,246,255,.6)' : 'rgba(0,0,0,.25)');   // a shadow, or a ring of water round a post in the sea
+    c.beginPath(); c.moveTo(x, y); c.lineTo(x, ly + 6 * s); c.lineWidth = 2.8 * s; c.strokeStyle = '#4a3020'; c.stroke();
+    rr(c, x - 5 * s, ly - 6 * s, 10 * s, 12 * s, 2 * s); c.fillStyle = on ? '#ffe9a3' : '#6b717d'; c.fill();
+    c.lineWidth = 1.6 * s; c.strokeStyle = on ? '#7a4e22' : '#2f333c'; c.stroke();
+    c.beginPath(); c.moveTo(x - 7.5 * s, ly - 5 * s); c.lineTo(x, ly - 12 * s); c.lineTo(x + 7.5 * s, ly - 5 * s); c.closePath(); c.fillStyle = on ? '#7a4e22' : '#3d424c'; c.fill();
+    if (!on) { c.beginPath(); c.moveTo(x - 5 * s, ly); c.lineTo(x + 5 * s, ly); c.lineWidth = 1.2 * s; c.strokeStyle = '#2f333c'; c.stroke(); continue; }
+    ell(c, x, ly + 1.5 * s, 2.6 * s, 4 * s, '#ff9a3a'); ell(c, x, ly + 2.5 * s, 1.2 * s, 2 * s, '#fff3c4');
+    c.beginPath();
+    for (let r = 0; r < 12; r += 2) { const cx = LAN_RAY[r], cy = LAN_RAY[r + 1]; c.moveTo(x + cx * 11 * s, ly + cy * 11 * s); c.lineTo(x + cx * 16 * s, ly + cy * 16 * s); }
+    c.lineWidth = 1.8 * s; c.strokeStyle = '#ffe9a3'; c.stroke();
+    if (!all) continue;
+    const k = (t * .25 + mapHash(q.i + 900)) % 1, a = calmly ? 1 : k < .16 ? Math.sin(k / .16 * Math.PI) : 0;
+    if (a > .02) { c.globalAlpha = a; starPath(c, x + 11 * s, ly - 13 * s, 5.5 * s, 1.6 * s, 4); c.fillStyle = '#fffbe8'; c.fill(); c.globalAlpha = 1; }
+  }
+}
+// A tap on a post that is nearer than `beat` (the nearest place's distance): what lit it, or what would. True when it took
+// the tap. A new word replaces the last one.
+function lanTap(x, y, beat) {
+  const s = Math.max(1, .5 / mapCam.k);
+  let best = null, bd = Math.min(beat, Math.max(26, 16 * s * mapCam.k));
+  for (const q of LAN) { const d = Math.hypot(mapSX(q.x) - x, mapSY(q.y - 20 * s) - y); if (d < bd) { bd = d; best = q; } }
+  if (!best) return false;
+  const on = lanLit(best);
+  if (on) sfx.sparkle(); else sfx.click();
+  if (lanMsg) lanMsg.remove();
+  toast(t(on ? 'lan_on' : 'lan_off'), 3000);
+  lanMsg = ui.lastElementChild;
+  return true;
+}
+
 // ----- The scene -----
 scenes.map = {
   enter() {
@@ -797,7 +868,10 @@ scenes.map = {
     this.sig = sig;
     mapFit();
     mapAim(-1);
-    hud(() => go('home'), `<button class="btn round" id="mapAll" aria-pressed="${mapCam.all}" aria-label="${esc(t(mapCam.all ? 'map_me' : 'map_all'))}">${ic('mapI', 30)}</button>`, { home: true });
+    lanOn = Math.min(LAN.length, clamp(nwSave.lit | 0, 0, 999));
+    const lanAll = lanOn >= LAN.length;
+    hud(() => go('home'), `<button class="btn round" id="mapAll" aria-pressed="${mapCam.all}" aria-label="${esc(t(mapCam.all ? 'map_me' : 'map_all'))}">${ic('mapI', 30)}</button>` +
+      `<span class="pill${lanAll ? ' lan-all' : ''}" id="lanPill" role="img" aria-label="${esc(t('lan_pill'))}: ${lanOn}/${LAN.length}">${ic(lanAll ? 'lanAll' : 'lamp', 22)}<b>${lanOn}/${LAN.length}</b></span>`, { home: true });
     $('#mapAll').onclick = mapToggle;
     add(`<div class="bar map-bar"><button class="btn go" id="mapGo"></button></div>`);
     $('#mapGo').onclick = () => { if (S.at === 'tree') { sfx.pop(); go('hub'); } else mapFish(S.at); };
@@ -835,6 +909,7 @@ scenes.map = {
     }
     c.save(); c.translate(ox, oy); c.scale(k, k);
     mapLife(c, V.t);
+    lanDraw(c, V.t);
     c.restore();
     mapPlaques(c);
     mapDrawMe(c, V.t);
@@ -850,12 +925,13 @@ scenes.map = {
     const d = mapDrag;
     mapDrag = null;
     if (!d || d.moved || cancelled) return;
-    // a plaque or a place under the finger (the nearest place within reach)
+    // a plaque, or what is nearest under the finger: a place within reach, or a lantern post nearer still
     let id = '';
     for (let i = mapHits.length - 1; i >= 0 && !id; i--) { const h = mapHits[i]; if (h.id && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) id = h.id; }
     if (!id) {
       let best = mapCam.all ? 30 : 46;
       for (const p of MAP_PLACES) { const [sx, sy] = mapScreen(p), dd = Math.hypot(sx - x, sy - 12 - y); if (dd < best) { best = dd; id = p; } }
+      if (lanTap(x, y, id ? best : 1e9)) return;
     }
     if (id) mapTap(id);
   },
@@ -879,3 +955,5 @@ ICON.mapFish0 = c => {
   c.beginPath(); c.moveTo(.4, 0); c.lineTo(.95, -.5); c.lineTo(.95, .5); c.closePath(); c.ellipse(-.15, 0, .75, .5, 0, 0, TAU);
   c.fillStyle = 'rgba(0,0,0,.25)'; c.fill(); c.setLineDash([.16, .12]); c.lineWidth = .1; c.strokeStyle = 'rgba(255,255,255,.7)'; c.stroke(); c.setLineDash([]);
 };
+// The lantern pill once every post is lit: the lamp with a star.
+ICON.lanAll = c => { ICON.lamp(c); starPath(c, .6, -.62, .42, .16, 4); c.fillStyle = '#fff'; c.fill(); c.lineWidth = .07; c.strokeStyle = '#b07a00'; c.stroke(); };

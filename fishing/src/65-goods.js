@@ -2,6 +2,21 @@
 // Prices follow the fish: the ordinary catches of one water pay for the next water's kit (a rod, a line, a reel)
 // in roughly 15 to 25 catches. `tier` is the angler rank that opens a thing in the shop.
 // `art` is only read by the icon below.
+Object.assign(L, {
+  // lures from the Night Watch: one for each silly gadget that stands on the treehouse (nwlSync below); names, then where they come from
+  nwl_peel: ['Banana-peel spinner', 'Банановая вертушка', 'Rotante buccia di banana'],
+  nwl_peelD: ['A gift from the banana peel on the treehouse. Yours while it stays there.', 'Подарок от банановой кожуры на домике. Твоя, пока кожура на месте.', 'Un regalo della buccia di banana sulla casa sull\'albero. È tuo finché la buccia resta lì.'],
+  nwl_tramp: ['Springy hopper', 'Прыгунок на пружинке', 'Saltarello a molla'],
+  nwl_trampD: ['A gift from the trampoline on the treehouse. Yours while it stays there.', 'Подарок от батута на домике. Твой, пока батут на месте.', 'Un regalo del tappeto elastico sulla casa sull\'albero. È tuo finché il tappeto resta lì.'],
+  nwl_tickle: ['Tickle-feather fly', 'Муха-щекоталка', 'Mosca solletico'],
+  nwl_tickleD: ['A gift from the tickle feather on the treehouse. Yours while it stays there.', 'Подарок от пера-щекоталки на домике. Твоя, пока перо на месте.', 'Un regalo della piuma del solletico sulla casa sull\'albero. È tua finché la piuma resta lì.'],
+  nwl_bubbler: ['Bubble popper', 'Пузырьковый поппер', 'Popper a bolle'],
+  nwl_bubblerD: ['A gift from the bubble machine on the treehouse. Yours while it stays there.', 'Подарок от машинки для пузырей на домике. Твой, пока машинка на месте.', 'Un regalo della macchina delle bolle sulla casa sull\'albero. È tuo finché la macchina resta lì.'],
+  nwl_cannon: ['Confetti spoon', 'Блесна-конфетти', 'Ondulante a coriandoli'],
+  nwl_cannonD: ['A gift from the confetti cannon on the treehouse. Yours while it stays there.', 'Подарок от пушки с конфетти на домике. Твоя, пока пушка на месте.', 'Un regalo del cannone di coriandoli sulla casa sull\'albero. È tuo finché il cannone resta lì.'],
+  nwl_disco: ['Disco spinner', 'Диско-вертушка', 'Rotante da discoteca'],
+  nwl_discoD: ['A gift from the disco ball on the treehouse. Yours while it stays there.', 'Подарок от диско-шара на домике. Твоя, пока шар на месте.', 'Un regalo della palla da discoteca sulla casa sull\'albero. È tuo finché la palla resta lì.'],
+});
 
 // Rods: a power line (reach, and tiring a fish) and a finesse line (a wider safe band, a better hook hold).
 defItem('rod0', ['Hazel rod', 'Ореховая удочка', 'Canna di nocciolo'], ['Your first rod. Bends nicely, forgives a lot.', 'Твоя первая удочка. Гнётся мягко, прощает многое.', 'La tua prima canna. Si piega bene e perdona molto.'],
@@ -115,6 +130,18 @@ defLure('squallspoon', ['Squall spoon', 'Шквальная блесна', 'Ondu
   5, 500, 3, 1, 2, 'shiny', { s: 'spoon', col: '#ffe36b' }, { lit: true, craft: 'stormKeeper' });
 defLure('candle', ['Chapel candle', 'Свеча часовни', 'Candela della cappella'], ['A small light that sinks and waits. Patience.', 'Маленький огонёк тонет и ждёт. Терпение.', 'Una piccola luce che affonda e aspetta. Pazienza.'],
   7, 900, 2, 2, 0, 'glow', { s: 'candle', col: '#fff3c4' }, { glow: true, lit: true, craft: 'bellTolls' });
+// Lures from the Night: every silly gadget that stands on the Night Watch's treehouse (nwSave.items) puts its own novelty lure
+// in the tackle box, free and never used up, for as long as it stands there. Each fishes exactly like the shop lure it copies
+// (`like`), at tier 0 and without a price: free things never get a buy button, so none of them is for sale.
+const NWL = [['peel', 'spinner', '#ffd93b'], ['tramp', 'jig', '#58a6ff'], ['tickle', 'nymph', '#ff9ecb'], ['bubbler', 'popper', '#7fc8ff'], ['cannon', 'spoon', '#a47be8'], ['disco', 'lampspin', '#dfe6f5']]
+  .map(([g, like, col]) => { const o = ITEMS[like]; defLure('nwl_' + g, L['nwl_' + g], L['nwl_' + g + 'D'], 0, 0, 0, o.depth, o.act, o.food, { s: o.art.s, col }, { free: true, glow: o.glow, lit: o.lit, nw: g, like }); return ITEMS['nwl_' + g]; });
+// Puts in the lures whose gadget is on the tree and takes out the others: once at load, before the boot repair (which ties the
+// worm back on when the rig's lure has gone), and again by a test. The other game's save may hold anything: only `t` is read.
+function nwlSync() {
+  const on = new Set((Array.isArray(nwSave && nwSave.items) ? nwSave.items : []).map(x => x && x.t));
+  for (const it of NWL) if (on.has(it.nw)) ITEMS[it.id] = it; else delete ITEMS[it.id];
+}
+nwlSync();
 
 // Expedition gear. The shop only offers a thing once it can be used (see `offered` in 80-hub.js).
 defItem('boat', ['The boat', 'Лодка', 'La barca'], ['Takes you out to Stormbreak Reef and the Lantern Deep.', 'Отвезёт тебя к Штормовому рифу и в Фонарную бездну.', 'Ti porta alla Scogliera delle Tempeste e all\'Abisso delle Lanterne.'],
@@ -170,6 +197,20 @@ const LURE_SHAPE = {
   lantern: (c, a) => { line(c, [0, -.95, 0, -.55], '#8a94a8', .06); ell(c, 0, -.05, .42, .5, a.col); ell(c, 0, -.05, .2, .26, '#fff'); rr(c, -.25, .42, .5, .14, .05); c.fillStyle = '#16323a'; c.fill(); lureHook(c, 0, .56, .9); },
   candle: (c, a) => { rr(c, -.25, -.25, .5, .9, .08); c.fillStyle = a.col; c.fill(); ell(c, 0, -.48, .13, .22, '#ff9a3a'); ell(c, 0, -.44, .06, .11, '#fff3c4'); line(c, [-.35, .65, .35, .65], '#8a94a8', .08); lureHook(c, 0, .65, .8); },
 };
+// What each gadget adds to its lure's picture, then the sticker every lure from the Night carries: a gold treehouse on a night-blue dot.
+const NWL_ART = {
+  peel: c => { ell(c, -.25, -.28, .2, .07, '#fff3a8', -.5); line(c, [.03, -.43, .13, -.56], '#8a6a1a', .09); },
+  tramp: c => line(c, [-.24, .06, -.1, .4, .04, .12, .18, .44, .32, .16, .46, .48], '#dfe6f5', .07),
+  tickle: c => { c.save(); c.translate(.62, -.48); c.rotate(.9); ell(c, 0, 0, .15, .42, '#ff9ecb'); line(c, [0, -.4, 0, .5], '#d8508a', .05); c.restore(); },
+  bubbler: c => { c.lineWidth = .06; c.strokeStyle = '#fff'; for (const [x, y, r] of [[.45, -.6, .16], [.8, -.82, .1], [.12, -.8, .08]]) { c.beginPath(); c.arc(x, y, r, 0, TAU); c.stroke(); } },
+  cannon: c => [['#ff8a7a', .45, -.72], ['#ffd24a', .85, -.62], ['#6fdc95', .1, -.85], ['#58a6ff', -.3, .7], ['#ff9ecb', .9, .6]].forEach(([col, x, y], i) => { c.save(); c.translate(x, y); c.rotate(i); c.fillStyle = col; c.fillRect(-.08, -.08, .16, .16); c.restore(); }),
+  disco: c => { for (const [x, y, col] of [[-.38, -.2, '#ff8a7a'], [-.25, -.28, '#ffd24a'], [-.12, -.36, '#58a6ff']]) circ(c, x, y, .05, col); for (const [x, y, r] of [[-.05, -.72, .17], [-.6, .5, .13]]) { starPath(c, x, y, r, r * .3, 4); c.fillStyle = '#fff'; c.fill(); } },
+};
+function nwlArt(c, g) {
+  NWL_ART[g](c);
+  circ(c, -.72, -.72, .27, '#1b2a6b'); c.lineWidth = .06; c.strokeStyle = '#ffd86b'; c.stroke();
+  poly(c, [-.85, -.6, -.85, -.73, -.72, -.86, -.59, -.73, -.59, -.6], '#ffd86b');
+}
 const GOODS_ART = {
   rod: (c, it) => {
     const a = it.art;
@@ -204,6 +245,7 @@ const GOODS_ART = {
     if (it.lit) glow(c, 0, 0, 1, '255,216,107', .6);
     (LURE_SHAPE[a.s] || LURE_SHAPE.ball)(c, a);
     if (it.lit && a.s !== 'candle' && a.s !== 'lantern') { circ(c, .62, -.62, .2, '#fff3c4'); circ(c, .62, -.62, .1, '#ffb02e'); }   // the little lamp of a lit lure
+    if (it.nw) nwlArt(c, it.nw);
   },
   gear: (c, it) => {
     const fx = it.fx;

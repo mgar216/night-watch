@@ -87,6 +87,7 @@ function go(name, arg) {
   hold.on = false;
   scene = scenes[name];
   scene.name = name; scene.arg = arg;   // `name`, not `id`: a scene may keep an id of its own (the fishing scene's is its water)
+  music.mood(name === 'spot' ? 'water' : 'day');   // at a spot the water's own sounds lead
   scene.enter(arg);
 }
 

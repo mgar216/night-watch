@@ -101,6 +101,8 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
 .who > .btn:first-child { flex: 1; min-width: 0; justify-content: flex-start; }
 .who > .btn:first-child span { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .who.me > .btn:first-child { background: #f2b93b; color: #3a2400; border-color: #fff3c4; }
+.bday { gap: 1em; }
+.bday select { font: inherit; font-weight: 800; min-width: 3.6em; min-height: 48px; margin-left: .3em; border-radius: .6em; border: 2px solid #8fa4d8; background: #fff; color: #1b2550; }
 #print { display: none; }
 @media print {
   @page { size: landscape; margin: 10mm; }
@@ -186,6 +188,7 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
   .hud .pill { padding: .1em .45em; font-size: .82em; }
   .hud .btn.round { width: 48px; height: 48px; }
   .gatebtns .btn { font-size: 1.1em; gap: .3em; padding: .3em .6em; }
+  .tbar .helper > span { display: none; }   /* the Tinker Treehouse's bar: the helper's picture only, so that the test button keeps its words */
 }
 /* phones and anything lower: smaller tiles keep the Password Forge scene large */
 @media (max-height: 700px) {
@@ -204,6 +207,11 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
 /* A phone on its side: station bars drop the extra pills, and the Tinker palette becomes a two-column strip on the right. */
 @media (min-aspect-ratio: 23/20) and (max-height: 520px) {
   .hud.slim .extra, .hud.slim #pStars, .hud.slim #pBeams { display: none; }
+  .whos { display: grid; grid-template-columns: 1fr 1fr; }   /* the players two by two, so that the settings under them stay on the screen */
+  /* the Password Forge: the bar keeps to one row and scrolls sideways when it holds more tiles than fit (a second row lay
+     under the tray, out of sight and out of reach); auto margins keep a short row in the middle */
+  .slots { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; }
+  .slots .tile { flex: none; } .slots > :first-child { margin-left: auto; } .slots > :last-child { margin-right: auto; }
   .palette { left: auto; top: 4.6em; width: 15.6em; align-content: flex-start; border-top: 0; border-left: 2px solid var(--line); overflow-y: auto; }   /* three columns: a page of nine fits without scrolling */
   .pal { flex: 1 0 28%; min-height: 52px; }
   /* the gate reference card stands as a narrow column at the right edge, clear of the visitor's speech bubble */
@@ -400,6 +408,25 @@ const L = {
   bedOk: ['Good night', 'Спокойной ночи', 'Buona notte'], bedMore: ['Grown-ups', 'Для взрослых', 'Per i grandi'],
   bedSet: ['Bedtime', 'Отбой', 'Nanna'], bedOff: ['off', 'выкл.', 'mai'],
   bedAsk: ['For grown-ups: after how many Nights in one day does the owl say good night?', 'Для взрослых: после скольких ночей за день сова говорит «спокойной ночи»?', 'Per i grandi: dopo quante Notti in un giorno il gufo dà la buona notte?'],
+  // the day's first words: what happened last time (src/50-ui.js, greet)
+  mem_perfect: ['Last time every jar stayed safe. Well done!', 'В прошлый раз все банки остались на месте. Отличная работа!', 'L\'ultima volta tutti i barattoli sono rimasti al sicuro. Ottimo lavoro!'],
+  mem_lost: ['Last time the magpies took a jar or two. Tonight we watch even closer.', 'В прошлый раз сороки унесли банку-другую. Сегодня будем смотреть ещё внимательнее.', 'L\'ultima volta le gazze hanno preso qualche barattolo. Stanotte guardiamo ancora meglio.'],
+  mem_hard: ['Last time was a hard Night. Tonight we try again, together.', 'Прошлая ночь выдалась трудной. Сегодня попробуем ещё раз, вместе.', 'L\'ultima Notte è stata dura. Stanotte riproviamo, insieme.'],
+  mem_promo: ['You got a new badge last time. It suits you!', 'В прошлый раз у тебя появился новый значок. Он тебе идёт!', 'L\'ultima volta hai ricevuto un distintivo nuovo. Ti sta benissimo!'],
+  mem_boss: ['Last time Baron von Shiny went home with nothing. He is still grumbling!', 'В прошлый раз Барон фон Блеск улетел ни с чем. Он до сих пор ворчит!', 'L\'ultima volta il Barone von Luccichio è tornato a casa a mani vuote. Brontola ancora!'],
+  mem_laugh: ['Last time the magpies laughed so much that they forgot the jars!', 'В прошлый раз сороки так смеялись, что забыли про банки!', 'L\'ultima volta le gazze hanno riso così tanto da dimenticare i barattoli!'],
+  mem_fish: ['You went fishing at first light. I hope the fish were biting!', 'На рассвете была рыбалка. Надеюсь, клевало!', 'All\'alba si è pescato. Spero che i pesci abbiano abboccato!'],
+  mem_bed: ['Last time bedtime came right on time. A rested watcher sees more!', 'В прошлый раз отбой был вовремя. Кто выспался, тот видит больше!', 'L\'ultima volta la nanna è arrivata puntuale. Chi ha dormito bene vede di più!'],
+  mem_away: ['It is so good to see you again! The forest missed you.', 'Как хорошо, что ты снова здесь! Лес по тебе скучал.', 'Che bello rivederti! Il bosco sentiva la tua mancanza.'],
+  // the birthday (a grown-up sets the date in the players panel); fish for supper after a good day's fishing
+  bday1: ['Happy birthday!', 'С днём рождения!', 'Buon compleanno!'],
+  bday2: ['The whole forest dressed up the treehouse for you. Here is a party hat!', 'Весь лес украсил для тебя домик на дереве. Держи праздничный колпак!', 'Tutto il bosco ha addobbato per te la casa sull\'albero. Ecco un cappellino da festa!'],
+  bdaySet: ['Birthday', 'День рождения', 'Compleanno'], bdayDay: ['Day', 'День', 'Giorno'], bdayMon: ['Month', 'Месяц', 'Mese'],
+  eye1: ['Thank you for the fish supper! My eyes are sharp tonight. At the gate, tap the eye and I will take a close look for you.', 'Спасибо за рыбку на ужин! Сегодня у меня зоркие глаза. У ворот нажми на глаз, и я хорошенько рассмотрю гостя.', 'Grazie del pesce per cena! Stanotte ho la vista acuta. Al cancello tocca l\'occhio e guardo bene io per te.'],
+  // a Night without a lost jar lights a lantern on the map of the fishing game
+  litNew: ['New lantern', 'Новый фонарь', 'Nuova lanterna'],
+  lit1: ['A Night without a lost jar lights a lantern in the Watchwood. Lit paths are quicker to walk by day!', 'Если за ночь не пропала ни одна банка, в Дозорном лесу загорается фонарь. По освещённым тропам днём идти быстрее!', 'Una Notte senza barattoli persi accende una lanterna nel Bosco di Guardia. Di giorno, sui sentieri illuminati si cammina più in fretta!'],
+  palsT: ['Friends', 'Друзья', 'Amici'], flagT: ['Flag', 'Флаг', 'Bandiera'],
   // tonight's real moon, said when the moon is tapped: new, growing, full, shrinking; then the same closing line
   moon0: ['New moon tonight: you can hardly see it.', 'Сегодня новолуние: луны почти не видно.', 'Stanotte c\'è la luna nuova: quasi non si vede.'],
   moon1: ['The moon is growing.', 'Луна растёт.', 'La luna cresce.'], moon2: ['Full moon tonight!', 'Сегодня полнолуние!', 'Stanotte c\'è la luna piena!'],
@@ -569,6 +596,129 @@ const L = {
   boss_say2: ['Presents for you! Take them all inside!', 'Подарки для вас! Несите их все в домик!', 'Regali per voi! Portateli tutti dentro!'],
   boss_say3: ['My Guess-o-Matic opens any lock!', 'Мой Угадай-о-мат откроет любой замок!', 'Il mio Indovinomatic apre ogni lucchetto!'],
   boss_say4: ['Curses! Until next time!', 'Ах, досада! До новой встречи!', 'Accidenti! Alla prossima!'],
+  // ----- the treehouse flag (src/59-flag.js) -----
+  flag_hi: ['Paint our flag, Chief! It will fly on the roof.', 'Раскрась наш флаг, командир! Он будет развеваться на крыше.', 'Dipingi la nostra bandiera, Capo! Sventolerà sul tetto.'],
+  flag_ask: ['Put our old flag back and start again?', 'Вернём старый флаг и начнём заново?', 'Rimettiamo la vecchia bandiera e ricominciamo?'],
+  flag_new: ['Start again', 'Начать заново', 'Ricomincia'],
+  flag_keep: ['Keep painting', 'Рисовать дальше', 'Continua'],
+  flag_cols: ['Colours', 'Цвета', 'Colori'],
+  flag_c0: ['Night blue', 'Тёмно-синий', 'Blu notte'], flag_c1: ['Yellow', 'Жёлтый', 'Giallo'], flag_c2: ['Red', 'Красный', 'Rosso'],
+  flag_c3: ['Pink', 'Розовый', 'Rosa'], flag_c4: ['Green', 'Зелёный', 'Verde'], flag_c5: ['Sky blue', 'Голубой', 'Azzurro'],
+  flag_c6: ['Purple', 'Фиолетовый', 'Viola'], flag_c7: ['White', 'Белый', 'Bianco'],
+  // ----- tonight's weather: one sentence of the owl after the briefing (src/47-season.js) -----
+  wx_rain: ['It\'s raining! Wet magpies are slow magpies.', 'Идёт дождь! Мокрая сорока — медленная сорока.', 'Piove! Gazze bagnate, gazze lente.'],
+  wx_wind: ['It\'s so windy! The wind blows the magpies back.', 'Какой ветер! Сороки летят, а их сдувает назад.', 'Che vento! Spinge indietro le gazze.'],
+  wx_snow: ['It\'s snowing! Magpies with cold feet go slowly.', 'Идёт снег! Сороки с холодными лапками ходят медленно.', 'Nevica! Le gazze con le zampe fredde vanno piano.'],
+  // the owl's eye at the gate (one comes with a good day's fishing): the button, and the owl's three short words
+  eye_btn: ['Owl\'s sharp eye', 'Зоркий глаз совы', 'Occhio acuto del gufo'],
+  eye_badge: ['Look at the badge!', 'Посмотри на значок!', 'Guarda il distintivo!'],
+  eye_pass: ['Look at the password!', 'Посмотри на пароль!', 'Guarda la parola segreta!'],
+  eye_ok: ['All good. A friend!', 'Всё в порядке. Это друг!', 'Tutto a posto. È un amico!'],
+  // ----- the Baron's story: three chapters after his Nights (src/95-saga.js); titles, the owl's captions, the present -----
+  saga_t1: ['The Baron\'s Nest', 'Гнездо Барона', 'Il nido del Barone'],
+  saga_c11: ['The Baron\'s plan fell apart again. He flies home all alone.', 'План Барона опять развалился. Он летит домой совсем один.',
+    'Il piano del Barone è di nuovo andato in pezzi. Torna a casa in volo, tutto solo.'],
+  saga_c12: ['His nest is full of shiny things. But nobody ever sees them.', 'Его гнездо полным-полно блестяшек. Но их никто никогда не видит.',
+    'Il suo nido è pieno di cose luccicanti. Ma nessuno le vede mai.'],
+  saga_c13: ['He does not want to be rich, he just loves how things shine. And he feels lonely.', 'Он не хочет быть богатым, он просто любит, как всё блестит. И ему одиноко.',
+    'Non vuole diventare ricco: ama solo vedere le cose brillare. E si sente solo.'],
+  saga_t2: ['A Secret Plan', 'Тайный план', 'Un piano segreto'],
+  saga_c21: ['Zip brings the Baron a lost cog from his machine, polished until it shines.', 'Зип приносит Барону потерянную шестерёнку от его машины. Она начищена до блеска!',
+    'Zip porta al Barone un ingranaggio perduto della sua macchina, tirato a lucido.'],
+  saga_c22: ['Nobody had ever given the Baron a present before. Suddenly he has an idea!', 'Барону ещё никто никогда ничего не дарил. И вдруг у него появляется идея!',
+    'Nessuno aveva mai fatto un regalo al Barone. All\'improvviso gli viene un\'idea!'],
+  saga_c23: ['At night the magpies carry planks and nails. What can they be building?', 'По ночам сороки носят доски и гвозди. Что же они строят?',
+    'Di notte le gazze portano assi e chiodi. Che cosa staranno costruendo?'],
+  saga_t3: ['The Grand Opening', 'Торжественное открытие', 'La grande inaugurazione'],
+  saga_c31: ['The Baron is opening a Museum of Shiny Things! The first invitations are for you and me, Chief.', 'Барон открывает Музей блестяшек! Первые приглашения — нам с тобой, командир.',
+    'Il Barone apre un Museo delle cose luccicanti! I primi inviti sono per te e per me, Capo.'],
+  saga_c32: ['The whole Watchwood comes to the opening. The fireflies light up the hall all by themselves!', 'На открытие приходит весь Дозорный лес. А светлячки сами освещают зал!',
+    'All\'inaugurazione arriva tutto il Bosco di Guardia. Le lucciole illuminano la sala da sole!'],
+  saga_c33: ['“Shiny things are best when everyone can see them,” says the Baron. No more silly plans!', '«Блестяшки лучше всего, когда на них смотрят все», — говорит Барон. Больше никаких смешных планов!',
+    '«Le cose luccicanti sono più belle se tutti le possono vedere», dice il Barone. Niente più piani buffi!'],
+  saga_gift: ['The Baron has left you a present, Chief. Something shiny, of course!', 'Барон оставил тебе подарок, командир. Конечно, что-то блестящее!',
+    'Il Barone ti ha lasciato un regalo, Capo. Qualcosa di luccicante, naturalmente!'],
+  // ----- life at the treehouse (src/46-life.js): what the stars add, today's visitor (who, the wish, the answers, the gifts' names) -----
+  grow_t: ['The treehouse grows', 'Домик растёт', 'La casa sull\'albero cresce'],
+  grow_0: ['Your stars make our treehouse grow! The forest friends hung a swing under the branch.', 'Твои звёзды помогают нашему домику расти! Лесные друзья повесили под веткой качели.', 'Le tue stelle fanno crescere la nostra casa sull\'albero! Gli amici del bosco hanno appeso un\'altalena sotto il ramo.'],
+  grow_1: ['More stars, more surprises! Now flowers grow under the windows.', 'Больше звёзд, больше сюрпризов! Теперь под окнами растут цветы.', 'Più stelle, più sorprese! Ora sotto le finestre crescono i fiori.'],
+  grow_2: ['So many stars, Chief! Now we have a hammock for a little nap.', 'Сколько звёзд, командир! Теперь у нас есть гамак, чтобы вздремнуть.', 'Quante stelle, Capo! Ora abbiamo un\'amaca per un pisolino.'],
+  vis_c0: ['A squirrel came to visit!', 'В гости пришла белка!', 'È venuto a trovarci uno scoiattolo!'],
+  vis_c1: ['A rabbit came to visit!', 'В гости пришёл зайчик!', 'È venuto a trovarci un coniglietto!'],
+  vis_c2: ['A hedgehog came to visit!', 'В гости пришёл ёжик!', 'È venuto a trovarci un riccio!'],
+  vis_c3: ['A mouse came to visit!', 'В гости пришла мышка!', 'È venuto a trovarci un topolino!'],
+  vis_w0: ['It wants to stay dry in the rain.', 'Не хочет промокнуть под дождём.', 'Non vuole bagnarsi sotto la pioggia.'],
+  vis_w1: ['It wants to keep warm on this cold night.', 'Хочет согреться: ночь сегодня холодная.', 'Vorrebbe stare al calduccio: stanotte fa freddo.'],
+  vis_w2: ['It wants to see the stars up close.', 'Хочет рассмотреть звёзды поближе.', 'Vorrebbe vedere le stelle da vicino.'],
+  vis_w3: ['It dreams of flying to the moon.', 'Мечтает полететь на Луну.', 'Sogna di volare fino alla luna.'],
+  vis_w4: ['It wants to play a song for its friends.', 'Хочет сыграть друзьям песенку.', 'Vorrebbe suonare una canzone per gli amici.'],
+  vis_w5: ['It is hungry after a long walk.', 'Очень хочет есть после долгой прогулки.', 'Dopo una lunga passeggiata ha tanta fame.'],
+  vis_w6: ['It wants to cross the pond to see a friend.', 'Хочет переплыть пруд и навестить друга.', 'Vorrebbe attraversare lo stagno per andare da un amico.'],
+  vis_w7: ['It is sleepy and wants something soft for a nap.', 'Хочет вздремнуть на чём-нибудь мягком.', 'Ha sonno e vorrebbe qualcosa di morbido per un pisolino.'],
+  vis_w8: ['It is going to a birthday party and wants to bring a treat.', 'Идёт на день рождения и хочет принести угощение.', 'Va a una festa di compleanno e vorrebbe portare qualcosa di buono.'],
+  vis_no: ['Not quite. Try another one!', 'Не совсем. Попробуй другое!', 'Non proprio. Provane un altro!'],
+  vis_yes: ['Thank you, Chief! That is just what it wished for.', 'Спасибо, командир! Это как раз то, что нужно.', 'Grazie, Capo! È proprio quello che desiderava.'],
+  vis_later: ['Later', 'Потом', 'Più tardi'],
+  vis_umb: ['Umbrella', 'Зонтик', 'Ombrello'],
+  vis_hat: ['Warm hat', 'Тёплая шапка', 'Berretto'],
+  vis_scope: ['Telescope', 'Телескоп', 'Telescopio'],
+  vis_rocket: ['Rocket', 'Ракета', 'Razzo'],
+  vis_drum: ['Drum', 'Барабан', 'Tamburo'],
+  vis_berry: ['Berries', 'Ягоды', 'Bacche'],
+  vis_boat: ['Boat', 'Лодочка', 'Barchetta'],
+  vis_pillow: ['Pillow', 'Подушка', 'Cuscino'],
+  vis_cake: ['Cake', 'Торт', 'Torta'],
+  vis_fish: ['Fish', 'Рыба', 'Pesce'],
+  vis_banana: ['Banana', 'Банан', 'Banana'],
+  vis_frog: ['Frog', 'Лягушка', 'Rana'],
+  vis_pizza: ['Pizza', 'Пицца', 'Pizza'],
+  vis_hammer: ['Hammer', 'Молоток', 'Martello'],
+  vis_bell: ['Bell', 'Колокольчик', 'Campanella'],
+  vis_robot: ['Robot', 'Робот', 'Robot'],
+  // ----- Nights 9 to 30 (src/91-arc.js): the new gadgets, the palette's third page, briefings of a new trick, briefings of the other Nights, the owl's word after a test raid -----
+  i_fan: ['Fan', 'Вентилятор', 'Ventilatore'], i_honey: ['Honey puddle', 'Лужица мёда', 'Pozza di miele'],
+  i_seesaw: ['Seesaw', 'Качели-балансир', 'Altalena a bilico'], i_drum: ['Drum', 'Барабан', 'Tamburo'],
+  arc_new: ['New gadgets', 'Новые штуки', 'Nuovi aggeggi'],
+  arc_b9: ['Tonight a magpie floats in on a balloon! A fan waits for you in the Tinker Treehouse.', 'Этой ночью сорока прилетит на воздушном шарике! В Мастерской тебя ждёт вентилятор.', 'Stanotte una gazza arriva appesa a un palloncino! In Officina ti aspetta un ventilatore.'],
+  arc_b13: ['A magpie on stilts steps over lanterns and silly gadgets! Sticky honey waits in the Tinker Treehouse.', 'Сорока на ходулях перешагивает фонари и смешные штуки! В Мастерской ждёт липкий мёд.', 'Una gazza sui trampoli scavalca lanterne e aggeggi buffi! In Officina ti aspetta il miele appiccicoso.'],
+  arc_b17: ['Two magpies hide in one long coat! A seesaw waits in the Tinker Treehouse.', 'Две сороки прячутся в одном длинном пальто! В Мастерской ждут качели.', 'Due gazze si nascondono in un lungo cappotto! In Officina ti aspetta un\'altalena a bilico.'],
+  arc_b21: ['A magpie digs a tunnel under the ground! A drum waits in the Tinker Treehouse.', 'Сорока роет подземный ход! В Мастерской ждёт барабан.', 'Una gazza scava una galleria sotto terra! In Officina ti aspetta un tamburo.'],
+  arc_b25: ['Now the magpies mix all their tricks! All your gadgets wait in the Tinker Treehouse.', 'Теперь сороки пускают в ход все хитрости сразу! Все твои штуки ждут в Мастерской.', 'Ora le gazze mescolano tutti i loro trucchi! Tutti i tuoi aggeggi ti aspettano in Officina.'],
+  arc_kballoon: ['Balloons tonight. Keep a fan ready!', 'Этой ночью — воздушные шарики. Держи вентилятор наготове!', 'Stanotte arrivano i palloncini. Tieni pronto un ventilatore!'],
+  arc_kstilts: ['Stilts tonight. Honey makes them stick!', 'Этой ночью — ходули. Мёд их приклеит!', 'Stanotte arrivano i trampoli. Il miele li incolla!'],
+  arc_ktwins: ['Long coats tonight. A seesaw sends both magpies home!', 'Этой ночью — длинные пальто. С качелей обе сороки полетят домой!', 'Stanotte arrivano i cappotti lunghi. L\'altalena rimanda a casa tutte e due le gazze!'],
+  arc_kdig: ['Diggers tonight. A drum shakes them out!', 'Этой ночью сороки копают. Барабан их вытряхнет!', 'Stanotte le gazze scavano. Il tamburo le fa uscire!'],
+  arc_kmix: ['Mixed tricks tonight. Check all your gadgets!', 'Этой ночью разные хитрости. Проверь все свои штуки!', 'Stanotte trucchi misti. Controlla tutti i tuoi aggeggi!'],
+  o_balloon: ['A magpie floated in on a balloon. A fan in its path blows it home!', 'Сорока прилетела на шарике. Вентилятор на пути сдует её домой!', 'Una gazza è arrivata col palloncino. Un ventilatore sulla sua strada la soffia via!'],
+  o_stilts: ['A magpie on stilts stepped over everything. Put sticky honey in its path!', 'Сорока на ходулях всё перешагнула. Разлей липкий мёд у неё на пути!', 'Una gazza sui trampoli ha scavalcato tutto. Metti il miele sulla sua strada!'],
+  o_twins: ['Two magpies hid in one coat. A seesaw sends them both home!', 'Две сороки спрятались в одном пальто. Качели отправят домой обеих!', 'Due gazze si nascondevano in un cappotto. L\'altalena le rimanda a casa tutte e due!'],
+  o_dig: ['A magpie dug a tunnel to the ladder. A drum by the trunk shakes it out!', 'Сорока прорыла ход к лестнице. Барабан у ствола её вытряхнет!', 'Una gazza ha scavato una galleria fino alla scala. Un tamburo vicino al tronco la fa uscire!'],
+  // the friends: names, jobs, and the help each one brings to a raid (the pill in the Tinker Treehouse)
+  pal_n_guard: ['Tobi', 'Тоби', 'Tobi'], pal_n_baker: ['Pina', 'Пина', 'Pina'], pal_n_lamp: ['Lumi', 'Луми', 'Lumi'],
+  pal_n_post: ['Nico', 'Нико', 'Nico'], pal_n_garden: ['Flora', 'Флора', 'Flora'], pal_n_music: ['Mila', 'Мила', 'Mila'],
+  pal_j_guard: ['Guard', 'Страж', 'Guardia'], pal_j_baker: ['Baker', 'Пекарь', 'Fornaia'], pal_j_lamp: ['Lamplighter', 'Фонарщик', 'Lampionaio'],
+  pal_j_post: ['Postman', 'Почтальон', 'Postino'], pal_j_garden: ['Gardener', 'Садовница', 'Giardiniera'], pal_j_music: ['Musician', 'Музыкант', 'Musicista'],
+  pal_p_guard: ['Door guard', 'Страж у двери', 'Fa la guardia'], pal_p_baker: ['Pancakes', 'Блинчики', 'Frittelle'],
+  pal_p_lamp: ['Brighter lamps', 'Фонари ярче', 'Luci più forti'], pal_p_post: ['Quick recharge', 'Быстрый заряд', 'Ricarica lampo'],
+  pal_p_garden: ['Extra bubble', 'Ещё пузырь', 'Bolla in più'], pal_p_music: ['Bigger giggles', 'Больше смеха', 'Più risate'],
+  pal_baron: ['Museum director', 'Директор музея', 'Direttore del museo'],
+  pal_count: ['Kind catches {n}, next friend at {m}', 'Поймано по-доброму: {n} из {m} до нового друга', 'Prese gentili {n}, prossimo amico a {m}'],
+  pal_countAll: ['Kind catches {n}', 'Поймано по-доброму: {n}', 'Prese gentili {n}'],
+  pal_unmet: ['Not met yet', 'Ещё не знакомы', 'Ancora da conoscere'],
+  // the owl: who a new friend is, then what it does (said again when it is chosen to help)
+  pal_hi_guard: ['The magpie in the big cap is Tobi, our new guard!', 'Сорока в большой фуражке — это Тоби, наш новый страж!', 'La gazza col berretto gigante è Tobi, la nostra nuova guardia!'],
+  pal_hi_baker: ['Pina stopped stealing pancakes and makes them now!', 'Пина больше не таскает блинчики — теперь она их печёт!', 'Pina non ruba più le frittelle: ora le prepara!'],
+  pal_hi_lamp: ['Lumi stopped snatching lanterns and lights them instead!', 'Луми больше не таскает фонари, а зажигает их!', 'Lumi non ruba più le lanterne: ora le accende!'],
+  pal_hi_post: ['Nico gave back every letter and is our postman now!', 'Нико вернул все письма и теперь наш почтальон!', 'Nico ha restituito tutte le lettere e ora fa il postino!'],
+  pal_hi_garden: ['Flora swapped shiny things for seeds and is our gardener now!', 'Флора сменила блестяшки на семена и теперь наша садовница!', 'Flora ha scambiato i luccichini con i semi e ora fa la giardiniera!'],
+  pal_hi_music: ['Mila chattered so loudly that we gave her a drum!', 'Мила так громко трещала, что мы подарили ей барабан!', 'Mila chiacchierava così forte che le abbiamo regalato un tamburo!'],
+  pal_do_guard: ['Tobi can stop one magpie at the door.', 'Тоби может задержать одну сороку у двери.', 'Tobi può fermare una gazza alla porta.'],
+  pal_do_baker: ['Pina\'s pancakes keep the first magpie busy.', 'Блинчики Пины отвлекают первую сороку.', 'Le frittelle di Pina tengono occupata la prima gazza.'],
+  pal_do_lamp: ['Lumi makes our lanterns shine further.', 'С Луми наши фонари светят дальше.', 'Con Lumi le nostre lanterne fanno luce più lontano.'],
+  pal_do_post: ['Nico gets cameras and bells ready sooner.', 'С Нико камеры и колокольчики быстрее заряжаются.', 'Con Nico telecamere e campanelle sono pronte prima.'],
+  pal_do_garden: ['Flora grows one more bubble on our shield.', 'Флора выращивает ещё один пузырь на нашем щите.', 'Flora fa crescere una bolla in più sul nostro scudo.'],
+  pal_do_music: ['Mila\'s music makes silly gadgets reach further.', 'С музыкой Милы смешные штуки смешат даже издалека.', 'Con la musica di Mila gli aggeggi buffi arrivano più lontano.'],
+  pal_baronSay: ['Baron von Shiny runs a museum now. Everyone may look, but nobody may take!', 'Барон фон Блеск теперь директор музея. Смотреть можно всем, а брать нельзя никому!', 'Il Barone von Luccichio ora dirige un museo. Guardare sì, prendere no!'],
 };
 
 let lang = 0;
@@ -610,7 +760,17 @@ const S = { lang: -1, mute: false, name: '', night: 1, st: { cam: 0, gate: 0, fo
   voice: true, stk: {}, own: {}, hat: '', scarf: '', zhat: '', zscarf: '', boss: 0, fooled: 0,   // owl's voice on; stickers; wardrobe; last Baron Night won
   day: -1,     // 1 while the day after a finished Night has not begun (first light, fishing); -1 in a save from before there were days
   gifts: {},   // gifts of the Legendary fish that the owl has told the player about (src/49-gifts.js)
-  bedN: 3, bed: { d: '', n: 0, more: 0 } };   // bedtime after so many Nights a day (0: never); Nights finished on day d, and Nights a grown-up added
+  bedN: 3, bed: { d: '', n: 0, more: 0 },   // bedtime after so many Nights a day (0: never); Nights finished on day d, and Nights a grown-up added
+  caught: 0, pals: {}, helper: '',          // magpies caught kindly; friends the owl has introduced; the friend who helps in raids (src/57-pals.js)
+  lit: 0,                                   // three-star Nights: each lights a lantern on the Watchwood map of the fishing game
+  grow: 0,                                  // additions to the treehouse that the owl has told of (src/46-life.js)
+  visit: { d: '', done: 0, n: 0 },          // today's visitor: the day, whether the wish was granted, visits so far
+  mem: { d: '', k: '' }, memD: '',          // what happened last, for the day's first words; the day they were last said
+  eye: 0,                                   // owl's eyes for tonight's Gate Check: a good day's fishing brings one
+  flag: '',                                 // the flag the player painted (src/59-flag.js)
+  bday: '', bdayY: 0,                       // birthday as month-day, and the year it was last kept
+  sup: '',                                  // the last day's fishing that was counted (its id), so that supper comes once
+  saga: 0 };                                // chapters of the Baron's story seen; at 3 his museum is open and he raids no more
 try { Object.assign(S, JSON.parse(localStorage.getItem(SAVE) || '{}')); } catch (e) { /* private mode: play without saving */ }
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 const rankAt = night => night > 7 ? 3 : night > 4 ? 2 : night > 2 ? 1 : 0;
@@ -648,6 +808,8 @@ function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
 // Scenes: { enter(arg), update(dt), draw(), down(x,y), move(x,y), up(x,y), key(e), exit() }
 const scenes = {};
 let scene = null;
+// The music follows the scene (src/33-music.js); a scene that is not listed is a station.
+const MOOD = { home: 'night', hub: 'night', tinker: 'night', album: 'night', wear: 'night', badge: 'night', pals: 'night', flag: 'night', story: 'night', saga: 'night', raid: 'raid', boss: 'raid', dawn: 'dawn', bed: 'bed' };
 function go(name, arg) {
   if (scene && scene.exit) scene.exit();
   timers.forEach(clearTimeout); timers = [];
@@ -656,6 +818,7 @@ function go(name, arg) {
   hush();
   scene = scenes[name];
   scene.id = name;
+  music.mood(MOOD[name] || 'watch');
   scene.enter(arg);
 }
 
@@ -730,8 +893,9 @@ addEventListener('devicemotion', e => {
   grav[0] += (g.x - grav[0]) * .1; grav[1] += (g.y - grav[1]) * .1; grav[2] += (g.z - grav[2]) * .1;
   if (d > 12) scatter();
 });
-cv.addEventListener('pointerdown', e => { audioOn(); lastTouch = V.t; const p = ptr(e); swipe = [p[0], p[1], V.t]; if (scene && scene.down) scene.down(...p); });
-addEventListener('pointermove', e => { if (scene && scene.move) scene.move(...ptr(e)); });
+// (the event comes along as a last argument, for a scene that must tell one finger from another: the flag's painter)
+cv.addEventListener('pointerdown', e => { audioOn(); lastTouch = V.t; const p = ptr(e); swipe = [p[0], p[1], V.t]; if (scene && scene.down) scene.down(...p, e); });
+addEventListener('pointermove', e => { if (scene && scene.move) scene.move(...ptr(e), e); });
 addEventListener('pointerup', e => {
   const p = ptr(e);
   if (swipe && V.t - swipe[2] < .4 && Math.hypot(p[0] - swipe[0], p[1] - swipe[1]) > Math.min(V.w, V.h) * .35) scatter();
@@ -902,28 +1066,94 @@ function sayOther(s, strict, done) {
 }
 // A short buzz of the phone for a catch or a bonk, where the device can do it. Silent mode switches it off too.
 function buzz(ms) { try { if (!S.mute && !quiet && navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* not allowed */ } }
-// Gentle generative lullaby: slow bass notes under a wandering pentatonic melody.
-const PENTA = [261.6, 293.7, 329.6, 392, 440, 523.3, 587.3, 659.3], BASS = [130.8, 110, 87.3, 98];
-let mNext = 0, mStep = 0, mIdx = 3;
-function musicTick() {
-  if (S.mute || !AC || AC.state !== 'running') return;
-  if (mNext < AC.currentTime) mNext = AC.currentTime + .1;
-  while (mNext < AC.currentTime + .6) {
-    const w = mNext - AC.currentTime, st = mStep % 8;
-    if (st === 0) {
-      const b = BASS[(mStep / 8 | 0) % 4];
-      tone(b, 3.3, 'sine', .1, w, 0, .5); tone(b * 1.5, 3.3, 'sine', .05, w, 0, .7);
-    }
-    if (Math.random() < (st % 2 ? .25 : .8)) {
-      mIdx = clamp(mIdx + pick([-2, -1, -1, 0, 1, 1, 2]), 0, 7);
-      tone(PENTA[mIdx], 1.2, 'sine', .045, w, 0, .03);
-    }
-    mNext += .42; mStep++;
-  }
-}
 // Generated by tools/voice.js. Do not edit by hand.
 // Hashes of the sentences that have a recorded clip in voice/<lang>/<hash>.mp3.
-const VOICE = new Set(["100ftxb","10160g4","108b400","10daaap","10f2c8a","10f9yqo","10kvsgj","10l1ozr","10rkfl1","10ru54r","1108kx6","113jig9","1142gtp","115fly1","11d7imz","11f0k15","11g06ab","11gcesx","11iyrnk","11pdf13","11pm90d","11r3n9l","11rkp8h","11xxbpe","125tx6e","126rq71","1289wdh","128e46b","12c64n3","12d46v0","12h8hpd","12hn3wk","12ngc1u","12qfqp6","12vg211","12xnxfv","139lqo","13cxw0w","13gwofr","13hku9k","13i8sht","13iryo7","13o4ati","13o6bi7","13o99lf","13odfc9","13q3gww","13xfc13","13y549v","13z29x4","142vocj","1442dlf","14bsdkr","14icjne","14ji2ga","14li4xg","153hrvm","155oocv","15f8oa","15h2wzn","15iwhy0","15jl6b","15m1iga","15qeo4i","15req7i","162afq5","163zpxx","167ogau","168mp02","168qkee","169isor","16a77c2","16b4s1d","16bfy98","16hl367","16i4i5a","16lkluc","16nbugn","1726pvq","1750j12","1784s08","178vkuc","179attb","17g9z3c","17nhwq","17psvqv","17vtkun","17yfegk","187nsm1","188dq1v","18exoa1","18inq8f","18jh38g","18l3fuv","18o03ln","18opcvi","18te3xh","18tgq0q","18undm7","18v1pkt","193k4hc","19athyc","19gzq9o","19hu2bs","19ix769","19jynme","19sunzu","1a27k3g","1a39msy","1a55ine","1ad9oip","1agtpb4","1ajrgu3","1al3k1i","1amkme9","1apl6rg","1arg9eh","1at3451","1av85vi","1aw225l","1b3w364","1b6g9ic","1bbdjca","1bjp96a","1bu0lvx","1bu1gyg","1bzhnzf","1c0wv9v","1c5ctcp","1cfsscx","1ckntow","1clcko1","1cmrcp5","1cnn1zj","1d0i3wr","1d46tm7","1d9reau","1dbq4tq","1dc7gfw","1dc9eho","1dh6zvj","1di9ifl","1dkmevz","1e2c7j6","1e404ct","1e8sxlu","1eek7of","1ej81bx","1el70pk","1emf2jd","1emlzop","1emovfx","1er4ueo","1etlnny","1eysog1","1f7fxpw","1fa6mch","1feb1yh","1fj2amq","1fk6yo2","1fmhe1y","1fmkmhm","1ft7z2h","1fullqt","1fw73t8","1fyinco","1g06mva","1g1isr9","1g5fbdq","1g6vr9y","1g7w9tc","1g954t0","1gd13pn","1ghk866","1goi7l7","1gpp0do","1gq6g3j","1gsdor9","1gsw6rd","1gtvj93","1gyvaq6","1h02nj2","1h4h6eq","1h4h6ia","1hchxjq","1hdjbta","1hf1774","1hm4mqk","1hmqli8","1hnc52d","1hoe4ju","1hr88qc","1hv75tv","1hwku2l","1i1nkv9","1i3jj4f","1i4094","1i5x8k5","1i6eslv","1i7pj4x","1i9plk9","1id4xom","1idpw8o","1imomcd","1itnsne","1j3ibtk","1j7otqn","1je4rs6","1jisnk1","1jnw8sf","1joms4y","1jrcetj","1jsxofn","1jw2xcd","1jx0k90","1k0dlis","1kib9o0","1kispa","1kjyxz7","1kk1a7x","1kkiece","1kl6fwo","1ksmgy7","1kx58i8","1kydkr0","1l18p7c","1l5r765","1l68tez","1l8bush","1lcy6oa","1leshph","1lglhpf","1li0yfg","1lqlz8j","1ltudoo","1lxok6e","1lz3a8y","1m1lxka","1m62ouh","1m81d1p","1mc9bk0","1mezv75","1mhnqwc","1mjtmmy","1mjvy2g","1mno6qj","1mqn89u","1mqtddz","1mulf4o","1mwdca4","1mzrti","1n156gz","1n22bhv","1n8j9tj","1nhajyb","1nhbq9f","1nj6d18","1nux5dj","1o0005f","1o1v76i","1o3kcow","1odvax5","1olijfg","1orw0af","1oyyyb0","1p0z9sr","1p1fci","1pfg6by","1phut4c","1pjtlf7","1pszpit","1q4jgaq","1qdm172","1qhlafy","1qhy1k7","1qjiim6","1qomkiu","1qq4ns6","1qqrjqa","1qrltde","1qrymck","1r0ktcq","1r5hdt","1r5nix8","1r8npaq","1rcfocd","1ri9wzn","1rmjfes","1ro4pfn","1roew1f","1rqjq0b","1rr97df","1s659o1","1s77ak2","1sggvoo","1sh5qti","1snwn2","1spipum","1sr46dv","1t3ojgi","1t69wjq","1t9d035","1tfyrap","1tk75vs","1tuyub9","1tv285z","1txrfqp","1u25sqi","1u29x2z","1u5j7k0","1u5ool1","1uabzrq","1ugakq","1usy3mv","1ut0nbo","1ute2a","1uuvh42","1uzeb5t","1uzwgyt","1v3r6f7","1v6vx15","1v8zubq","1vgin9i","1vkb2fz","1vwgxg9","1vxjsqx","1vynqeu","1vzk5qg","1w00vjo","1w20mt6","1w7er79","1w81h6m","1w8arq5","1wdv3ed","1whbalz","1wm92df","1wpusl9","1wsetti","1wspry7","1wt5r0o","1x9q0ea","1xa40ff","1xbc9yr","1xbpi3q","1xiv7i2","1xl53wk","1xlca0m","1xnqn7i","1xo4cde","1xqbgmk","1xs4e5j","1xu8t5l","1xy5lle","1y7ddxy","1y9k7bf","1yl26r6","1ywfra","2594nd","26jy8h","29wq4","2ccz3s","2ev4ae","2ungtz","2vud1h","2xxh3t","2zh26","2zzdvk","31zies","34rha7","3b9675","3cu9qs","3gy8dw","3lbugn","3m86p2","3vcxpn","3z72wn","3z9dg0","49x23g","4crsrs","4idsu8","4jz99u","4l0qhg","4n0rq","4zp832","5455qf","54v0oc","5740vk","57da2b","58ck7k","599lrb","59qh45","59r5m7","5itn8h","5kl6m0","5o5mgf","5zvdty","6bas9i","6bthzj","6cr2h7","6dypnx","6iju9k","6k2z3t","6l0w9i","6xwdd8","70sqn6","78eqxu","7qt60w","7snmpb","7tmgzy","7wbilr","7wlee5","84o7cj","850rpe","85m4zw","8fbsv4","8j9j8r","8jiz0j","8johrk","8jxfsv","8lbsw3","8pp2vc","8q1dnv","8wirmi","90jnte","94j2hr","98279p","9dtix9","9srqd1","9t7093","9yb9eu","9yzd7m","a5r2pg","a6ngdb","altr97","aois3i","apujwg","aqcbxe","aqudzs","atjsae","aueuyq","b2jl57","b32tpe","b4a8ap","b61dsq","b8a9zq","bt1992","bxdji4","c4mmqp","c84v8c","c8y9xr","cfa595","cm27h0","cng80a","cpstza","crt59f","d4o57a","dgzkp2","dhauv6","dikvz6","dr6pu0","dwj4xa","e16srv","e45i20","ed9w8q","edypm1","ekxn98","emaz5w","epx1b1","erinq","ev8s56","exbgk2","f05x0i","f9jkzr","fk4dcw","fl6fc1","fm51ae","fo24aq","fo939p","frb64x","fumuym","fxc6tm","g31ljc","g6ev9d","g9b2dl","gc1iff","gjrnda","gjzhbx","glewek","gn5999","go164n","gpg8iy","gqzyed","grav71","gwxzpk","gx0oxz","h9c9zs","hcubg","hdkm07","hh62vh","hu3tkf","huvqc8","i7j1rf","i8vcg2","i9uc6p","io8k9h","ipz980","iqinxh","ir9z3d","jglek9","jic6s1","jk9aim","jkiquy","jo4l0e","jrjyr1","js3fa3","jvkp1","jxi74t","jy7uo8","k08w6y","k3ujbz","k7bzxz","kfcbps","kg6r5p","kiivax","kj0x3","ko5a9a","ko64vk","kqxtpu","kttij7","kycx5d","kyhhgj","kyvqvz","kywj7v","kz3n41","kzjdy7","l6ruau","lazsdu","lece24","lhxs0i","lkvmbo","lttxxv","lxgi34","m6ubhj","mejxyq","mij665","mivwh3","mjiveu","mk2m5b","ml7x5u","mlbek1","mno79y","mvoygg","n6pz6x","nfsk0e","ng2mu","nnsldm","nodzme","npau64","nw0cvr","nx84me","o14lyz","o37i7u","obyln3","oelrzt","ofiroo","ofocju","ogh4tz","ohlzsp","ohpvpa","ojadvh","os7c8g","oz63wh","p0rz8j","p55z4w","p63uor","p9snzr","paexxn","pahz4f","pdrgfv","pgg14i","phgilq","pi9mba","pmllti","q2a2jl","q5til","qabme6","qbseas","qfo12","qkk4o6","qmxqko","qqwknm","qrxbyu","qt0ruy","qu6m30","r2t00g","r6btmc","r9kucz","rab4au","rgzfua","rtqosb","rxsu5i","rzmslt","s1l0hh","s5ppqx","s7iz6c","s8iejm","sa90xk","scqwp0","scvma4","sg7xmi","sk4ksh","sly3y8","sqdgqo","srjimy","syjvh6","t4tddb","t7rdg0","tamusg","tg0glx","thw4kr","tjs8dm","tkw7zt","u03yfs","u1asov","u29gs7","u2bkhc","u5vzju","u7xa93","u91n96","uglljp","umfkbs","un7qxt","up63nb","upj3fn","upx4wm","v0ds2v","v2wvrd","v7ek5g","v7kdwe","vhs7sa","vi2jo","vljdg","vrhakw","w1trr4","w5aem6","w5nhoa","we8ovs","whie2c","wm8vhg","wnnr63","wnzknu","wp4g60","wtk601","x30fr2","x42u99","x66na4","xbkwkd","xedqwj","xi5tkg","xiaawj","xnay7r","xqfl7f","xu0qvz","y0tsw6","y6i7uu","y9k26","ybdjr","yeu8wg","yjtqoj","yny96t","yqj24t","ywe4ip","yx74b3","z1nom5","zaw4fx","zfnn9f","zglak7","zgs6tj","zhd2ae","zk97hp","zp3q6t","zu0hua","zujnr0","zw8tk7","zxdocv","zy104"]);
+const VOICE = new Set(["100ftxb","10160g4","1026338","108b400","10bq8az","10daaap","10f2c8a","10f9yqo","10kvsgj","10l1ozr","10r70vk","10rkfl1","10ru54r","10uyi08","10zg369","1108kx6","113jig9","1142gtp","115fly1","11d7imz","11dym93","11f0k15","11g06ab","11gcesx","11iyrnk","11pdf13","11pm90d","11r3n9l","11rkp8h","11xxbpe","125tx6e","126rq71","1283bz3","1289wdh","128e46b","12ank17","12awzyd","12c64n3","12d46v0","12h8hpd","12hmc91","12hn3wk","12ly30l","12ngc1u","12qfqp6","12sx00c","12vg211","12w63km","12xnxfv","1346ijl","139lqo","13cxw0w","13ftla4","13gwofr","13hku9k","13i8sht","13iryo7","13o4ati","13o6bi7","13o99lf","13odfc9","13oxt2b","13q3gww","13xcrnt","13xfc13","13y549v","13z29x4","140qezh","141ih14","141wqb3","1421loi","142vocj","1442dlf","1489zof","14bsdkr","14dqdk8","14hixsr","14icjne","14ji2ga","14li4xg","14wsh99","14zgg16","14zy4y3","153hrvm","155oocv","15cdy27","15f8oa","15h2wzn","15iwhy0","15j0hlv","15jl6b","15kqccr","15m1iga","15qeo4i","15req7i","15xnc4g","162afq5","163zpxx","167ogau","168mp02","168qkee","169isor","16a77c2","16b4s1d","16bfy98","16hl367","16i4i5a","16ksxfz","16lkluc","16llt17","16nbugn","16rjvb7","16telns","16xxvxz","16z7c62","171pw19","1726pvq","174vd3a","1750j12","1784s08","178vkuc","179attb","17fxewy","17g9z3c","17i5ya","17nhwq","17psvqv","17sjnlq","17vtkun","17yfegk","1836gh2","1844h6r","187nsm1","188dq1v","18b4sce","18exoa1","18f4oru","18gsy14","18inq8f","18jh38g","18kkg8z","18l3fuv","18mdu4o","18o03ln","18oki4p","18opcvi","18pzsai","18r2f9l","18tdh7u","18te3xh","18tgq0q","18undm7","18v1pkt","193k4hc","193vyoy","194v4m5","195fy7o","19athyc","19dsxuk","19gzq9o","19hu2bs","19ix769","19jll1d","19jynme","19o1doz","19rrb4w","19rxsm2","19sunzu","19yda2","1a27k3g","1a39msy","1a55ine","1acgta8","1ad9oip","1aecbk0","1agtpb4","1agymbs","1aj7ii","1ajrgu3","1al3k1i","1amkme9","1apl6rg","1arg9eh","1as43k6","1at3451","1av85vi","1avof8l","1aw225l","1azme7","1b3w364","1b6g9ic","1bbdjca","1bci3gl","1bjp96a","1bn3heo","1bnjde5","1bu0lvx","1bu1gyg","1bx46ze","1bzhnzf","1c0wv9v","1c5ctcp","1cfsscx","1ckntow","1clcko1","1cmrcp5","1cnn1zj","1d0i3wr","1d1uhcf","1d46tm7","1d9reau","1dbq4tq","1dc7gfw","1dc9eho","1dh6zvj","1di9ifl","1dkmevz","1ds6a8c","1dvyu16","1dxkw0q","1e2c7j6","1e31lyt","1e404ct","1e8sxlu","1eamhk3","1eein6","1eek7of","1ej81bx","1el70pk","1emf2jd","1emlzop","1emovfx","1er4ueo","1er5hhv","1etlnny","1ew6uxw","1eysog1","1eysw6j","1f7fxpw","1fa6mch","1fb4lqy","1fb5ker","1feb1yh","1fj2amq","1fk4e09","1fk6yo2","1fmhe1y","1fmkmhm","1ft7z2h","1fu96ep","1fuaml1","1fullqt","1fv1sh2","1fw73t8","1fyinco","1g06mva","1g1isr9","1g5fbdq","1g6vr9y","1g6ziwb","1g7w9tc","1g954t0","1gd13pn","1ghk866","1glf3l6","1goi7l7","1gp3jjv","1gpp0do","1gq6g3j","1gsdor9","1gsw6rd","1gtuuwm","1gtvj93","1gyvaq6","1h02nj2","1h1z9vd","1h3125w","1h4h6eq","1h4h6ia","1ha8qfz","1hbnn5m","1hchxjq","1hdjbta","1hf1774","1hj7lr5","1hm4mqk","1hmqli8","1hnc52d","1hoe4ju","1hr88qc","1hv75tv","1hwftjj","1hwku2l","1hy79n","1i07qoy","1i0w3o8","1i1nkv9","1i3jj4f","1i4094","1i5x8k5","1i6eslv","1i7pj4x","1i9plk9","1id4xom","1idoqpa","1idpw8o","1imomcd","1iou1ha","1isaibz","1itnsne","1j0pfdo","1j3ibtk","1j4gdpf","1j7fppj","1j7otqn","1jcu7a3","1je4rs6","1jequek","1jisnk1","1jnw8sf","1joms4y","1jrcetj","1jsxofn","1jw2xcd","1jx0k90","1k0dlis","1k0rco","1kc6jg6","1kgxl4w","1kh6xui","1kib9o0","1kispa","1kjcuib","1kjyxz7","1kk1a7x","1kkiece","1kl6fwo","1klfp82","1ksmgy7","1kx58i8","1kxuwnq","1kydkr0","1l18p7c","1l4fs80","1l5r765","1l68tez","1l7jeyl","1l8bush","1lcy6oa","1leshph","1lglhpf","1li0yfg","1lnq6f3","1lqlz8j","1ltudoo","1luu0xr","1lx29hw","1lxok6e","1lz3a8y","1m1lxka","1m62ouh","1m81d1p","1mc9bk0","1megsuz","1mezv75","1mh4ghx","1mhnqwc","1mjtmmy","1mjvy2g","1mno6qj","1mqn89u","1mqnzc9","1mqtddz","1mulf4o","1mwdca4","1mxpj84","1mzrti","1n156gz","1n22bhv","1n8j9tj","1n8rqyk","1nfg6pz","1nhajyb","1nhbq9f","1nj6d18","1njoxg0","1nux5dj","1o0005f","1o1v76i","1o3kcow","1o59qcu","1o5flnb","1odvax5","1okdpyb","1ol16gh","1ol8ebc","1olijfg","1olv4wt","1ooy226","1orw0af","1osc7h3","1oyyyb0","1p0qjgq","1p0z9sr","1p1fci","1p8uoet","1p9306b","1pfg6by","1phcygt","1phut4c","1pjpwf4","1pjtlf7","1pszpit","1q18zue","1q4jgaq","1qdjs1e","1qdm172","1qdpqgw","1qhlafy","1qhy1k7","1qjiim6","1qjr70i","1qkjw02","1qomkiu","1qq4ns6","1qqpmk3","1qqrjqa","1qr6w1l","1qrltde","1qrymck","1qtzkr","1qym5gs","1r0aebr","1r0ktcq","1r4gzui","1r5hdt","1r5nix8","1r8npaq","1rcfocd","1re07pi","1ri9wzn","1rm483x","1rmjfes","1rmjnz3","1ro4pfn","1roew1f","1rqjq0b","1rr97df","1rs1fbq","1s05hgi","1s659o1","1s77ak2","1sggvoo","1sh5qti","1shepyw","1snwn2","1spipum","1spl79d","1sr46dv","1ss8m8k","1sssmyz","1t39s61","1t3ojgi","1t69wjq","1t9d035","1tfyrap","1tj4sth","1tk75vs","1tsdrys","1tuyub9","1tv285z","1txrfqp","1u25sqi","1u29x2z","1u5j7k0","1u5o2mu","1u5ool1","1u8glda","1uabzrq","1ugakq","1uqg84y","1usy3mv","1ut0nbo","1ute2a","1utwgfv","1uuihou","1uuvh42","1uzeb5t","1uzwgyt","1v2zm2h","1v3r6f7","1v4ai9a","1v637dh","1v6vx15","1v8zubq","1vgin9i","1vgobem","1viehla","1vkb2fz","1vwgxg9","1vxjsqx","1vxtzec","1vynqeu","1vzk5qg","1w00vjo","1w20mt6","1w54td1","1w5tsbj","1w7er79","1w81h6m","1w8arq5","1wdv3ed","1wdzjgj","1whbalz","1wm92df","1wp9kq","1wpusl9","1wsetti","1wspry7","1wt5r0o","1wwxp9t","1x5mgg9","1x61q8u","1x9q0ea","1xa40ff","1xbc9yr","1xbpi3q","1xgo402","1xiv7i2","1xl53wk","1xlca0m","1xnqn7i","1xo4cde","1xpzmpj","1xqbgmk","1xs4e5j","1xu8t5l","1xy5lle","1xyq58g","1y2lvi3","1y2t1vv","1y7ddxy","1y9k7bf","1ycgqfi","1yiqnho","1yl26r6","1yueflc","1ywfra","1yzjuuk","22x2td","2594nd","26jy8h","27w3u0","29wq4","2ccz3s","2e3beo","2ev4ae","2ungtz","2vud1h","2xxh3t","2zh26","2zzdvk","31zies","34rha7","3b9675","3bns7h","3ck40n","3cu9qs","3gy8dw","3lbugn","3m86p2","3n4rnx","3vcxpn","3z72wn","3z9dg0","46v4xw","49x23g","4crsrs","4idsu8","4iycrd","4jz99u","4l0qhg","4n0rq","4w8dnr","4zp832","5455qf","54v0oc","5740vk","57da2b","58ck7k","58zvlv","599lrb","59qh45","59r5m7","5eq9de","5itn8h","5kl6m0","5o5mgf","5u9320","5w40g6","5z7d0w","5zvdty","613hw3","62x5vt","647r4f","66npo2","679f6b","6bas9i","6bthzj","6cr2h7","6dypnx","6iju9k","6jtsfv","6k2z3t","6l0w9i","6o3z0i","6pug1x","6qxstx","6xwdd8","6yeq5k","70sqn6","7128y2","77vj7p","78eqxu","7f9joo","7qt60w","7snmpb","7tmgzy","7wbilr","7wlee5","7wsza2","7xh1b1","7ytkh","84o7cj","850rpe","85m4zw","89hgv8","8ar7jn","8eca0a","8fbsv4","8j9j8r","8jiz0j","8johrk","8jxfsv","8lbsw3","8pp2vc","8q1dnv","8qdgd7","8wayfi","8wirmi","8ycs2f","8zshrh","90jnte","94j2hr","98279p","9dtix9","9hpj88","9srqd1","9t7093","9tgv10","9yb9eu","9ynl17","9yzd7m","9zse5c","a5r2pg","a6ngdb","a6s6nd","a8f5e5","altr97","aois3i","apujwg","aqcbxe","aqudzs","atjsae","auchn0","aueuyq","awj61x","b1lwox","b1wyl3","b2jl57","b32tpe","b4a8ap","b61dsq","b8a9zq","bl8y1p","bt1992","buztyb","bxdji4","bzn6r6","c249wm","c4mmqp","c84v8c","c8y9xr","cfa595","cm27h0","cng80a","cpstza","cquq4a","crt59f","csfcrm","ctbney","cy5tgz","d1zq4k","d4o57a","dauahl","dgzkp2","dhauv6","dhfoln","dhlpb4","dikvz6","dk9hvn","do86my","dr6pu0","dwj4xa","e16srv","e45i20","ea84fe","eas85e","ed9w8q","edypm1","ekdk1a","ekxn98","emaz5w","epx1b1","erinq","ev8s56","ewb31b","exbgk2","ez56by","ezlr3s","f05x0i","f9jkzr","fj74mp","fk4dcw","fl6fc1","fm51ae","fo24aq","fo939p","fomz6j","frb64x","fst7oo","fumuym","fuqi9x","fxc6tm","g31ljc","g6ev9d","g6qvss","g9b2dl","gc1iff","gh2m3b","gjrnda","gjzhbx","glewek","gn5999","go164n","goz4bv","gpg8iy","gqge1g","gqzyed","grav71","guhdiz","gwxzpk","gx0oxz","gzz7w3","h36upw","h3p8j0","h9c9zs","hbyxrw","hbzt7j","hcubg","hdkm07","hdtcgv","he86r9","hh62vh","hhwgqn","hm4zxt","hu3tkf","huvqc8","hxvwzs","i3jfgr","i7j1rf","i8vcg2","i9uc6p","idjfx7","io8k9h","ipz980","iqinxh","ir9z3d","j49hel","j4oxfs","jbh4zj","jglek9","jic6s1","jk9aim","jkiquy","jl4vme","jo4l0e","jqvskh","jrjyr1","js3fa3","jvkp1","jxi74t","jy7uo8","jyvwtg","k08w6y","k3ujbz","k7bzxz","kfcbps","kg6r5p","kiivax","kj0x3","kjsv4y","knlb9z","ko5a9a","ko64vk","kqxtpu","kr5cdo","krg9g9","kttij7","kycx5d","kyhhgj","kys1oc","kyvqvz","kywj7v","kz3n41","kzjdy7","kzkckd","l44djo","l6ruau","l6t9kv","lazsdu","lbdhuk","lece24","lhccqd","lhxs0i","lkvmbo","lmlxm9","lttxxv","lxgi34","m6ubhj","m9f3n1","mejxyq","mij665","mivwh3","mjb2d5","mjiveu","mk2m5b","mk36xt","mktbrp","ml7x5u","mlbek1","mm243q","mno79y","mvoygg","n130f2","n6pz6x","nc7ew1","ndb26","nfsk0e","ng2mu","nmug6h","nmupwv","nnsldm","no0m1k","nodzme","npau64","nw0cvr","nx84me","ny2xhf","o14lyz","o37i7u","o4rvq8","o94rql","oaks3e","obyln3","oc29ce","oelrzt","ofiroo","ofocju","ogh4tz","ohlzsp","ohpvpa","ojadvh","ollils","os7c8g","oxbj0e","oxgmca","oz63wh","p0rz8j","p25rm9","p55z4w","p63uor","p9snzr","pabeqo","paexxn","pahz4f","pbbvgz","pdn4tz","pdrgfv","pdyz9f","pew7od","pgg14i","phgilq","pi9mba","pmllti","pwuoh4","pzqnor","q2a2jl","q5til","qa42i6","qabme6","qbseas","qfo12","qgdnhn","qglsaq","qhby2y","qhsd80","qkk4o6","qmxqko","qqwknm","qrxbyu","qt0ruy","qu6m30","r2byku","r2t00g","r3wm80","r6btmc","r9kucz","rab4au","rgzfua","rm5rs7","rtqosb","rxsu5i","ryzw5j","rzmslt","s1l0hh","s5ppqx","s7iz6c","s8iejm","sa90xk","scqwp0","scvma4","sg7xmi","sgd5s8","siaohf","sk4ksh","sly3y8","sqdgqo","srjimy","syjvh6","t1o8hd","t4tddb","t725i8","t7rdg0","t92sql","tamusg","tcjsij","tg0glx","thw4kr","tjs8dm","tkw7zt","trk2gc","u03yfs","u1asov","u29gs7","u2bkhc","u5vzju","u6w6an","u7xa93","u91n96","uglljp","uhogg3","umfkbs","un7qxt","up63nb","upj3fn","upx4wm","usomn0","utu3lp","v0ds2v","v2wvrd","v7ek5g","v7kdwe","vhs7sa","vi2jo","vjisfu","vljdg","vm0t8d","vn59mi","vrhakw","w1trr4","w3zjh0","w5aem6","w5nhoa","we8ovs","whie2c","wkfwoy","wl1qyi","wm8vhg","wnnr63","wnzknu","wp4g60","wtk601","wwqdpq","wy9kip","wyaz","x30fr2","x42u99","x66na4","x6xzug","xbkwkd","xedqwj","xfxjlv","xhaac5","xi5tkg","xiaawj","xjogk0","xnay7r","xqfl7f","xu0qvz","xu9fuw","y0tsw6","y6i7uu","y9k26","ybdjr","ybx6lm","ydjmqe","yeu8wg","yfxa0q","yjtqoj","yny96t","yqj24t","ywe4ip","yx74b3","z1nom5","zajene","zaw4fx","zfnn9f","zghyk9","zglak7","zgs6tj","zhd2ae","zk97hp","zm6e6a","zp3q6t","zu0hua","zujnr0","zw8tk7","zxdocv","zy104"]);
+// ---------- Music: generated in the browser, quiet, never needed to play. Shared with First Light Fishing. ----------
+// Both games call musicTick() five times a second once their sound has started (it schedules the next notes with tone(),
+// never more than about .6 seconds ahead), and music.mood(name) whenever the scene changes:
+//   night  the menus of the Night Watch (lullaby)      watch  inside a station (the same, thinner)
+//   raid   magpies are coming                           dawn   first light
+//   bed    bedtime                                      party  a birthday, a finale
+//   day    the fishing map, title and treehouse         water  at a fishing spot (the water's own sounds lead)
+// A new mood starts with the next bar: the notes already played ring out, and two moods never play at once. A name
+// that is not listed plays the night. It uses only what both games have (AC, tone(), noise(), S.mute, clamp, pick), and
+// only inside functions, because the fishing game loads this file before its own sound.
+// Every tune keeps to a five-note scale with no half steps in it, over one soft chord per bar, and stays quiet (bass up
+// to .1, tunes up to .05), so the music sits under the effects and the owl.
+const PENTA = [261.6, 293.7, 329.6, 392, 440, 523.3, 587.3, 659.3];   // C major pentatonic (the code station and the spy game play it too)
+const musBass = [130.8, 110, 87.3, 98];                                // C A F G, one per bar: the lullaby's chords
+let musNext = 0, musSt = 0, musBar = 0, musIdx = 3, musCur = 'night', musWant = 'night', musWait = 0;
+// The next note of a wandering tune: a step or two up or down the scale, kept between the indexes lo and hi.
+const musWalk = (lo = 0, hi = 7) => PENTA[musIdx = clamp(musIdx + pick([-2, -1, -1, 0, 1, 1, 2]), lo, hi)];
+// A mood is [seconds per step, steps per bar, play(step in the bar, seconds from now)]. No bar is longer than 3.4 seconds,
+// so a new mood is heard within four.
+const MUS = {
+  // the lullaby: a bass note and its fifth swell each bar under a slow tune that wanders on most steps
+  night: [.42, 8, (st, w) => {
+    if (!st) { const b = musBass[musBar % 4]; tone(b, 3.3, 'sine', .1, w, 0, .5); tone(b * 1.5, 3.3, 'sine', .05, w, 0, .7); }
+    if (Math.random() < (st % 2 ? .25 : .8)) tone(musWalk(), 1.2, 'sine', .045, w, 0, .03);
+  }],
+  // a station: the same, thinner, so that it does not distract: no fifth, half the tune, nothing high
+  watch: [.42, 8, (st, w) => {
+    if (!st) tone(musBass[musBar % 4], 3.3, 'sine', .09, w, 0, .5);
+    if (Math.random() < (st % 2 ? .1 : .4)) tone(musWalk(0, 5), 1.2, 'sine', .04, w, 0, .05);
+  }],
+  // magpies are coming: a tiptoe bass (root, fifth, octave, fifth, all short) under plucked notes that land mostly
+  // between its steps; in every fourth bar the tune stops and peeks with a little slide up. The chords go Am Dm G C, so
+  // each round ends in a major key: cheeky, never dark.
+  raid: [.32, 8, (st, w) => {
+    if (!(st % 2)) tone([110, 73.4, 98, 130.8][musBar % 4] * [1, 1.5, 2, 1.5][st / 2], .2, 'triangle', .1, w, 0, .005);
+    if (musBar % 4 === 3) { if (st === 5) tone(440, .4, 'sine', .05, w, 523.3, .03); }
+    else if (Math.random() < (st % 2 ? .6 : .35)) tone(musWalk(), .3, 'triangle', .05, w, 0, .005);
+  }],
+  // first light: over a soft bass and its octave, four notes climb in each bar (C Am F G), and a round later an octave
+  // higher, as the sun gets up; now and then a bird chirps
+  dawn: [.4, 8, (st, w) => {
+    const k = musBar % 4;
+    if (!st) { tone(musBass[k], 3.1, 'sine', .08, w, 0, .6); tone(musBass[k] * 2, 3.1, 'sine', .03, w, 0, .9); }
+    if (!(st % 2)) tone(PENTA[[0, 2, 3, 1][k] + st / 2] * (musBar & 4 ? 2 : 1), 1.6, 'triangle', .032, w, 0, .08);
+    if (st === 5 && Math.random() < .4) { tone(1046.5, .06, 'sine', .03, w, 1318.5, .005); tone(1174.7, .07, 'sine', .03, w + .1, 1396.9, .005); }
+  }],
+  // bedtime: very slow and quieter; every other bar three long notes fall down the scale
+  bed: [.8, 4, (st, w) => {
+    if (!st) { tone(musBass[musBar % 4], 3.1, 'sine', .06, w, 0, .9); musIdx = pick([4, 5, 6, 7]); }
+    if (!(musBar % 2) && st < 3) tone(PENTA[musIdx - st], 2, 'sine', .028, w, 0, .15);
+  }],
+  // a birthday or a finale: oom-pah (C F G C) under a bouncy tune in a skipping rhythm; every fourth bar ends with a whee
+  party: [.25, 8, (st, w) => {
+    const k = musBar % 4;
+    if (!(st % 4)) tone([130.8, 87.3, 98, 130.8][k], .3, 'triangle', .1, w, 0, .01);
+    else if (st % 4 === 2) for (const f of [[261.6, 329.6], [220, 261.6], [196, 293.7], [261.6, 329.6]][k]) tone(f, .15, 'triangle', .03, w, 0, .01);
+    if ('x.xx.xx.'[st] === 'x') tone(musWalk(2, 7), .25, 'triangle', .045, w, 0, .01);
+    if (k === 3 && st === 6) tone(523.3, .5, 'sine', .045, w, 1046.5, .02);
+  }],
+  // the fishing day: a light morning tune in G major pentatonic at a walking pace; the bass steps from root to fifth
+  day: [.34, 8, (st, w) => {
+    const r = [98, 82.4, 110, 146.8][musBar % 4];   // G Em Am D
+    if (!(st % 4)) tone(st ? r * 1.5 : r, .9, 'sine', .08, w, 0, .05);
+    if (Math.random() < (st % 2 ? .3 : .7)) tone(musWalk() * 1.5, .5, 'triangle', .04, w, 0, .02);
+  }],
+  // at a fishing spot the water's own sounds lead: one soft low note, six to ten seconds apart
+  water: [.5, 6, (st, w) => {
+    if (--musWait > 0) return;
+    musWait = 12 + (Math.random() * 9 | 0);   // in half-second steps
+    tone(pick([146.8, 164.8, 196, 220]), 3, 'sine', .05, w, 0, .8);   // D E G A, from the day's scale, below its tune
+  }],
+};
+const music = { mood(name) { musWant = Object.prototype.hasOwnProperty.call(MUS, name) ? name : 'night'; } };
+function musicTick() {
+  if (S.mute || !AC || AC.state !== 'running') return;
+  const now = AC.currentTime;
+  if (musNext < now) musNext = now + .1;   // after a pause the music goes on from now; it never catches up
+  while (musNext < now + .6) {
+    if (!musSt && musCur !== musWant) { musCur = musWant; musBar = musWait = 0; }
+    const [step, steps, play] = MUS[musCur];
+    play(musSt, musNext - now);
+    musNext += step;
+    if (++musSt >= steps) { musSt = 0; musBar++; }
+  }
+}
 // ---------- Art: every picture is drawn here with canvas shapes; no image files ----------
 function starPath(c, x, y, R, r, n) {
   c.beginPath();
@@ -1261,6 +1491,331 @@ function critter(c, x, y, s, t, kind, sad) {
   if (sad) { line(c, [-12, -67, -5, -71], '#3a2418', 1.6); line(c, [12, -67, 5, -71], '#3a2418', 1.6); }   // inner ends up: sad, never angry
   c.restore();
 }
+// ---------- Life at the treehouse: it keeps growing with the stars, a visitor comes by each day, and a birthday is kept ----------
+// Called by the other files:
+//   growLevel()            how many of the three additions the stars have earned so far (0 to 3)
+//   growNews(then)         the owl tells of an addition once (S.grow is how many were told), then calls then()
+//   growTree(c, t, k)      from drawTree, inside the tree's transform (tree units): the additions, and on the player's
+//                          birthday (isBirthday() in src/50-ui.js) the party decorations; k is the tree's scale on screen
+//   growTap(lx, ly, T)     from menuTap, tree units: true when an addition answered the tap
+//   visitTree(c, T, t)     from the menu scenes, after the tree and before the owl: today's visitor on the deck
+//   visitTap(lx, ly, T)    from menuTap: true when the visitor answered the tap
+
+// ----- The treehouse grows with the stars (counted, never spent): a swing, a flower garden, a hammock -----
+const LIFE_AT = [60, 120, 200];
+// The middle of each addition (tree units): where a sparkle shows it for the first time, and where a tap finds the swing and the hammock.
+const LIFE_XY = [[785, 405], [500, 262], [155, 395]];
+const lifeT = [-9, -9, -9];   // when each addition was last tapped: its joke plays for about three seconds
+let lifeWho = 0;             // the forest friend in the next joke
+function growLevel() { return LIFE_AT.filter(n => S.stars >= n).length; }
+// At the Night menu the owl tells of each new addition once; the veil stays almost clear, and a sparkle shows the place.
+function growNews(then) {
+  if (growLevel() <= S.grow) return then();
+  const i = S.grow++; save();
+  owlSay(t('grow_' + i), { title: t('grow_t'), mood: 'cheer', acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => {
+    const T = treeArea();
+    sfx.sparkle(); burst(T.ox + LIFE_XY[i][0] * T.k, T.oy + LIFE_XY[i][1] * T.k, 26, { speed: 200, size: 9, kind: 'star', colors: ['#ffd86b', '#fff6da', '#ff9ecb'] });
+    later(() => growNews(then), 1400);
+  } }] }).classList.add('clear');
+}
+// Drawn by drawTree under the placed items, which stay in full view. m scales the small things up on a phone, each as far
+// as its neighbours allow (the window jars, the item spots, the slide, the observatory).
+function growTree(c, t, k) {
+  const g = S.grow | 0, calm = still(), m = Math.max(1, .5 / k);
+  if (g >= 1) lifeSwing(c, t, calm, Math.min(m, 1.5));
+  if (g >= 2) lifeGarden(c, t, calm, Math.min(m, 1.4));
+  if (g >= 3) lifeHammock(c, t, calm, Math.min(m, 1.3));
+  if (isBirthday()) lifeParty(c, t, calm, Math.min(m, 1.25));
+}
+// The swing hangs from the underside of the upper right branch and sways a little; a tap: a friend swings high.
+function lifeSwing(c, t, calm, m) {
+  const d = V.t - lifeT[0], on = d < 2.8, a = calm ? 0 : on ? .75 * Math.sin(d * 4.4) * Math.min(1, d * 2, (2.8 - d) * 1.5) : .06 * Math.sin(t * 1.3);
+  c.save(); c.translate(785, 350); c.rotate(a); c.scale(m, m);
+  line(c, [-13, 4, -15, 96], '#e8d6a8', 2.5); line(c, [13, -2, 15, 96], '#e8d6a8', 2.5);
+  if (on) critter(c, 0, 108, .44, t, lifeWho);   // seated: the plank in front hides its feet
+  rr(c, -19, 94, 38, 8, 3); c.fillStyle = '#c98a45'; c.fill(); line(c, [-16, 96, 16, 96], '#e8b070', 2);
+  c.restore();
+}
+const lifeFlower = (c, x, y, r, col) => { for (let i = 0; i < 5; i++) circ(c, x + Math.cos(i * 1.2566) * r, y + Math.sin(i * 1.2566) * r, r * .8, col); circ(c, x, y, r * .55, '#fff6da'); };
+const LIFE_FL = ['#ff9ecb', '#ffd24a', '#c9b8ff', '#ff8a7a'];
+// Boxes of flowers under the windows (kept below the jars) and a flowering vine along the eaves; a butterfly visits them.
+// A tap: the flowers open wide and the butterfly rises over the roof and comes back.
+function lifeGarden(c, t, calm, m) {
+  const d = V.t - lifeT[1], on = d < 2.8, o = !on ? 0 : calm ? 1 : Math.min(1, d * 3, (2.8 - d) * 2);
+  for (const x0 of [378, 502]) {
+    c.beginPath(); c.moveTo(x0, 216); c.quadraticCurveTo(x0 + 60, 232, x0 + 120, 216); c.strokeStyle = '#3d9a52'; c.lineWidth = 2.5; c.stroke();
+    for (let i = 1; i < 6; i++) lifeFlower(c, x0 + i * 20, 216 + 32 * (i / 6) * (1 - i / 6), 2.6 + o, LIFE_FL[(i + x0) % 4]);
+  }
+  for (const bx of [419, 529]) {
+    for (let i = 0; i < 4; i++) { const x = bx + 8 + i * 12; line(c, [x, 288, x, 282 - o * 2], '#3d9a52', 1.5); lifeFlower(c, x, 281 - o * 2, 2 + o * 2.2, LIFE_FL[(i + bx) % 4]); }
+    rr(c, bx + 1, 285, 50, 13, 3); c.fillStyle = '#9a5a2e'; c.fill(); line(c, [bx + 3, 287, bx + 49, 287], '#c07a44', 2);
+  }
+  const x = calm ? (on ? 440 : 426) : 440 + (on ? 30 * Math.sin(d * 3) : 24 * Math.sin(t * .7));
+  const y = calm ? (on ? 224 : 292) : 292 - (on ? 150 * Math.sin(Math.PI * d / 2.8) : 0) + 3 * Math.sin(t * 2.3);
+  const f = calm ? 1 : .35 + .65 * Math.abs(Math.sin(t * 11));   // wings beat: drawn narrower and wider
+  c.save(); c.translate(x, y); c.scale(m * f, m);
+  ell(c, -5, -3, 5, 4, '#ffd24a', -.4); ell(c, 5, -3, 5, 4, '#ffd24a', .4); ell(c, -4, 3, 3.5, 3, '#ff9a3a', .4); ell(c, 4, 3, 3.5, 3, '#ff9a3a', -.4);
+  c.restore(); line(c, [x, y - 4 * m, x, y + 4 * m], '#4a2f1a', 1.6 * m);
+}
+// The hammock hangs from the underside of the upper left branch, striped, swaying gently; a tap: a friend snoozes in it.
+function lifeHammock(c, t, calm, m) {
+  const d = V.t - lifeT[2], on = d < 3, sw = calm ? 0 : (on ? 5 : 3) * Math.sin(t * 1.4);
+  c.save(); c.translate(155, 364); c.scale(m, m);
+  line(c, [-47, -12, -37, 24], '#e8d6a8', 2.5); line(c, [47, 12, 39, 28], '#e8d6a8', 2.5);
+  c.beginPath(); c.moveTo(-37, 24); c.quadraticCurveTo(sw, 80, 39, 28); c.quadraticCurveTo(sw, 44, -37, 24); c.fillStyle = '#e8503a'; c.fill();
+  c.save(); c.clip(); for (let x = -32; x < 40; x += 12) line(c, [x + sw * .3, 20, x + sw * .3, 64], '#ffd24a', 4); c.restore();
+  if (on) {
+    const col = CRITTERS[lifeWho][0];
+    c.save(); c.translate(6 + sw * .5, 31); c.rotate(-1.3); critter(c, 0, 0, .4, 0, lifeWho);
+    for (const sx of [-3.2, 3.2]) { circ(c, sx, -24.8, 1.8, col); line(c, [sx - 1.4, -24.6, sx + 1.4, -24.6], '#3a2418', .8); }   // eyes shut
+    c.restore();
+    rr(c, -8 + sw * .5, 22, 40, 14, 6); c.fillStyle = '#58a6ff'; c.fill(); line(c, [-4 + sw * .5, 29, 28 + sw * .5, 29], '#fff', 2);   // tucked in, head free
+    c.font = '900 20px ui-rounded, "Segoe UI", Roboto, sans-serif'; c.fillStyle = '#dff0ff';
+    for (let i = 0; i < 3; i++) { const u = calm ? i / 3 : (d * .6 + i / 3) % 1; c.globalAlpha = calm ? 1 : 1 - u; c.fillText('z', -26 + u * 14 + i * 3, 14 - u * 40 - (calm ? i * 4 : 0)); }
+    c.globalAlpha = 1;
+  }
+  c.restore();
+}
+// On the player's birthday: bunting along the deck rails (on the left only up to the two jars on the deck) and three
+// balloons tied to the left rail post, floating between the slide's top and the observatory.
+function lifeParty(c, t, calm, m) {
+  const COL = ['#ff6b8a', '#ffd24a', '#58a6ff'];
+  for (const [x0, x1, n] of [[298, 350, 2], [600, 702, 4]]) {
+    c.beginPath(); c.moveTo(x0, 299); c.quadraticCurveTo((x0 + x1) / 2, 307, x1, 299); c.strokeStyle = '#fff6da'; c.lineWidth = 1.5; c.stroke();
+    for (let i = 0; i < n; i++) { const u = (i + .5) / n, x = lerp(x0, x1, u), y = 299 + 16 * u * (1 - u); poly(c, [x - 7, y, x + 7, y, x, y + 14], COL[i % 3]); circ(c, x, y + 5, 1.6, '#fff'); }
+  }
+  c.save(); c.translate(298, 296); c.scale(m, m);
+  [[-52, -60], [-30, -80], [-8, -56]].forEach(([bx, by], i) => {
+    if (!calm) { bx += 3 * Math.sin(t * 1.1 + i * 2); by += 2 * Math.sin(t * 1.6 + i); }
+    c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(bx * .3, by * .5, bx, by + 16); c.strokeStyle = 'rgba(255,246,218,.8)'; c.lineWidth = 1; c.stroke();
+    ell(c, bx, by, 11, 14, COL[i]); ell(c, bx - 4, by - 5, 2.5, 4, 'rgba(255,255,255,.55)', .4); poly(c, [bx - 2.5, by + 17, bx + 2.5, by + 17, bx, by + 13], COL[i]);
+  });
+  c.restore();
+}
+// A tap on an addition (the visitor, the friends and the gifts are asked first, see menuTap). The garden answers left of
+// the flag's pole only, so that the flag (asked last) keeps the whole of its own tap area.
+function growTap(lx, ly, T) {
+  const g = S.grow | 0, r = Math.max(50, 26 / T.k), near = (x, y, q = r) => Math.hypot(lx - x, ly - y) < q;
+  const i = g >= 1 && near(...LIFE_XY[0]) ? 0 : g >= 2 && lx < 605 && [[445, 290], [555, 290], [420, 222], [580, 222]].some(([x, y]) => near(x, y)) ? 1 : g >= 3 && near(...LIFE_XY[2]) ? 2 : -1;
+  if (i < 0) return false;
+  lifeT[i] = V.t; lifeWho = (lifeWho + 1) % 4;
+  [sfx.whee, sfx.sparkle, sfx.snore][i]();
+  return true;
+}
+
+// ----- Today's visitor: from Night 2, one forest friend a day stands on the deck in front of the door with a wish -----
+// [the wish's picture, the gift that fits it, two funny wrong ones]; each gift is a text key vis_<id>, drawn with lifeIc(id).
+const LIFE_WISH = [['lifeRain', 'umb', 'fish', 'banana'], ['lifeSnow', 'hat', 'frog', 'robot'], ['star', 'scope', 'banana', 'pizza'],
+  ['moon', 'rocket', 'cake', 'frog'], ['lifeNote', 'drum', 'fish', 'pizza'], ['lifeBowl', 'berry', 'hammer', 'bell'],
+  ['lifeWave', 'boat', 'cake', 'hammer'], ['lifeZz', 'pillow', 'drum', 'rocket'], ['party', 'cake', 'hammer', 'pillow']];
+const lifeIc = id => ({ umb: 'lifeUmb', hat: 'lifeHat', pillow: 'lifePillow' })[id] || id;
+let lifeJoy = -9;   // when the visitor last jumped for joy
+// The visitor and the wish of day d ('Y-M-D'), fixed for the day: [forest friend 0..3, wish]. The four friends take turns
+// in blocks of four days (each block starts with another friend), so any ten days bring all four. The drawing asks in
+// every frame, so the last day's answer is kept (read it, do not change it).
+let lifeDayOf = '', lifeDayIs = [0, 0];
+const lifeDay = d => {
+  if (d !== lifeDayOf) { const n = dayNo(d); lifeDayOf = d; lifeDayIs = [(n + (hash(Math.floor(n / 4) + .5) * 4 | 0)) % 4, hash(n * 2.71 + 9.5) * LIFE_WISH.length | 0]; }
+  return lifeDayIs;
+};
+// Today's visitor ({ kind, wish, open, n }), or null before Night 2. A day without a granted wish has its wish open, so a
+// new day brings its visitor lazily, and a missed day loses nothing. The save is never trusted to have the right shape.
+function lifeNow() {
+  if (!(S.night >= 2)) return null;
+  const d = today(), v = S.visit && typeof S.visit === 'object' ? S.visit : {}, [kind, wish] = lifeDay(d);
+  return { kind, wish, open: !(v.d === d && v.done), n: Math.max(0, v.n | 0) };
+}
+// Where it stands (tree units): [x, scale, top of its head]. It is scaled up on a phone only as far as the window jars
+// allow; the squirrel stands a little left, so its tail keeps clear of them.
+const lifeAt = (v, T) => { const s = clamp(.3 / T.k, .8, 1); return [v.kind ? 500 : 492, s, 330 - (v.kind === 1 ? 112 : 92) * s]; };
+const lifeBub = (T, top) => { const r = clamp(15 / T.k, 34, 40); return [r, top - r - 14]; };   // the thought bubble between the roof's two upper item spots
+function visitTree(c, T, t) {
+  const v = lifeNow();
+  if (!v) return;
+  const [x, s, top] = lifeAt(v, T), d = V.t - lifeJoy, calm = still(), y = 330 - (calm || d > 1.2 ? 0 : Math.abs(Math.sin(d * 8)) * 24 * (1 - d / 1.2));
+  c.save(); c.translate(T.ox, T.oy); c.scale(T.k, T.k);
+  critter(c, x, y, s, t, v.kind);
+  if (!v.open) drawIcon(c, lifeIc(LIFE_WISH[v.wish][1]), x + (v.kind ? 26 : -26) * s, y - 24 * s, 26 * s);   // happy, with its gift, for the rest of the day
+  else {
+    const [r, by] = lifeBub(T, top), q = r / 36, b = by + (calm ? 0 : 3 * Math.sin(t * 1.6));
+    c.lineWidth = 2.5; c.strokeStyle = 'rgba(42,28,5,.35)';
+    for (const [px, py, pr] of [[510, top - 4, 3.5], [516, top - 12, 5.5], [500, b, r]]) { c.beginPath(); c.arc(px, py, pr * (pr === r ? 1 : q), 0, TAU); c.fillStyle = '#fff6da'; c.fill(); c.stroke(); }
+    drawIcon(c, LIFE_WISH[v.wish][0], 500, b, r * 1.25);
+  }
+  c.restore();
+}
+function visitTap(lx, ly, T) {
+  const v = lifeNow();
+  if (!v) return false;
+  // the visitor answers in a wide circle, its bubble in its own (at least 48 px across): on a small screen a wider one took the taps of its neighbours
+  const [x, s, top] = lifeAt(v, T), [rb, by] = lifeBub(T, top), r = Math.max(60, 28 / T.k);
+  if (Math.hypot(lx - x, ly - (330 - 40 * s)) > r && !(v.open && Math.hypot(lx - 500, ly - by) < Math.max(rb, 24 / T.k))) return false;
+  if (v.open) lifeAsk(v); else { lifeJoy = V.t; sfx.chirp(); }
+  return true;
+}
+// The owl says who came and what it wishes for, and offers three gifts. A wrong one shakes and the wish stays open; the
+// right one grants it: five moonbeams, once a day.
+function lifeAsk(v) {
+  const [pic, right, ...rest] = LIFE_WISH[v.wish];
+  const dlg = owlSay(t('vis_c' + v.kind) + ' ' + t('vis_w' + v.wish), { acts: [{ label: t('vis_later') }],
+    html: `<div class="pics"><span class="pill" style="background:#fff6da">${ic(pic, 34)}</span></div><div class="cards" style="margin-top:.5em">${shuffle([right, ...rest]).map(id =>
+      `<button class="card" data-k="${id}">${ic(lifeIc(id), 40)}<span>${esc(t('vis_' + id))}</span></button>`).join('')}</div>` });
+  dlg.querySelectorAll('.card').forEach(b => b.onclick = () => {
+    const now = lifeNow();
+    if (!now || !now.open) return;   // granted already: a second tap pays nothing
+    if (now.kind !== v.kind || now.wish !== v.wish) return lifeAsk(now);   // the day turned while the dialog was open: today's visitor asks its own wish
+    if (b.dataset.k !== right) {
+      const s = t('vis_no');
+      sfx.boing(); nudge(b); $('#owlText', dlg).textContent = s; say(s); speak(s); if (portrait) portrait.t0 = V.t;
+      return;
+    }
+    S.visit = { d: today(), done: 1, n: now.n + 1 }; S.beams += 5; save(); refreshHud();
+    const T = treeArea(), [x, s] = lifeAt(now, T);
+    lifeJoy = V.t; sfx.win(); burst(T.ox + x * T.k, T.oy + (330 - 40 * s) * T.k, 30, { speed: 220, size: 9, kind: 'star', colors: ['#ffd86b', '#fff6da', '#ff9ecb', '#7fd0ff'] });
+    owlSay(t('vis_yes'), { mood: 'cheer', quiet: true, html: `<div class="pics">${ic(lifeIc(right), 44)}<span class="pill pop">${ic('beam', 22)}<b>+5</b></span></div>` }).classList.add('clear');
+  });
+}
+// Pictures of the wishes, and of the gifts that had no icon yet.
+ICON.lifeRain = c => { for (const [x, y, r] of [[-.4, -.1, .36], [.05, -.32, .46], [.45, -.08, .34]]) circ(c, x, y, r, '#8a9cc4'); rr(c, -.76, -.12, 1.55, .38, .19); c.fillStyle = '#8a9cc4'; c.fill(); for (const x of [-.45, 0, .45]) line(c, [x, .45, x - .12, .8], '#2f6fd0', .13); };
+ICON.lifeSnow = c => { for (let i = 0; i < 6; i++) { const x = Math.cos(i * TAU / 6), y = Math.sin(i * TAU / 6); line(c, [0, 0, x * .9, y * .9], '#2f6fd0', .12); line(c, [x * .4 - y * .2, y * .4 + x * .2, x * .62, y * .62, x * .4 + y * .2, y * .4 - x * .2], '#2f6fd0', .1); } };
+ICON.lifeNote = c => { ell(c, -.28, .55, .34, .25, '#6b3fd1', -.35); line(c, [.04, .5, .04, -.85], '#6b3fd1', .13); c.beginPath(); c.moveTo(.04, -.85); c.quadraticCurveTo(.6, -.6, .5, -.05); c.stroke(); };
+ICON.lifeBowl = c => { line(c, [.3, -.2, .8, -.9], '#8a94a8', .12); c.beginPath(); c.arc(0, -.05, .85, 0, Math.PI); c.closePath(); c.fillStyle = '#c8813a'; c.fill(); rr(c, -.92, -.18, 1.84, .2, .1); c.fillStyle = '#e8a860'; c.fill(); rr(c, -.3, .74, .6, .14, .06); c.fillStyle = '#a8663a'; c.fill(); };
+ICON.lifeWave = c => { for (const y of [-.45, .05, .55]) line(c, [-.9, y, -.6, y - .2, -.3, y, 0, y - .2, .3, y, .6, y - .2, .9, y], '#2f6fd0', .13); };
+ICON.lifeZz = c => { line(c, [-.8, -.6, -.05, -.6, -.8, .3, -.05, .3], '#2b3f8f', .17); line(c, [.2, -.05, .75, -.05, .2, .65, .75, .65], '#2b3f8f', .13); };
+ICON.lifeUmb = c => {
+  for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(0, .05); c.arc(0, .05, .92, Math.PI * (1 + i / 4), Math.PI * (1.25 + i / 4)); c.closePath(); c.fillStyle = i % 2 ? '#fff3c4' : '#e8503a'; c.fill(); }
+  line(c, [0, -.87, 0, .78], '#7a4e22', .1); c.beginPath(); c.arc(-.16, .78, .16, 0, Math.PI); c.stroke();
+};
+ICON.lifePillow = c => {
+  rr(c, -.9, -.62, 1.8, 1.24, .5); c.fillStyle = '#eef3ff'; c.fill(); c.lineWidth = .08; c.strokeStyle = '#8fa4d8'; c.stroke();
+  for (const [x, y] of [[-.83, -.56], [.83, -.56], [-.83, .56], [.83, .56]]) circ(c, x, y, .14, '#8fa4d8');   // the corners' tufts
+  line(c, [-.5, .3, .5, .3], 'rgba(143,164,216,.7)', .07); starPath(c, 0, -.08, .3, .13, 5); c.fillStyle = '#ffd24a'; c.fill();
+};
+ICON.lifeHat = c => { c.translate(0, .5); c.scale(.85, .85); WEAR.knit.draw(c); };   // the wardrobe's woolly hat, as big as the box allows
+// ---------- Seasons and weather: the tree follows the real calendar, and some Nights have weather that nudges the raid ----------
+// Called by the other files:
+//   seasonLeaf()            the four leaf colours drawTree uses, darkest first
+//   seasonGround()          [ground, shadow under the tree] colours for drawTree
+//   seasonTree(c, t, rooms) from drawTree, inside the tree's transform, under the placed items: snow, blossom and the
+//                           like; rooms is the number of rooms the treehouse has (1 slide, 2 kitchen, 3 observatory)
+//   seasonFx(c, t, n)       from drawTree, after the transform is undone (screen space): petals, leaves, snow, and the rain
+//                           or wind of Night n (tonight's, unless a raid that is over still shows its own)
+//   nightWeather(n)         the weather of Night n: { k: 'clear' | 'rain' | 'wind' | 'snow', slow: 0 to .25 }; the raid
+//                           moves its magpies slower by `slow` (src/90-tinker.js); the object is shared, read it only
+//   weatherLine(n)          the text key of the owl's sentence about that weather for the briefing, or ''
+// Tests and screenshots force the month and tonight's weather here: { m: 0 to 11, w: 'clear' | 'rain' | 'wind' | 'snow' };
+// either key may be left out.
+let seaForce = null;
+// The season of the month, northern hemisphere: 0 winter (December to February), 1 spring, 2 summer, 3 autumn. Every frame
+// asks for it several times, so the calendar is read at most once a second.
+let seaMon = 0, seaAt = -1e4;
+const seaSeason = () => {
+  const now = Date.now();
+  if (now - seaAt > 1e3 || now < seaAt) { seaAt = now; seaMon = new Date(now).getMonth(); }
+  return ((seaForce && seaForce.m >= 0 ? seaForce.m : seaMon) + 1) % 12 / 3 | 0;
+};
+const seaWrap = (v, m) => v - Math.floor(v / m) * m;
+
+// Leaves darkest first (index 1 is the main colour), and [ground, shadow under the tree]. Summer is the tree as it always
+// was. Every season stays dark enough for the night, so the coverage rings, the placed things and the magpies still read.
+const SEA_LEAF = [['#173440', '#1e424c', '#265058', '#305e64'], ['#264a20', '#305e29', '#3a7031', '#46823a'],
+  ['#1a4c33', '#1f5a3c', '#246a45', '#2b7a50'], ['#52281a', '#70391d', '#834d20', '#946226']];
+const SEA_GROUND = [['#33426f', '#3b4b7b'], ['#0c1a40', '#13275a'], ['#0c1740', '#13235a'], ['#121640', '#1b2258']];
+function seasonLeaf() { return SEA_LEAF[seaSeason()]; }
+function seasonGround() { return SEA_GROUND[seaSeason()]; }
+
+// ----- On the tree (tree units): snow lies on the roofs, the rails, the branches and the tops of the leaf balls; blossom sits
+// on the leaf balls; autumn's leaves lie at the foot. All of it keeps off the windows, the jars, the door, the ladder, the
+// owl's place, the flag and the item spots, and the placed things are drawn over it anyway. -----
+const SEA_SNOW = '#e4ecfb';
+// The branches as drawTree draws them, with where the snow on top may start (clear of the trunk and the ladder).
+const SEA_BRANCH = [[470, 430, 70, 330, .05], [530, 410, 930, 300, .19], [462, 650, 90, 610, .05], [538, 630, 910, 670, .17]];
+// Every leaf ball: [x, y, r, blossoms] (the crown, then the tip and the middle of each branch).
+const SEA_BALL = [[500, 110, 150, 9], [330, 170, 90, 7], [680, 160, 95, 7]];
+for (const [x1, y1, x2, y2] of SEA_BRANCH) SEA_BALL.push([x2, y2 - 20, 58, 5], [lerp(x1, x2, .55), lerp(y1, y2, .55) - 46, 34, 2]);
+const SEA_DOT = [-.5, -.45, .55, -.5, .15, -.85, 0, -.15, .9, -.05, -.8, .05, .4, .2, -.3, .3, -.15, -.6];   // blossom spots on a ball, in its radii
+// Snow along a round top: a band on the arc from angle a to b (canvas angles, -PI / 2 is straight up) with two lumps under it.
+function seaCap(c, x, y, r, w, a, b) {
+  c.beginPath(); c.arc(x, y, r, a, b); c.lineWidth = w; c.strokeStyle = SEA_SNOW; c.lineCap = 'round'; c.stroke();
+  for (let k = .3; k < 1; k += .4) { const q = lerp(a, b, k); circ(c, x + Math.cos(q) * (r - w * .45), y + Math.sin(q) * (r - w * .45), w * .32, SEA_SNOW); }
+}
+const SEA_LEAVES = [175, 250, 330, 445, 478, 628, 700, 760, 805], SEA_AUT = ['#b86a2a', '#c4933a', '#94432a'];   // autumn's fallen leaves: x, colours
+const SEA_DRIFTS = [425, 36, 9, 368, 22, 6, 632, 28, 8, 690, 18, 5];   // winter's snow at the foot: x, half width, height
+// A blossom: five round petals and a pale yellow heart.
+function seaBloom(c, x, y, r, col) {
+  c.beginPath();
+  for (let i = 0; i < 5; i++) { const a = i * TAU / 5 - Math.PI / 2, px = x + Math.cos(a) * r * .55, py = y + Math.sin(a) * r * .55; c.moveTo(px + r * .48, py); c.arc(px, py, r * .48, 0, TAU); }
+  c.fillStyle = col; c.fill(); circ(c, x, y, r * .3, '#ffe9a8');
+}
+// Blossom only where the leaf ball shows: not under the roof or the cabin, the flag or the observatory.
+const seaOpen = (x, y, rooms) => !(x > 360 && x < 640 && y > 204 - 102 * Math.max(0, 1 - Math.abs(x - 500) / 128)) && !(x > 600 && x < 712 && y > 70 && y < 210)
+  && !(rooms >= 3 && x > 268 && x < 372 && y > 80 && y < 200);
+function seasonTree(c, t, rooms) {
+  const s = seaSeason();
+  if (s === 0) {
+    line(c, [400, 189, 500, 109, 600, 189], SEA_SNOW, 13);   // the roof, short of the eaves and of the flag's pole
+    for (const x of [425, 465, 535, 575]) circ(c, x, 218 - 102 * (1 - Math.abs(x - 500) / 128), 4.5, SEA_SNOW);
+    line(c, [306, 294, 342, 294], SEA_SNOW, 5); line(c, [604, 294, 696, 294], SEA_SNOW, 5);   // the rails, short of the deck's jars and the posts
+    for (const [x1, y1, x2, y2, u] of SEA_BRANCH) for (const [a, b] of [[u, .46], [.64, .86]]) line(c, [lerp(x1, x2, a), lerp(y1, y2, a) - 14, lerp(x1, x2, b), lerp(y1, y2, b) - 14], SEA_SNOW, 7);
+    // a cap on each leaf ball; the right crown's starts higher, above the flag, and the left one beside the telescope
+    for (const [x, y, r] of SEA_BALL) seaCap(c, x + r * .1, y - r * .45, r * .58, r * .16, x === 680 ? -2.1 : rooms >= 3 && x === 330 ? -2.15 : -2.45, -.69);
+    if (rooms >= 2) line(c, [295, 453, 380, 417, 465, 453], SEA_SNOW, 10);   // the kitchen roof
+    if (rooms >= 3) { seaCap(c, 320, 152, 42, 8, -1.3, -.4); seaCap(c, 320, 152, 42, 8, -2.75, -2.4); }   // the dome, beside its slit and telescope
+    for (let i = 0; i < 12; i += 3) { c.beginPath(); c.ellipse(SEA_DRIFTS[i], 933, SEA_DRIFTS[i + 1], SEA_DRIFTS[i + 2], 0, Math.PI, TAU); c.fillStyle = SEA_SNOW; c.fill(); }
+  } else if (s === 1) {
+    for (const [x, y, r, n] of SEA_BALL) for (let i = 0; i < n; i++) {
+      const bx = x + SEA_DOT[i * 2] * r, by = y + SEA_DOT[i * 2 + 1] * r;
+      if (seaOpen(bx, by, rooms)) seaBloom(c, bx, by, Math.max(5.5, r * .075), i % 3 ? '#ee9fc2' : '#f6cfe0');
+    }
+  } else if (s === 3) {
+    for (let i = 0; i < 9; i++) ell(c, SEA_LEAVES[i], 936 + hash(i + 70) * 9, 9, 4, SEA_AUT[i % 3], hash(i + 80) * TAU);
+    rr(c, 347, 917, 10, 15, 3); c.fillStyle = '#e8dcc0'; c.fill();   // a mushroom by the roots
+    c.beginPath(); c.ellipse(352, 919, 14, 10, 0, Math.PI, TAU); c.fillStyle = '#b8432e'; c.fill();
+    circ(c, 346, 914, 2, '#f4ead6'); circ(c, 356, 912, 1.6, '#f4ead6');
+  }
+}
+
+// ----- Over the whole screen: the season's own drift (spring petals, autumn leaves, a little winter snow) and tonight's
+// weather on top. Every place comes from hash(i), so a frame makes no arrays; at most 60 particles (spring petals and rain), all thin and pale,
+// so the magpies of a raid stay easy to see. With motion reduced: every other particle, standing still. -----
+const SEA_FALL = ['rgba(214,132,52,.75)', 'rgba(222,178,72,.75)', 'rgba(178,82,46,.75)'], SEA_DRIFT = [12, 34, 10, 26, 0, 0, 8, 44];   // autumn's colours; per season: count, fall speed
+function seasonFx(c, t, n = S.night) {
+  const s = seaSeason(), k = nightWeather(n).k, calm = still(), tt = calm ? 0 : t, step = calm ? 2 : 1;
+  const w = V.w + 40, h = V.h + 40, z = Math.max(1, Math.min(V.w, V.h) / 500), gust = k === 'wind' ? 160 : 0;
+  c.save();
+  for (let i = 0, n = SEA_DRIFT[s * 2], fall = SEA_DRIFT[s * 2 + 1]; i < n; i += step) {
+    const sway = Math.sin(tt * (.8 + hash(i + 3) * .6) + i * 2.1);
+    const x = seaWrap(hash(i + 11) * w + tt * (14 + gust) + sway * 22 * z, w) - 20, y = seaWrap(hash(i + 31) * h + tt * fall * (.7 + hash(i + 51) * .6) * z, h) - 20;
+    if (s === 0) circ(c, x, y, (1.2 + hash(i + 71)) * z, 'rgba(236,243,255,.6)');
+    else ell(c, x, y, (s === 1 ? 3 : 4.2) * z, 2 * z, s === 1 ? 'rgba(244,184,212,.7)' : SEA_FALL[i % 3], sway * 1.2 + i);
+  }
+  c.beginPath();
+  if (k === 'rain') {
+    for (let i = 0; i < 26; i += step) { const x = seaWrap(hash(i + 101) * w - tt * 120, w) - 20, y = seaWrap(hash(i + 131) * h + tt * (520 + hash(i + 161) * 160), h) - 20; c.moveTo(x, y); c.lineTo(x - 3.2 * z, y + 16 * z); }
+    c.lineWidth = 1.2 * z; c.strokeStyle = 'rgba(190,214,255,.4)'; c.stroke();
+  } else if (k === 'wind') {
+    for (let i = 0; i < 12; i += step) { const L = (60 + hash(i + 191) * 70) * z, x = seaWrap(hash(i + 201) * (w + L) + tt * (420 + hash(i + 221) * 200), w + L) - L, y = V.h * (.08 + hash(i + 241) * .8) + Math.sin(tt * 2 + i) * 8; c.moveTo(x, y); c.quadraticCurveTo(x + L * .25, y - 8 * z, x + L * .5, y); c.quadraticCurveTo(x + L * .75, y + 8 * z, x + L, y); }
+    c.lineWidth = 1.8 * z; c.strokeStyle = 'rgba(226,236,255,.45)'; c.stroke();
+  } else if (k === 'snow') {
+    for (let i = 0; i < 24; i += step) { const r = (1.8 + hash(i + 261) * 1.6) * z, x = seaWrap(hash(i + 281) * w + tt * 18 + Math.sin(tt * (.6 + hash(i + 301) * .5) + i) * 26 * z, w) - 20, y = seaWrap(hash(i + 321) * h + tt * (52 + hash(i + 341) * 30) * z, h) - 20; c.moveTo(x + r, y); c.arc(x, y, r, 0, TAU); }
+    c.fillStyle = 'rgba(240,246,255,.7)'; c.fill();
+  }
+  c.restore();
+}
+
+// ----- Weather is the Night's own, not the real one: the same Night always brings the same weather. Nights 1 to 3 are clear;
+// from Night 4 on, one Night in each three has weather, the first or the second of the three, so two such Nights never follow
+// each other. In the winter months the rain falls as snow: only the picture changes, not the strength, so a test raid on
+// the last day of February still predicts the raid on the first of March. -----
+const SEA_WX = { clear: { k: 'clear', slow: 0 }, rain: { k: 'rain', slow: .15 }, wind: { k: 'wind', slow: .1 }, snow: { k: 'snow', slow: .15 } };
+for (const k in SEA_WX) Object.freeze(SEA_WX[k]);
+function nightWeather(n) {
+  if (seaForce && has(SEA_WX, seaForce.w)) return SEA_WX[seaForce.w];
+  const b = Math.floor((n - 1) / 3);
+  if (!(b > 0) || (n - 1) % 3 !== (hash(b + .5) < .5 ? 0 : 1)) return SEA_WX.clear;
+  return SEA_WX[hash(b + .25) < .4 ? 'wind' : seaSeason() ? 'rain' : 'snow'];
+}
+function weatherLine(n) { return { rain: 'wx_rain', wind: 'wx_wind', snow: 'wx_snow' }[nightWeather(n).k] || ''; }
 // ---------- The forest and the treehouse headquarters (logical 1000 x 1000 space) ----------
 // Magpie routes to the vault door. Later Nights open more of them.
 const ROUTES = {
@@ -1321,7 +1876,8 @@ function menuTap(x, y, T) {
   const [lx, ly] = toTree(T, x, y), room = roomAt(lx, ly), [mx, my, mr] = moonAt();
   if (room) { roomT[room] = V.t; [null, sfx.whee, sfx.sizzle, sfx.wish][room](); return true; }
   if (Math.hypot(x - mx, y - my) < Math.max(34, mr * 1.5)) { winkT = V.t; sfx.chirp(); ui.querySelectorAll('.toast').forEach(n => n.remove()); toast(moonWord(), 3400); return true; }
-  return giftTap(lx, ly, T);   // the gifts of the Legendary fish answer a tap too
+  // then the things that live at the tree: today's visitor, the friends, the gifts, the additions, the flag
+  return visitTap(lx, ly, T) || palTap(lx, ly, T) || giftTap(lx, ly, T) || growTap(lx, ly, T) || flagTap(lx, ly, T);
 }
 
 // The two rows of far hills: part of the cached sky, and drawn once more in front of the rising sun at first light.
@@ -1399,12 +1955,14 @@ function drawZone(c, type, x, y) {
   c.setLineDash(dash); c.lineWidth = 4; c.strokeStyle = `rgba(${rgb},.85)`; c.beginPath(); c.arc(x, y, r, 0, TAU); c.stroke(); c.setLineDash([]);
 }
 
-// The big tree, the cabin, jars and everything the player has placed. o: { jars, nest, zones, skip (mount index being dragged) }
+// The big tree, the cabin, jars and everything the player has placed. o: { jars, nest, zones, skip (mount index being dragged),
+// rooms, night (the Night whose weather is drawn: a raid's own) }
 function drawTree(c, T, t, o = {}) {
   c.save(); c.translate(T.ox, T.oy); c.scale(T.k, T.k); c.lineCap = c.lineJoin = 'round';
-  c.fillStyle = '#0c1740'; c.fillRect(-3000, 930, 7000, 3000);
-  ell(c, 500, 935, 380, 26, '#13235a');
-  const leaves = (x, y, r) => { circ(c, x, y, r, '#1f5a3c'); circ(c, x - r * .5, y + r * .3, r * .7, '#1a4c33'); circ(c, x + r * .55, y + r * .2, r * .75, '#246a45'); circ(c, x + r * .1, y - r * .45, r * .6, '#2b7a50'); };
+  const LC = seasonLeaf(), GC = seasonGround();   // the tree follows the real seasons (src/47-season.js)
+  c.fillStyle = GC[0]; c.fillRect(-3000, 930, 7000, 3000);
+  ell(c, 500, 935, 380, 26, GC[1]);
+  const leaves = (x, y, r) => { circ(c, x, y, r, LC[1]); circ(c, x - r * .5, y + r * .3, r * .7, LC[0]); circ(c, x + r * .55, y + r * .2, r * .75, LC[2]); circ(c, x + r * .1, y - r * .45, r * .6, LC[3]); };
   leaves(500, 110, 150); leaves(330, 170, 90); leaves(680, 160, 95);
   const rooms = o.rooms === undefined ? rank() : o.rooms;
   if (rooms >= 3) {   // the observatory in the left crown (clear of the moon on a phone): a drum, a dome with a slit, a telescope
@@ -1454,6 +2012,9 @@ function drawTree(c, T, t, o = {}) {
   ell(c, 868, 868, 32, 11, '#6b4a2e');
   for (let i = 0; i < nest; i++) jar(c, 852 + i * 16, 853, 11, t + i, .75);
   line(c, [838, 866, 850, 875, 886, 875, 898, 866], '#8a6a44', 5);
+  // What the treehouse has gained (src/46-life.js), the player's flag (src/59-flag.js) and the season's touch, all under
+  // the things the player has placed, which stay in full view.
+  growTree(c, t, T.k); flagDraw(c, t, T.k); seasonTree(c, t, rooms);
   if (o.zones) for (const it of S.items) if (it.m !== o.skip) drawZone(c, it.t, MOUNTS[it.m][0], MOUNTS[it.m][1]);
   for (const it of S.items) if (it.m !== o.skip) drawItem(c, it.t, MOUNTS[it.m][0], MOUNTS[it.m][1], t, T.k);
   // The rooms' jokes, in front of everything: a friend whizzes down the slide, a pancake flips out of the kitchen pipe.
@@ -1468,6 +2029,7 @@ function drawTree(c, T, t, o = {}) {
     ell(c, 0, 0, 18, 7, '#c98a3a'); ell(c, 0, -2, 16, 5, '#f2c26b'); c.restore();
   }
   c.restore();
+  seasonFx(c, t, o.night);   // petals, leaves, snow, and the rain or wind of tonight (of its own Night for a raid that is over)
 }
 // Drifting fireflies for any scene (screen space).
 function fireflies(c, t, n = 16) {
@@ -1835,8 +2397,9 @@ function askName(then) {
 // Secrets on the menu screens: tap the moon, tap a room, swipe or shake the fireflies; after a quiet while the owl dozes off.
 const dozing = () => V.t - lastTouch > 25;
 function snore(sc) { if (dozing() && V.t > (sc.snoreT || 0)) { sc.snoreT = V.t + 3.6; sfx.snore(); } }
-// After the last story the magpies have joined the Night Watch: one of them stands guard by the ladder, in a cap that is far too big.
-function helper(T, t0) { if (rank() === 3) magpie(ctx, T.ox + 745 * T.k, T.oy + 930 * T.k, Math.max(.42, T.k * .95), t0, { dir: -1, disguise: 4, face: 'joy' }); }
+// Everything that lives at the tree on the menu screens, drawn between the tree and the owl: the gifts of the Legendary
+// fish, the friendly magpies, today's visitor.
+function lifeTree(c, T, t) { giftTree(c, T, t); palsTree(c, T, t); visitTree(c, T, t); }
 scenes.home = {
   sky: true,
   enter() {
@@ -1872,9 +2435,8 @@ scenes.home = {
   },
   draw() {
     const T = treeArea(), t0 = V.t;
-    drawSky(ctx, t0); drawTree(ctx, T, t0); giftTree(ctx, T, t0);
+    drawSky(ctx, t0); drawTree(ctx, T, t0); lifeTree(ctx, T, t0);
     treeOwl(ctx, T, t0, t0 < this.cheer ? 'cheer' : this.zz || dozing() ? 'sleep' : 'idle');
-    helper(T, t0);
     const zx = 500 + Math.sin(t0 * .9) * 330, zy = 230 + Math.sin(t0 * 1.8) * 90;
     zip(ctx, T.ox + zx * T.k, T.oy + zy * T.k, Math.max(.6, T.k * 1.6), t0, Math.cos(t0 * .9) > 0 ? 1 : -1);
     // the big jar by the roots: tap it and it sparkles
@@ -1886,7 +2448,7 @@ scenes.home = {
 
 // ----- Hub: the Night menu -----
 const BRIEF_PICS = [['jar', 'torch'], ['feather', 'jar'], ['cam', 'cam', 'cam'], ['badge:leaf:0', 'lock'], ['torch', 'torch'], ['cam', 'cam', 'cam'], ['star', 'star', 'star'], ['jar', 'beam']];
-const isBoss = n => n % 5 === 0;   // every fifth Night the Baron comes with a plan of his own
+const isBoss = n => n % 5 === 0 && S.saga < 3;   // every fifth Night the Baron comes with a plan of his own, until his story has ended
 const EXTRA_ICON = { flies: 'fliesFly', mail: 'mailBox', code: 'codeNote' };
 scenes.hub = {
   sky: true,
@@ -1894,6 +2456,7 @@ scenes.hub = {
     if (S.promo) return go('badge', { promo: true });   // a ceremony that a reload interrupted still takes place
     if (asleep()) return go('bed');                      // enough Nights for one day: the owl says good night
     if (S.day) return go('dawn');                        // first light comes once between two Nights
+    if (S.boss === S.night && S.saga < 3 && S.night >= 10 * (S.saga + 1)) return go('saga', { ch: S.saga + 1 });   // a chapter of the Baron's story that a reload or the home button cut short
     hud(() => go('home'), `<button class="btn round" id="bBadge" aria-label="${esc(t('badgeTitle'))}">${ic('rank:' + rank(), 34)}</button>`);
     $('#bBadge').onclick = () => { sfx.click(); go('badge', { from: 'hub' }); };
     // Three stations open the raid; from Night 2 a fourth, extra one takes turns (dashed card: a bonus, never needed).
@@ -1907,22 +2470,24 @@ scenes.hub = {
     n.querySelectorAll('.card').forEach(b => b.onclick = () => { sfx.pop(); go(b.dataset.s); });
     $('#bTinker', n).onclick = () => { sfx.pop(); go('tinker'); };
     $('#bRaid', n).onclick = () => { sfx.alarm(); boss ? go('boss', { then: () => go('raid') }) : go('raid'); };
-    // News first (a gift from a Legendary fish of the day), then the Night's briefing.
-    giftNews(() => {
-      if (S.briefed >= S.night) return;
-      const back = S.nest > 0, b = Math.min(S.night, 8);
-      S.briefed = S.night; S.nest = 0; save();
-      owlSay(t('b' + b) + (isBoss(S.night) ? ' ' + t('bBoss') : ''), { title: t('night', { n: S.night }), html: picsHtml(BRIEF_PICS[b - 1].concat(isBoss(S.night) ? ['stk:m6'] : [])),
-        acts: [{ label: t('go'), cls: 'go', icon: 'play', fn: () => { if (back) { toast(t('jarsBack')); sfx.chirp(); } } }] });
-    });
+    // News first (a gift from a Legendary fish, a new friend, an addition to the treehouse), then the day's first words,
+    // then the Night's briefing.
+    giftNews(() => palNews(() => growNews(() => greet(() => this.brief()))));
+  },
+  brief() {
+    if (S.briefed >= S.night) return;
+    const back = S.nest > 0, b = Math.min(S.night, 8), arc = arcBrief(S.night), wx = weatherLine(S.night);   // later Nights bring new tricks; some Nights have weather
+    S.briefed = S.night; S.nest = 0; save();
+    owlSay((arc ? arc.text : t('b' + b)) + (isBoss(S.night) ? ' ' + t('bBoss') : '') + (wx ? ' ' + t(wx) : ''), { title: t('night', { n: S.night }),
+      html: picsHtml((arc ? arc.pics : BRIEF_PICS[b - 1]).concat(isBoss(S.night) ? ['stk:m6'] : [])),
+      acts: [{ label: t('go'), cls: 'go', icon: 'play', fn: () => { if (back) { toast(t('jarsBack')); sfx.chirp(); } } }] });
   },
   update() { snore(this); },
   down(x, y) { menuTap(x, y, treeArea()); },
   draw() {
     const T = treeArea(), t0 = V.t;
-    drawSky(ctx, t0); drawTree(ctx, T, t0); giftTree(ctx, T, t0);
+    drawSky(ctx, t0); drawTree(ctx, T, t0); lifeTree(ctx, T, t0);
     treeOwl(ctx, T, t0, dozing() ? 'sleep' : 'idle');
-    helper(T, t0);
     zip(ctx, T.ox + (500 + Math.sin(t0 * .7) * 300) * T.k, T.oy + (200 + Math.sin(t0 * 1.4) * 60) * T.k, Math.max(.6, T.k * 1.6), t0, Math.cos(t0 * .7) > 0 ? 1 : -1);
     fireflies(ctx, t0, 10);
   },
@@ -1952,9 +2517,8 @@ scenes.dawn = {
     const r = Math.min(V.w, V.h) * .08, sx = V.w * (wide() ? .9 : .15), sy = V.h * (wide() ? .8 - .22 * k : .27 - .13 * k);
     glow(ctx, sx, sy, r * 3.4, '255,238,180', .6 * k); circ(ctx, sx, sy, r, '#fff4cf');
     farHills(ctx, V.w, V.h);
-    drawTree(ctx, T, t0); giftTree(ctx, T, t0);
+    drawTree(ctx, T, t0); lifeTree(ctx, T, t0);
     treeOwl(ctx, T, t0, 'cheer');
-    helper(T, t0);
   },
 };
 // The browser's Back button brings this page back as it was left: on the morning screen, with its question already answered.
@@ -1978,20 +2542,63 @@ function giftNews(then) {
   } }] }).classList.add('clear');
 }
 
+// ----- The day's first words: what happened last time, or the birthday. After a good day's fishing there is fish for
+// supper, and with it an owl's eye for tonight's Gate Check. -----
+function remember(k) { S.mem = { d: today(), k }; }
+const dayNo = s => { const [y, m, d] = String(s).split('-').map(Number); return Math.round(Date.UTC(y || 1970, (m || 1) - 1, d || 1) / 864e5); };
+const isBirthday = () => !!S.bday && (today(), S.bday === todayMD);
+// What the day's fishing brought (the fishing game leaves a note in the shared storage): a memory, and from three fish on, supper.
+function supper() {
+  try {
+    const r = JSON.parse(localStorage.getItem('firstlight.day' + (slot ? '.' + (slot + 1) : '')) || 'null');
+    if (!r || !(r.n > 0) || !Number.isSafeInteger(r.id) || r.id < 0 || String(r.id) === S.sup) return false;   // the id is the time the day's fishing began
+    S.sup = String(r.id); remember('fish');
+    if (r.n < 3) return false;
+    S.eye = 1;
+    return true;
+  } catch (e) { return false; }
+}
+function greet(then) {
+  const d = today(), y = +d.split('-')[0], parts = [], fish = supper();
+  const party = isBirthday() && S.bdayY !== y;   // once a year: the party hat for the wardrobe and a few moonbeams, also when the date was set later that day
+  if (party) { S.bdayY = y; S.own.party = 1; S.beams += 30; parts.push(t('bday1'), t('bday2')); }
+  if (S.memD !== d) {
+    const away = S.memD ? dayNo(d) - dayNo(S.memD) : 0;   // days since the last visit to the Night menu
+    S.memD = d;
+    if (!party && away >= 7) parts.push(t('mem_away'));
+    else if (!party && S.mem.k && !fish && L['mem_' + S.mem.k]) parts.push(t('mem_' + S.mem.k));
+  }
+  if (fish) parts.push(t('eye1'));
+  save();
+  if (!parts.length) return then();
+  if (party) { music.mood('party'); sfx.fanfare(); burst(V.w / 2, V.h * .35, 50, { colors: ['#ffd86b', '#ff9ecb', '#7fd0ff', '#6fdc95'], speed: 340, kind: 'star', size: 9, life: 1.5 }); refreshHud(); }
+  owlSay(parts.join(' '), { mood: 'cheer', quiet: party,
+    html: party ? `<div class="pics">${ic('wear:party', 56)}<span class="pill pop">${ic('beam', 22)}<b>+30</b></span></div>` : fish ? picsHtml(['fish', 'fish', 'fish']) : '',
+    acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: then }] });
+}
+
 // ----- Bedtime: after so many Nights in one real day the owl says good night until tomorrow. A grown-up sets how many
 // (in the players panel; 0 switches it off) and can allow one more Night. The watch's day turns at four in the morning. -----
-const today = () => { const d = new Date(Date.now() - 144e5); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+// The watch's day ('Y-M-D') and its month and day ('M-D'). Drawing asks for them in every frame (the birthday, today's
+// visitor), so they are worked out once a second.
+let todayAt = -1, todayS = '', todayMD = '';
+const today = () => {
+  const s = Math.floor(Date.now() / 1e3);
+  if (s !== todayAt) { const d = new Date(Date.now() - 144e5); todayAt = s; todayMD = (d.getMonth() + 1) + '-' + d.getDate(); todayS = d.getFullYear() + '-' + todayMD; }
+  return todayS;
+};
 const asleep = () => S.bedN > 0 && S.bed.d === today() && S.bed.n >= S.bedN + S.bed.more;
 scenes.bed = {
   enter() {
+    remember('bed'); save();   // tomorrow's first words praise the rested watcher
     owlSay(t('bed1'), { title: t('bedT'), acts: [
       { label: t('bedMore'), icon: 'lock', fn: () => askGrownUp(() => { S.bed.more++; save(); go('hub'); }, () => go('bed')) },
       { label: t('bedOk'), cls: 'go', icon: 'moon', fn: () => go('home') }] });
   },
   draw() {
     const T = treeArea(), t0 = V.t;
-    drawSky(ctx, t0); drawTree(ctx, T, t0); giftTree(ctx, T, t0);
-    treeOwl(ctx, T, t0, 'sleep'); helper(T, t0);
+    drawSky(ctx, t0); drawTree(ctx, T, t0); lifeTree(ctx, T, t0);
+    treeOwl(ctx, T, t0, 'sleep');
     ctx.fillStyle = 'rgba(4,8,28,.4)'; ctx.fillRect(0, 0, V.w, V.h);   // the lights are low
     fireflies(ctx, t0, 5);
   },
@@ -1999,11 +2606,14 @@ scenes.bed = {
 
 // The Night ends after the raid: stars, moonbeams, maybe a promotion, then the Tinker Treehouse, then first light.
 // closeNight() counts and saves it the moment the raid is over; the owl's word about it may come later (after a replay).
-function closeNight(stolen) {
+function closeNight(stolen, laughed = 0) {
   const stars = stolen === 0 ? 3 : stolen === 1 ? 2 : 1, old = rank();
   S.stars += stars; S.beams += 15 + stars * 10; S.nest = stolen; S.night++; S.st = { cam: 0, gate: 0, forge: 0, extra: 0 };
   S.promo = rank() > old;   // kept in the save, so closing the page here cannot skip the ceremony
   S.day = 1;                // nor the day that follows the Night
+  if (stolen === 0) S.lit++;   // a Night without a lost jar lights one lantern on the Watchwood map of the fishing game
+  // (once his museum is open the Baron is no grumbler any more: that Night is remembered for itself)
+  remember(S.boss === S.night - 1 && S.saga < 3 ? 'boss' : S.promo ? 'promo' : laughed ? 'laugh' : stolen === 0 ? 'perfect' : stolen >= 3 ? 'hard' : 'lost');
   if (S.bed.d !== today()) S.bed = { d: today(), n: 0, more: 0 };
   S.bed.n++;                // Nights finished today, for bedtime
   save();
@@ -2011,8 +2621,9 @@ function closeNight(stolen) {
 }
 function finishNight(stolen, stars = closeNight(stolen)) {
   stolen ? sfx.hoot() : sfx.win();
-  owlSay(stolen ? t('raid1') + ' ' + t('raid2') : t('raid0'), { title: t('night', { n: S.night - 1 }), stars, mood: stolen ? 'idle' : 'cheer', quiet: true,
-    html: `<div class="pics"><span class="pill pop">${ic('beam', 22)}<b>+${15 + stars * 10}</b></span></div>`,
+  // the first lantern comes with a word about what it is for
+  owlSay(stolen ? t('raid1') + ' ' + t('raid2') : t('raid0') + (S.lit === 1 ? ' ' + t('lit1') : ''), { title: t('night', { n: S.night - 1 }), stars, mood: stolen ? 'idle' : 'cheer', quiet: true,
+    html: `<div class="pics"><span class="pill pop">${ic('beam', 22)}<b>+${15 + stars * 10}</b></span>${stolen ? '' : `<span class="pill pop">${ic('lamp', 22)}${esc(t('litNew'))}</span>`}</div>`,
     acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => S.promo ? go('badge', { promo: true }) : go('tinker') }] });
 }
 
@@ -2023,6 +2634,7 @@ scenes.badge = {
     this.o = o; this.t0 = V.t; this.panel = null;
     const r = rank(), party = this.party = r === 3;   // a Chief always gets the forest-wide celebration
     if (o.promo && !o.told) return go('story', { rank: r, then: () => go('badge', { promo: true, told: true }) });
+    if (party || o.promo) music.mood('party');   // a promotion, or the Chief's forest-wide celebration
     if (o.promo) { sfx.fanfare(); later(() => speak(t('promo', { r: t('rank' + r) }) + (party ? ' ' + t('finaleSay') : '')), 1300); }
     const n = add(`<div class="bar badgebar"><div class="dlg" style="width:min(26em,100%)">
       <h2>${esc(o.promo ? t('promo', { r: t('rank' + r) }) : t('badgeTitle'))}</h2>
@@ -2123,9 +2735,11 @@ scenes.album = {
     this.page = o.page === undefined ? Math.max(0, STK_SETS.findIndex(set => set.some(id => S.stk[id] === 1))) : o.page;   // open where something is new
     const have = STK_SETS.flat().filter(id => S.stk[id]).length, set = STK_SETS[this.page];
     const bar = add(`<div class="hud"><button class="btn round" id="aBack" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
-      <span class="pill">${ic('album', 24)}<span class="extra">${esc(t('album'))}</span></span><span class="sp"></span>
+      <span class="pill">${ic('album', 24)}<span class="extra">${esc(t('album'))}</span></span>
+      <button class="btn round" id="aPals" aria-label="${esc(t('palsT'))}">${ic('pals', 30)}</button><span class="sp"></span>
       <span class="pill">${ic('star', 22)}<span><b>${have}</b>/${STK_SETS.flat().length}</span></span></div>`);
     $('#aBack', bar).onclick = () => { sfx.click(); go(this.from); };
+    $('#aPals', bar).onclick = () => { sfx.pop(); go('pals', { from: 'album' }); };   // the friendly magpies have a page of their own
     // Portrait: three stickers in a row; landscape: six. The pictures take the room that is left.
     const cols = wide() ? 6 : 3, rows = Math.ceil(set.length / cols);
     const px = clamp(Math.min((Math.min(V.w, 720) - 16) / cols - 22, (V.h - 150) / rows - 46), 40, 110) | 0;
@@ -2158,9 +2772,11 @@ scenes.wear = {
     this.from = o.from || this.from || 'home'; this.who = o.who || this.who || 'owl'; this.sel = '';
     tryOn = null;
     const bar = add(`<div class="hud"><button class="btn round" id="wBack" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
-      <span class="pill">${ic('hanger', 24)}<span class="extra">${esc(t('wardrobe'))}</span></span><span class="sp"></span>
+      <span class="pill">${ic('hanger', 24)}<span class="extra">${esc(t('wardrobe'))}</span></span>
+      <button class="btn round" id="wFlag" aria-label="${esc(t('flagT'))}">${ic('flagI', 30)}</button><span class="sp"></span>
       <span class="pill" id="pBeams">${ic('beam', 22)}<b>${S.beams}</b></span></div>`);
     $('#wBack', bar).onclick = () => { sfx.click(); go(this.from); };
+    $('#wFlag', bar).onclick = () => { sfx.pop(); go('flag', { from: 'wear' }); };   // the treehouse wears something too: its flag
     this.panel = add(`<div class="side wearbar"><div class="row"><div class="langs" role="group">
       <button class="btn" data-w="owl" aria-label="${esc(t('k_owl'))}">${ic('owlI', 40)}</button><button class="btn" data-w="zip" aria-label="${esc(t('k_zip'))}">${ic('zipI', 40)}</button></div>
       <button class="btn gold" id="wBuy" disabled>${ic('beam', 24)}<b></b><span>${esc(t('buy'))}</span></button></div>
@@ -2226,6 +2842,221 @@ scenes.wear = {
     zip(ctx, zx, zy, s * 1.5, t0, -1);
     fireflies(ctx, t0, 8);
   },
+};
+// ---------- Friends: magpies that were caught kindly often enough give up stealing, get a name and a job, and help ----------
+// Called by the other files:
+//   pieCaught(n = 1)       a magpie was caught or sent home kindly (Camera Watch, Gate Check, a raid): counts in S.caught
+//   palNews(then)          the owl tells of a new friend once (S.pals[id] = 1), then calls then()
+//   palPerk()              what the chosen helper does in tonight's raid: '' | 'guard' | 'baker' | 'lamp' | 'post' |
+//                          'garden' | 'music' (the raid applies it, see src/90-tinker.js)
+//   palPill()              HTML of a small pill that names the helper and the help, for the Tinker Treehouse ('' if none)
+//   palsTree(c, T, t)      from the menu scenes, after the tree and before the owl: the helper on the ground by the
+//                          ladder and other friends on their perches
+//   palTap(lx, ly, T)      from menuTap, tree units: true when a friend answered the tap
+//   scenes.pals            the Friends page: go('pals', { from }) (opened from the album)
+
+// The six friends in the order they come, and the number of kind catches that brings each one. A friend's id is also the
+// name of its help in a raid (palPerk). Baron von Shiny is no friend of this kind: once his story has ended he has a card.
+const PALS = ['guard', 'baker', 'lamp', 'post', 'garden', 'music'], PAL_AT = [25, 60, 110, 170, 240, 320];
+// What each friend wears or carries, drawn over magpie() in its units (facing right, feet at 0, 0, head at 20, -52), and the
+// box the whole friend takes up there [left, top, right, bottom]: a placed item it overlaps is drawn again in front of it.
+// Each job has its own shape: a cap far too big, a tall white hat, a lantern on a pole, a satchel, a straw hat, a drum.
+const PAL = {
+  guard: { box: [-64, -82, 54, 0] },   // the cap is magpie()'s own disguise 4: the guard stood by the ladder before it had a name
+  baker: { box: [-64, -91, 50, 0], gear(c) {
+    c.save(); c.translate(10, -20); c.rotate(-.4);   // a rolling pin across the white chest
+    line(c, [-17, 0, 17, 0], '#7a4a22', 2.4); rr(c, -11, -3.5, 22, 7, 3.5); c.fillStyle = '#d9965a'; c.fill(); c.lineWidth = 1; c.strokeStyle = '#6b3d18'; c.stroke();
+    c.restore();
+    wearOn(c, 'chef', 20, -62, 12, .12);   // the wardrobe's chef's hat
+  } },
+  lamp: { box: [-64, -106, 50, 0], gear(c, t, calm) {
+    const f = calm ? 1 : 1 + .08 * Math.sin(t * 9) + .05 * Math.sin(t * 13.7);   // the flame flickers a little
+    glow(c, -3, -86, 24 * f, '255,216,107', .5);
+    line(c, [0, -24, -15, -99], '#8a5a34', 3);   // the pole, held under the wing
+    line(c, [-15, -99, -10, -104, -3, -102, -3, -97], '#4a2f1a', 1.8);
+    poly(c, [-8, -98, 2, -98, 5, -94, -11, -94], '#3d3b4c');
+    rr(c, -10.5, -94, 15, 15, 3); c.fillStyle = '#ffe9a3'; c.fill(); c.lineWidth = 1.4; c.strokeStyle = '#4a2f1a'; c.stroke();
+    ell(c, -3, -86.5, 2.6 * f, 4.4 * f, '#ff9a3a');
+    rr(c, -11.5, -79.5, 17, 3, 1); c.fillStyle = '#3d3b4c'; c.fill();
+  } },
+  post: { box: [-64, -68, 50, 0], gear(c) {
+    line(c, [16, -43, -8, -21], '#6b3d18', 2.4);   // the strap over the chest
+    c.save(); c.translate(-12, -18); c.rotate(.15);
+    rr(c, -7, -17, 15, 10, 1); c.fillStyle = '#fff'; c.fill(); line(c, [-7, -17, .5, -11.5, 8, -17], '#9aa6c2', 1.1); circ(c, 5, -14, 1.6, '#e8503a');   // a letter peeks out
+    rr(c, -11, -8, 22, 16, 4); c.fillStyle = '#c8813a'; c.fill(); c.lineWidth = 1.2; c.strokeStyle = '#fff3dc'; c.stroke();
+    rr(c, -11, -8, 22, 7, 3); c.fillStyle = '#9a5a26'; c.fill(); circ(c, 0, -2, 1.9, '#ffd24a');   // the flap and its buckle
+    c.restore();
+  } },
+  garden: { box: [-64, -79, 50, 0], gear(c) {
+    c.save(); c.translate(-40, 0);   // an orange watering can stands by the tail: it shows on bark and on grass
+    line(c, [-6, -9, -15, -19], '#e0791f', 3); ell(c, -16, -20, 3.4, 2, '#e0791f', -.7);
+    rr(c, -8, -13, 16, 13, 3); c.fillStyle = '#ff9a3a'; c.fill(); c.lineWidth = 1.2; c.strokeStyle = '#ffe2b0'; c.stroke();
+    c.beginPath(); c.arc(1, -13, 5, Math.PI, 0); c.lineWidth = 2; c.strokeStyle = '#e0791f'; c.stroke();
+    c.restore();
+    c.save(); c.translate(19, -66); c.rotate(.12);   // a straw hat much wider than the head, with a ribbon and a flower
+    ell(c, 0, 1, 23, 5, '#e9c05a'); c.lineWidth = 1; c.strokeStyle = '#a07a1a'; c.stroke();
+    c.beginPath(); c.arc(0, 0, 11, Math.PI, 0); c.closePath(); c.fillStyle = '#f5d77a'; c.fill();
+    rr(c, -11, -4, 22, 4, 1); c.fillStyle = '#58a84f'; c.fill(); circ(c, 6, -6, 2.8, '#ff9ecb'); circ(c, 6, -6, 1.1, '#fff');
+    c.restore();
+  } },
+  music: { box: [-64, -101, 55, 0], gear(c, t, calm) {
+    const hit = calm ? 0 : Math.max(0, Math.sin(t * 6)) * .45;   // now and then the stick taps the drum
+    line(c, [15, -42, 9, -28], '#2a1d12', 1.6);
+    rr(c, 4, -28, 22, 13, 3); c.fillStyle = '#e8503a'; c.fill(); c.lineWidth = 1.2; c.strokeStyle = '#fff3dc'; c.stroke();
+    line(c, [5, -24, 10, -18, 15, -24, 20, -18, 25, -24], '#ffd24a', 1.3); ell(c, 15, -28, 11, 3, '#fff3dc');
+    c.save(); c.translate(-3, -36); c.rotate(.28 - hit); line(c, [0, 0, 17, 1], '#c8813a', 2); circ(c, 17, 1, 1.8, '#fff3dc'); c.restore();
+    if (!calm) for (let i = 0; i < 2; i++) {   // and a note floats up
+      const q = (t * .4 + i * .5) % 1;
+      if (q > .6) continue;
+      const x = 36 + i * 6 + q * 8, y = -70 - q * 30;
+      c.globalAlpha = Math.sin(Math.PI * q / .6); ell(c, x, y, 3, 2.2, '#fff6da', -.4); line(c, [x + 2.6, y - 1, x + 2.6, y - 12, x + 6, y - 9], '#fff6da', 1.3); c.globalAlpha = 1;
+    }
+  } },
+};
+const palT = {};   // when each friend was last tapped
+function pieCaught(n = 1) { S.caught = (S.caught | 0) + n; }
+// A friend counts once the owl has introduced it. The save may hold anything, so ids are looked up in the table first.
+const palMet = id => has(PAL, id) && !!S.pals && S.pals[id] === 1;
+const palHelper = () => typeof S.helper === 'string' && palMet(S.helper) ? S.helper : '';
+// The friend whose turn has come. At the top rank the story has already told that the magpies joined the watch, so the
+// first friend comes at once there.
+function palDue() {
+  if (rank() === 3 && !PALS.some(palMet)) return PALS[0];
+  return PALS.find((id, i) => !palMet(id) && (S.caught | 0) >= PAL_AT[i]) || '';
+}
+function palNews(then) {
+  const id = palDue();
+  if (!id) return then();
+  if (!S.pals || typeof S.pals !== 'object' || Array.isArray(S.pals)) S.pals = {};
+  S.pals[id] = 1;
+  if (!palHelper()) S.helper = id;   // the first friend helps at once
+  save();
+  // The veil is almost clear and the friend is already at the tree; after OK a sparkle shows where, then the next news.
+  owlSay(t('pal_hi_' + id) + ' ' + t('pal_do_' + id), { title: t('pal_n_' + id), mood: 'cheer', html: `<div class="pics">${ic('pal:' + id, 64)}</div>`, acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => {
+    const p = palAt(id, treeArea());
+    if (p) { sfx.sparkle(); burst(p[0], p[1], 26, { speed: 200, size: 9, kind: 'star', colors: ['#ffd86b', '#fff6da', '#9fe8ff'] }); }
+    later(() => palNews(then), 1400);
+  } }] }).classList.add('clear');
+}
+function palPerk() { return palHelper(); }
+function palPill() {
+  const id = palHelper();
+  // the pill says who helps and how; where a bar is narrow only the picture stays (.tbar in the stylesheet), so the words are its label too
+  return id ? `<span class="pill helper" role="img" aria-label="${esc(t('pal_n_' + id) + ': ' + t('pal_p_' + id))}">${ic('pal:' + id, 30)}<span>${esc(t('pal_p_' + id))}</span></span>` : '';
+}
+
+// One friend with its feet at (x, y); s scales as for magpie(), dir -1 faces left; calm: no flicker, no floating notes.
+function palDraw(c, id, x, y, s, t, dir = 1, face = 'kind', calm = true) {
+  const P = has(PAL, id) ? PAL[id] : null;
+  magpie(c, x, y, s, t, { dir, face, disguise: id === 'guard' ? 4 : 0, baron: id === 'baron' ? 1 : 0 });
+  if (!P || !P.gear) return;
+  c.save(); c.translate(x, y); c.scale(s * dir, s); c.lineCap = c.lineJoin = 'round'; P.gear(c, t, calm); c.restore();
+}
+ICON.pal = (c, id) => palDraw(c, id, .1, .82, .0155, 0);   // a friend's portrait; 'baron' is Baron von Shiny
+const palHeart = (c, x, y, r) => { c.beginPath(); c.moveTo(x, y + r); c.bezierCurveTo(x - r * 1.5, y - r * .1, x - r * .8, y - r * 1.3, x, y - r * .45); c.bezierCurveTo(x + r * .8, y - r * 1.3, x + r * 1.5, y - r * .1, x, y + r); c.fillStyle = '#ff6b8a'; c.fill(); };
+ICON.pals = c => { magpie(c, 0, .86, .016, 0, { face: 'joy' }); palHeart(c, .56, -.56, .34); };
+
+// Where the friends live on the menu screens, in tree units [id, feet x, feet y, facing]: the helper on the ground by the
+// ladder, the others on these seats in order, each in a gap between item spots: three branches, the roof (not on a low wide
+// screen, where the Night menu's top bar covers it), the kitchen's roof (once there is a kitchen), and last the lower left
+// branch, where the slide takes the taps along its middle and the one place left is item spot 6.
+const PAL_SEATS = [[205, 353, 1], [790, 328, -1], [780, 645, -1], [455, 146, -1], [432, 440, 1], [160, 607, 1]];
+function palPlaces() {
+  const h = palHelper(), out = h ? [[h, 745, 930, -1]] : [], low = wide() && V.h <= 520;
+  const seats = PAL_SEATS.filter((s, i) => !(i === 3 && low) && !(i === 4 && rank() < 2));
+  let i = 0;
+  for (const id of PALS) if (id !== h && palMet(id) && i < seats.length) out.push([id, ...seats[i++]]);
+  return out;
+}
+// The middle of a friend on the screen (for the sparkle of its news).
+function palAt(id, T) {
+  const p = palPlaces().find(q => q[0] === id), u = Math.max(.42, T.k * .95) / T.k;
+  return p ? [T.ox + (p[1] - 7 * p[3] * u) * T.k, T.oy + (p[2] - 34 * u) * T.k] : null;
+}
+function palsTree(c, T, t) {
+  const at = palPlaces();
+  if (!at.length) return;
+  const k = T.k, s = Math.max(.42, k * .95), u = s / k, calm = still(), night = scene === scenes.bed || scene === scenes.dawn, box = [];
+  at.forEach(([id, x, y, dir], i) => {
+    // A tapped friend hops twice and laughs; now and then one hops a little and blinks. Not with motion reduced (a tapped
+    // friend only laughs then), and not at bedtime or first light, when the magpies sleep.
+    const d = t - (palT[id] || -9), q = (t * .45 + i * .29) % 1, rest = calm || night;
+    const hop = rest ? 0 : d < .6 ? Math.abs(Math.sin(d / .3 * Math.PI)) * 12 : q < .1 ? Math.sin(q * 10 * Math.PI) * 3 : 0;
+    const face = night ? 'sleep' : d < 1.2 ? 'joy' : !calm && (t * .8 + i * .61) % 4.4 < .14 ? 'sleep' : 'kind';
+    palDraw(c, id, T.ox + x * k, T.oy + y * k - hop * s, s, t, dir, face, rest);
+    const b = PAL[id].box;
+    box.push([x + (dir > 0 ? b[0] : -b[2]) * u, y + b[1] * u, x + (dir > 0 ? b[2] : -b[0]) * u, y + 2]);
+  });
+  // Placed items stay in full view: one that a friend overlaps is drawn once more, in front of it (the box as in drawItem).
+  let on = false;
+  for (const it of Array.isArray(S.items) ? S.items : []) {
+    const m = it && Array.isArray(MOUNTS[it.m]) ? MOUNTS[it.m] : null;
+    if (!m || it.m === VAULT || !has(ITEMS, it.t)) continue;
+    const big = Math.max(ITEMS[it.t].deco ? 62 : 50, 22 / k), x0 = m[0] - big / 2, x1 = m[0] + big / 2, y0 = m[1] - big * .92, y1 = m[1] + big * .08;
+    if (!box.some(b => b[0] < x1 && b[2] > x0 && b[1] < y1 && b[3] > y0)) continue;
+    if (!on) { c.save(); c.translate(T.ox, T.oy); c.scale(k, k); c.lineCap = c.lineJoin = 'round'; on = true; }
+    drawItem(c, it.t, m[0], m[1], t, k);
+  }
+  if (on) c.restore();
+}
+function palTap(lx, ly, T) {
+  const k = T.k, u = Math.max(.42, k * .95) / k;
+  let id = '', best = Math.max(45, 26 / k);
+  for (const [f, x, y, dir] of palPlaces()) { const d = Math.hypot(lx - x + 7 * dir * u, ly - y + 34 * u); if (d < best) { best = d; id = f; } }
+  if (!id) return false;
+  // the heron and the pond are right beside the helper: a gift nearer to the tap keeps it
+  const g = giftOn() || {}, sx = T.ox + lx * k, sy = T.oy + ly * k;
+  if (GIFTS.some(gid => g[gid] === 1 && (p => Math.hypot(p[0] - sx, p[1] - sy) < best * k)(giftAt(gid, T)))) return false;
+  palT[id] = V.t;
+  speak(t('pal_n_' + id), 'pie');   // magpie chatter
+  ui.querySelectorAll('.toast').forEach(n => n.remove());
+  toast(t('pal_n_' + id) + ' · ' + t('pal_j_' + id), 2200);
+  return true;
+}
+
+// ----- The Friends page: everyone met so far, and who helps in the raids. A friend not met yet is a dashed question mark. -----
+scenes.pals = {
+  enter(o = {}) {
+    this.from = has(scenes, o.from) && o.from !== 'pals' ? o.from : 'home';
+    // the number shown is the one that brings the next friend not met yet (at the top rank the guard came without any)
+    const n = S.caught | 0, next = PAL_AT.find((v, i) => !palMet(PALS[i])), back = this.from === 'album' ? 'album' : 'home';
+    // the top bar: back where the page came from, the title, and the kind catches so far with the number for the next friend
+    const bar = add(`<div class="hud"><button class="btn round" id="palBack" aria-label="${esc(t(back))}">${ic(back, 28)}</button>
+      <span class="pill">${ic('pals', 24)}<span class="extra">${esc(t('palsT'))}</span></span><span class="sp"></span>
+      <span class="pill" role="img" aria-label="${esc(next ? t('pal_count', { n, m: next }) : t('pal_countAll', { n }))}">${ic('pie', 26)}<b>${n}</b>${next ? `<span>/ ${next}</span>` : ''}</span></div>`);
+    $('#palBack', bar).onclick = () => { sfx.click(); go(this.from); };
+    // Upright three cards in a row (two on a very narrow screen), sideways six; the pictures take the room that is left.
+    const ids = PALS.concat((S.saga | 0) >= 3 ? ['baron'] : []);
+    const cols = wide() ? (V.w >= 480 ? 6 : 3) : V.w >= 330 ? 3 : 2, rows = Math.ceil(ids.length / cols);
+    const u = parseFloat(getComputedStyle(ui).fontSize) || 16, f = Math.max(11, u * .7), gap = u * .4;
+    const px = clamp(Math.min((Math.min(45 * u, V.w - u) - (cols - 1) * gap) / cols - 18, (V.h - 4.5 * u - (rows - 1) * gap) / rows - 2.6 * f - 18), 36, 120) | 0;
+    const w = `flex:0 0 calc(${(100 / cols).toFixed(3)}% - ${(gap * (cols - 1) / cols + .5).toFixed(1)}px)`;   // half a pixel to spare: rounding must not push a card to the next row
+    const card = id => id === 'baron' ? `<button class="stk" data-pal="baron" style="${w}">${ic('pal:baron', px)}<b>${esc(t('k_m6'))}</b><span>${esc(t('pal_baron'))}</span></button>`
+      : palMet(id) ? `<button class="stk" data-pal="${id}" aria-pressed="false" style="${w}">${ic('pal:' + id, px)}<b>${esc(t('pal_n_' + id))}</b><span>${esc(t('pal_j_' + id))}</span><span data-tick style="position:absolute;top:4px;right:4px;display:none">${ic('pieTick', 24)}</span></button>`
+      : `<button class="stk none" data-pal="" aria-label="${esc(t('pal_unmet'))}" style="${w}">${ic('stk0', px)}<span>?</span></button>`;
+    const box = add(`<div class="album"><div style="display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:${gap}px;width:min(45em,100%);flex:1;min-height:0">${ids.map(card).join('')}</div></div>`);
+    box.querySelectorAll('[data-pal]').forEach(b => b.onclick = () => this.tap(b));
+    this.mark();
+  },
+  // A friend's card makes it the helper: it chatters, and the owl tells what it does in a raid. The Baron only chats.
+  tap(b) {
+    const id = b.dataset.pal;
+    if (!id) { sfx.empty(); return nudge(b); }
+    b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+    speak(t(id === 'baron' ? 'k_m6' : 'pal_n_' + id), 'pie');
+    if (id !== 'baron') { S.helper = id; save(); this.mark(); }
+    later(() => { ui.querySelectorAll('.toast').forEach(n => n.remove()); toast(t(id === 'baron' ? 'pal_baronSay' : 'pal_do_' + id), 3800); }, 350);   // one line at a time, however fast the taps
+  },
+  // The helper's card: pressed, a white rim with a gold ring, and a tick in its corner.
+  mark() {
+    const h = palHelper();
+    for (const b of ui.querySelectorAll('[data-pal]')) {
+      const tick = $('[data-tick]', b), on = b.dataset.pal === h;
+      if (!tick) continue;   // the Baron and the friends not met yet never help
+      b.setAttribute('aria-pressed', on); b.style.borderColor = on ? '#fff' : ''; b.style.boxShadow = on ? '0 0 0 3px var(--gold)' : ''; tick.style.display = on ? 'block' : 'none';
+    }
+  },
+  draw() { drawSky(ctx, V.t); fireflies(ctx, V.t, 10); },
 };
 // ---------- The badge certificate (to save or print) and the players who share this device ----------
 // The certificate is painted on its own canvas, 1400 x 990 (the shape of a sheet of paper on its side), on light paper so it prints well.
@@ -2302,11 +3133,23 @@ function showPlayers() {
       <button class="btn round" data-del="${i}" aria-label="${esc(t('erase'))}: ${esc(d.name || t('nameDef'))}">${ic('bin', 24)}</button></div>`
       : `<div class="who"><button class="btn" data-new="${i}">${ic('plus', 24)}<span>${esc(t('newPlayer'))}</span></button></div>`;
   }).join('');
+  const [bm, bd] = S.bday.split('-');
   const v = modal(`<h2>${esc(t('players'))}</h2><div class="whos">${rows}</div><div class="acts"><button class="btn" id="wBed">${ic('moon', 24)}${esc(t('bedSet'))}: ${S.bedN || esc(t('bedOff'))}</button>
+    <button class="btn" id="wBday">${ic('wear:party', 24)}${esc(t('bdaySet'))}: ${S.bday ? bd + '.' + bm : '?'}</button>
     <button class="btn go" id="wOk">${ic('yes', 26)}${esc(t('ok'))}</button></div>`, t('players'));
   // Bedtime: the sum first, then after how many Nights a day the owl says good night (off, or one to five).
   $('#wBed', v).onclick = () => { sfx.click(); askGrownUp(() => owlSay(t('bedAsk'), { quiet: true, mood: 'idle',
     acts: [0, 1, 2, 3, 4, 5].map(n => ({ label: n ? String(n) : t('bedOff'), cls: n === S.bedN ? 'go' : '', fn: () => { S.bedN = n; save(); showPlayers(); } })) })); };
+  // The birthday of this player: the sum first, then the day and the month (no year). On that day the owl keeps it.
+  $('#wBday', v).onclick = () => { sfx.click(); askGrownUp(() => {
+    const opts = (n, sel) => `<option value="0">?</option>` + [...Array(n).keys()].map(i => `<option value="${i + 1}"${i + 1 === +sel ? ' selected' : ''}>${i + 1}</option>`).join('');
+    const w = modal(`<h2>${esc(t('bdaySet'))}</h2><div class="pics bday"><label>${esc(t('bdayDay'))} <select id="bdD">${opts(31, bd)}</select></label>
+      <label>${esc(t('bdayMon'))} <select id="bdM">${opts(12, bm)}</select></label></div>
+      <div class="acts"><button class="btn go" id="bdOk">${ic('yes', 26)}${esc(t('ok'))}</button></div>`, t('bdaySet'));
+    // a day the month does not have becomes its last day (the 31st of a short month would never come)
+    $('#bdOk', w).onclick = () => { sfx.click(); const m = +$('#bdM', w).value, d = Math.min(+$('#bdD', w).value, [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1] || 0); S.bday = d && m ? m + '-' + d : ''; save(); showPlayers(); };
+    $('#bdOk', w).focus({ preventScroll: true });
+  }); };
   v.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { sfx.click(); +b.dataset.go === slot ? closeDlg() : playAs(+b.dataset.go); });
   v.querySelectorAll('[data-new]').forEach(b => b.onclick = () => { sfx.pop(); playAs(+b.dataset.new, { lang: S.lang, mute: S.mute, voice: S.voice }); });
   v.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
@@ -2316,7 +3159,7 @@ function showPlayers() {
       // The current player starts afresh in the same language; another player's row becomes free. The player's fishing career goes too.
       try {
         i === slot ? localStorage.setItem(slotKey(i), JSON.stringify({ lang: S.lang, mute: S.mute, voice: S.voice })) : localStorage.removeItem(slotKey(i));
-        localStorage.removeItem('firstlight.v1' + (i ? '.' + (i + 1) : ''));
+        for (const k of ['firstlight.v1', 'firstlight.day']) localStorage.removeItem(k + (i ? '.' + (i + 1) : ''));
       } catch (e) { /* nothing was saved */ }
       i === slot ? location.reload() : showPlayers();
     });
@@ -2324,6 +3167,179 @@ function showPlayers() {
   $('#wOk', v).onclick = () => { sfx.click(); closeDlg(); };
   $('#wOk', v).focus({ preventScroll: true });
 }
+// ---------- The treehouse flag: the player paints it, and it flies beside the roof in every scene with the tree ----------
+// Called by the other files:
+//   flagDraw(c, t, k)      from drawTree, inside the tree's transform (tree units); k is the tree's scale on screen
+//   flagTap(lx, ly, T)     from menuTap, tree units: a tap on the flag opens the painting screen; true when it did
+//   scenes.flag            the painting screen: go('flag', { from })
+// The painting is saved in S.flag (a short string; '' means the Night Watch's own flag).
+
+// A painting is 12 x 8 cells, row by row, one digit per cell: the index of one of eight colours. On the palette every
+// colour carries a mark of its own (moon, star, heart, flower, leaf, drop, diamond, snowflake) and its name for screen
+// readers, so no colour is known by its hue alone.
+const FLAG_C = ['#3048a8', '#ffd24a', '#e8503a', '#ff8fc8', '#4cc46a', '#7fd0ff', '#9b5fd6', '#fdf8ec'];
+const FLAG_MK = [
+  c => { c.beginPath(); SHAPES.moon(c); c.fill(); },
+  c => { starPath(c, 0, .08, .95, .42, 5); c.fill(); },
+  c => { c.beginPath(); c.moveTo(0, .85); c.bezierCurveTo(-1.2, 0, -.6, -1, 0, -.4); c.bezierCurveTo(.6, -1, 1.2, 0, 0, .85); c.fill(); },
+  c => { for (let i = 0; i < 5; i++) circ(c, Math.cos(i * TAU / 5 - Math.PI / 2) * .52, Math.sin(i * TAU / 5 - Math.PI / 2) * .52, .38, c.fillStyle); },
+  c => { c.beginPath(); SHAPES.leaf(c); c.fill(); },
+  c => { c.beginPath(); SHAPES.drop(c); c.fill(); },
+  c => poly(c, [0, -.95, .72, 0, 0, .95, -.72, 0], c.fillStyle),
+  c => { for (let i = 0; i < 3; i++) { const a = i * Math.PI / 3; line(c, [Math.cos(a) * .9, Math.sin(a) * .9, -Math.cos(a) * .9, -Math.sin(a) * .9], c.strokeStyle, .2); } },
+];
+// The Night Watch's own flag: a golden moon and star on night blue, with two little white stars.
+const FLAG_OWN = ['000000000000', '000110001007', '001100011100', '011100111110', '011100011100', '001100010100', '000110000070', '000000000000'].join('');
+// Anything else in the save (damaged, or typed in by hand) flies as the Night Watch's own flag.
+const flagCode = () => typeof S.flag === 'string' && /^[0-7]{96}$/.test(S.flag) ? S.flag : FLAG_OWN;
+// One note per column (pentatonic): a stroke along a row runs up or down a little scale.
+const FLAG_NOTE = [392, 440, 523, 587, 659, 784, 880, 1047, 1175, 1319, 1568, 1760];
+
+// One quad of the cloth, without an array per call (the cloth is drawn in every frame).
+const flagQuad = (c, x0, x1, ya, yb, yc, yd, col) => { c.beginPath(); c.moveTo(x0, ya); c.lineTo(x1, yb); c.lineTo(x1, yc); c.lineTo(x0, yd); c.closePath(); c.fillStyle = col; c.fill(); };
+// The cloth from its corner at the pole (x, y), w x h. Held at the pole and freer towards its end, it waves as one slow sine
+// with light and shade on the folds; it hangs flat when motion is reduced, and in icons.
+function flagCloth(c, x, y, w, h, t, f = flagCode(), flat = still()) {
+  const cw = w / 12, ch = h / 8, amp = flat ? 0 : h * .07, dy = i => amp * i / 12 * Math.sin(t * 3 - i * .8), ga = c.globalAlpha;
+  c.beginPath();
+  for (let i = 0; i <= 12; i++) c.lineTo(x + i * cw, y + dy(i));
+  for (let i = 12; i >= 0; i--) c.lineTo(x + i * cw, y + h + dy(i));
+  c.closePath(); c.lineJoin = 'round'; c.lineWidth = h * .06; c.strokeStyle = 'rgba(8,12,40,.75)'; c.stroke();
+  for (let i = 0; i < 12; i++) {
+    const a = dy(i), b = dy(i + 1), x0 = x + i * cw, x1 = x0 + cw * (i < 11 ? 1.15 : 1);   // a little overlap hides the seams
+    for (let j = 0, e; j < 8; j = e) {   // one quad per run of cells of the same colour down the column
+      for (e = j + 1; e < 8 && f[e * 12 + i] === f[j * 12 + i]; e++);
+      const y0 = y + j * ch, y1 = y + e * ch + (e < 8 ? ch * .15 : 0);
+      flagQuad(c, x0, x1, y0 + a, y0 + b, y1 + b, y1 + a, FLAG_C[f[j * 12 + i]]);
+    }
+    if (amp) { const sh = .22 * Math.cos(t * 3 - (i + .5) * .8) * (i + .5) / 12; c.globalAlpha = ga * Math.abs(sh); flagQuad(c, x0, x0 + cw, y + a, y + b, y + h + b, y + h + a, sh > 0 ? '#000' : '#fff'); c.globalAlpha = ga; }
+  }
+}
+// On the tree: the pole stands on the right roof slope, the flag flies to its right. On a phone it grows (to the right
+// and down, away from the items on the roof's spots) so that the painting can still be seen.
+function flagDraw(c, t, k) {
+  const s = Math.max(1, .5 / k);
+  line(c, [612, 204, 612, 80], '#e8c984', 4 * s); circ(c, 612, 78, 5.5 * s, '#ffd24a');
+  flagCloth(c, 614, 83, 90 * s, 60 * s, t);
+}
+function flagTap(lx, ly, T) {
+  const s = Math.max(1, .5 / T.k), m = 24 / T.k;   // the flag's rectangle, grown to at least 48 CSS px
+  if (Math.abs(lx - 614 - 45 * s) > Math.max(45 * s, m) || Math.abs(ly - 83 - 30 * s) > Math.max(30 * s, m)) return false;
+  sfx.pop(); go('flag', { from: scene.id });
+  return true;
+}
+ICON.flagI = (c, own) => { line(c, [-.8, .95, -.8, -.86], '#e8c984', .12); circ(c, -.8, -.88, .11, '#ffd24a'); flagCloth(c, -.75, -.78, 1.68, 1.12, 0, own ? FLAG_OWN : flagCode(), true); };
+ICON.flagMk = (c, i) => { c.fillStyle = c.strokeStyle = [0, 2, 6].includes(+i) ? '#fff6da' : '#1b2550'; c.scale(.8, .8); FLAG_MK[+i](c); };
+
+// ----- The painting screen: tap or drag across the cells; arrows and Enter or Space for the keyboard, 1 to 8 pick a colour -----
+scenes.flag = {
+  enter(o = {}) {
+    Object.assign(this, { from: o.from || 'home', col: this.col >= 0 ? this.col : 2, drag: false, dirty: false, kb: false, cx: 0, cy: 0 });
+    if (S.flag !== flagCode()) S.flag = '';   // a damaged value counts as no painting yet: the owl's first word comes as well
+    this.bar = add(`<div class="hud"><button class="btn round" id="flagBack" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
+      <span class="pill">${ic('flagI', 24)}<span>${esc(t('flagT'))}</span></span><span class="sp"></span>
+      <button class="btn" id="flagNew">${ic('retry', 24)}<span>${esc(t('flag_new'))}</span></button></div>`);
+    $('#flagBack', this.bar).onclick = () => { sfx.click(); go(this.from); };
+    $('#flagNew', this.bar).onclick = () => { sfx.click(); this.ask(); };
+    this.pal = add(`<div id="flagPal" role="group" aria-label="${esc(t('flag_cols'))}" style="position:absolute;display:grid;gap:6px;pointer-events:auto">${FLAG_C.map((col, i) =>
+      `<button class="pal" data-c="${i}" aria-label="${esc(t('flag_c' + i))}" style="position:relative;min-width:0;min-height:0;max-width:none;padding:0;cursor:pointer;touch-action:manipulation;background:${col}">${ic('flagMk:' + i, 36)}<canvas class="ic" data-i="pieTick" data-s="18" style="position:absolute;top:2px;right:2px"></canvas></button>`).join('')}</div>`);
+    this.pal.onclick = e => { const b = e.target.closest('[data-c]'); if (b) this.pick(+b.dataset.c); };
+    // Enter or Space on a colour takes it and hands the keys to the painting: arrows move the cursor, Enter paints.
+    this.pal.onkeydown = e => { const b = e.target.closest('[data-c]'); if (b && (e.key === 'Enter' || e.key === ' ')) { this.pick(+b.dataset.c); this.kb = true; b.blur(); e.preventDefault(); } };
+    this.lay(); this.marks();
+    if (!S.flag) owlSay(t('flag_hi'), { mood: 'cheer', html: picsHtml(['flagI']) });
+  },
+  exit() { this.up(); },
+  resize() { this.lay(); },
+  pick(i) { this.col = i; sfx.click(); this.marks(); },
+  marks() {
+    this.pal.querySelectorAll('[data-c]').forEach(b => {
+      const on = +b.dataset.c === this.col;
+      b.setAttribute('aria-pressed', on);
+      b.style.borderColor = on ? '#fff' : ''; b.style.boxShadow = on ? '0 0 0 4px #ffd86b' : '';
+      b.lastChild.style.visibility = on ? '' : 'hidden';
+    });
+  },
+  // The grid takes all the room the screen allows: above the palette in portrait; beside it in landscape, where the
+  // palette sits under the preview in a column on the right (within a thumb's reach on a phone held sideways).
+  lay() {
+    const u = ui.getBoundingClientRect(), top = this.bar.getBoundingClientRect().bottom, p = 8, g = 6, s = this.pal.style, land = wide();
+    const cols = land || u.width - 2 * p < 8 * 56 + 7 * g ? 4 : 8, rows = 8 / cols;
+    const bh = land ? clamp((V.h - top - 2 * p) / 5.8 | 0, 48, 64) : clamp(V.h * .085 | 0, 48, 64);
+    const bw = land ? bh : Math.min(80, (u.width - 2 * p - (cols - 1) * g) / cols | 0), pw = cols * bw + (cols - 1) * g, ph = rows * bh + (rows - 1) * g;
+    Object.assign(s, { gridTemplateColumns: `repeat(${cols},${bw}px)`, gridAutoRows: bh + 'px' });
+    let c, x, y;
+    if (land) {
+      const H = V.h - top - 2 * p;
+      c = Math.min(64, (u.width - 3 * p - pw) / 12 | 0, H / 8 | 0);
+      x = u.left + (u.width - 12 * c - p - pw) / 2 | 0; y = top + p + (H - 8 * c) / 2 | 0;
+      Object.assign(s, { left: x + 12 * c + p - u.left + 'px', top: y + 8 * c - ph + 'px', bottom: '' });
+      this.P = [x + 12 * c + p, y, pw, 8 * c - ph - p];
+    } else {
+      Object.assign(s, { left: (u.width - pw) / 2 + 'px', top: '', bottom: `calc(${p}px + env(safe-area-inset-bottom))` });
+      const H = this.pal.getBoundingClientRect().top - top - 3 * p;
+      c = Math.min(64, (u.width - 2 * p) / 12 | 0, H * .7 / 8 | 0);
+      const pv = Math.min(H - 8 * c, 6 * c);
+      x = u.left + (u.width - 12 * c) / 2 | 0; y = top + 2 * p + (H - 8 * c - pv) / 2 + pv | 0;
+      this.P = [x, y - p - pv, 12 * c, pv];
+    }
+    this.G = { x, y, c };
+  },
+  cell(x, y) { const { x: gx, y: gy, c } = this.G, i = Math.floor((x - gx) / c), j = Math.floor((y - gy) / c); return i >= 0 && i < 12 && j >= 0 && j < 8 ? j * 12 + i : -1; },
+  // One cell takes the chosen colour (true when it changed). The save is written when the stroke ends.
+  dab(n) {
+    const f = flagCode();
+    if (n < 0 || +f[n] === this.col) return false;
+    S.flag = f.slice(0, n) + this.col + f.slice(n + 1);
+    tone(FLAG_NOTE[n % 12], .1, 'sine', .12);
+    return this.dirty = true;
+  },
+  // One finger paints: a second finger or a palm on the screen starts nothing and draws nothing.
+  down(x, y, e) { const n = this.cell(x, y); if (n < 0 || this.drag) return; Object.assign(this, { drag: true, kb: false, lx: x, ly: y, pid: e && e.pointerId }); this.dab(n); },
+  // A quick drag can jump over cells between two pointer events: the way between them is walked in thirds of a cell.
+  move(x, y, e) {
+    if (!this.drag || e && e.pointerId !== this.pid) return;
+    const n = Math.ceil(Math.hypot(x - this.lx, y - this.ly) / (this.G.c / 3));
+    for (let i = 1; i <= n; i++) this.dab(this.cell(lerp(this.lx, x, i / n), lerp(this.ly, y, i / n)));
+    this.lx = x; this.ly = y;
+  },
+  up() { this.drag = false; if (this.dirty) { this.dirty = false; save(); } },
+  key(e) {
+    const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+    if (d) { e.preventDefault(); this.kb = true; this.cx = clamp(this.cx + d[0], 0, 11); this.cy = clamp(this.cy + d[1], 0, 7); }
+    else if (/^[1-8]$/.test(e.key)) this.pick(e.key - 1);
+    else if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('button')) { e.preventDefault(); this.kb = true; this.dab(this.cy * 12 + this.cx); this.up(); }
+  },
+  // "Start again" asks first: a painting is a child's work, and one stray tap must not wipe it.
+  ask() {
+    owlSay(t('flag_ask'), { mood: 'idle', html: picsHtml(['flagI', 'play', 'flagI:1']), acts: [
+      { label: t('flag_new'), icon: 'retry', fn: () => { S.flag = ''; save(); sfx.pop(); const { x, y, c } = this.G; burst(x + 6 * c, y + 4 * c, 24, { speed: 220, kind: 'star', size: 8 }); } },
+      { label: t('flag_keep'), cls: 'go', icon: 'yes' }] });
+  },
+  draw() {
+    const t0 = V.t, { x, y, c } = this.G, [px, py, pw, ph] = this.P, f = flagCode();
+    drawSky(ctx, t0); fireflies(ctx, t0, 6);
+    // the live preview: a window onto the real treehouse roof, with the flag as it flies there
+    if (ph > 40) {
+      const k = Math.min(pw / 260, ph / 180);
+      ctx.save(); rr(ctx, px, py, pw, ph, 14); ctx.fillStyle = '#13225c'; ctx.fill(); ctx.clip();
+      drawTree(ctx, { k, ox: px + pw / 2 - 650 * k, oy: py + ph / 2 - 140 * k }, t0);
+      ctx.restore();
+      rr(ctx, px, py, pw, ph, 14); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,216,107,.45)'; ctx.stroke();
+    }
+    // the painting: big cells with thin lines between them, and the keyboard's cursor
+    rr(ctx, x - 6, y - 6, 12 * c + 12, 8 * c + 12, 12); ctx.fillStyle = 'rgba(6,10,32,.88)'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,216,107,.45)'; ctx.stroke();
+    for (let n = 0; n < 96; n++) { ctx.fillStyle = FLAG_C[f[n]]; ctx.fillRect(x + n % 12 * c, y + (n / 12 | 0) * c, c, c); }
+    ctx.beginPath();
+    for (let i = 1; i < 12; i++) { ctx.moveTo(x + i * c, y); ctx.lineTo(x + i * c, y + 8 * c); }
+    for (let j = 1; j < 8; j++) { ctx.moveTo(x, y + j * c); ctx.lineTo(x + 12 * c, y + j * c); }
+    ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(6,10,32,.45)'; ctx.stroke();
+    if (this.kb) {
+      const qx = x + this.cx * c + 2, qy = y + this.cy * c + 2;
+      ctx.lineWidth = 6; ctx.strokeStyle = '#0b1437'; ctx.strokeRect(qx, qy, c - 4, c - 4); ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.strokeRect(qx, qy, c - 4, c - 4);
+    }
+  },
+};
 // ---------- Station one: Camera Watch (watch patiently, tell friends from thieves, mind the battery) ----------
 ICON.pie = c => magpie(c, -.15, .8, .021, 0);
 let scanPat = null;
@@ -2371,7 +3387,7 @@ scenes.cam = {
     this.batt -= 1; f.flashT = .4; sfx.flash();
     const [x, y, w, h] = this.rect(i), exposed = m && m.state === 'walk' && m.x > .03 && m.x < .97 && f.staticT <= 0;
     if (exposed && !m.decoy) {
-      m.state = 'caught'; m.dir = m.phase === 'in' ? -m.dir : m.dir; this.caught++;
+      m.state = 'caught'; m.dir = m.phase === 'in' ? -m.dir : m.dir; this.caught++; pieCaught();   // caught kindly: it counts towards a new friend
       sfx.squawk(); burst(x + m.x * w, y + h * .6, 12, { kind: 'feather', color: '#dfe6f5', speed: 140, size: 7 });
       if (m.carry) { m.carry = false; floatText(x + m.x * w, y + h * .4, '+1', '#ffd86b'); burst(x + m.x * w, y + h * .5, 14, { speed: 120 }); sfx.sparkle(); }
       $('#pCatch b').textContent = this.caught;
@@ -2502,6 +3518,12 @@ scenes.cam = {
   },
 };
 // ---------- Station two: Gate Check (two checks before trust: the password AND the badge) ----------
+// The owl's eye: an almond eye with an owl's amber iris.
+ICON.eyeI = c => {
+  c.beginPath(); c.moveTo(-.95, 0); c.quadraticCurveTo(0, -.95, .95, 0); c.quadraticCurveTo(0, .95, -.95, 0); c.closePath();
+  c.fillStyle = '#fff6da'; c.fill(); c.lineWidth = .12; c.strokeStyle = '#2a1c05'; c.stroke();
+  circ(c, 0, 0, .36, '#f2a93b'); circ(c, 0, 0, .17, '#2a1c05'); circ(c, .12, -.13, .08, '#fff');
+};
 const GSYM = ['moon', 'berry', 'star', 'leaf', 'acorn', 'mushroom', 'feather', 'flower'];
 // Build tonight's queue. Friends always have both right; every trickster has at least one thing wrong.
 function gateQueue(n, pass, badge) {
@@ -2546,22 +3568,47 @@ scenes.gate = {
       patience: n >= 3 ? (15 - Math.min(n, 8) * .8) * (count('bell') ? 1.35 : 1) : 1e9 });
     hud(() => go('hub'), `<span class="pill" id="pGate">${ic('yes', 20)}<span><b>0</b>/${this.q.length}</span></span>`);
     const lab = s => `<span class="lab">${ic(s, 34)}${esc(t(s))}</span>`;
-    add(`<div class="ref"><span class="lab">${esc(t('pass'))}</span>${this.pass.map(lab).join('')}<span class="sep"></span>
+    this.ref = add(`<div class="ref"><span class="lab">${esc(t('pass'))}</span>${this.pass.map(lab).join('')}<span class="sep"></span>
       <span class="lab">${ic(`badge:${this.badge.shape}:${this.badge.style}`, 40)}${esc(t('badge'))}</span></div>`);
     const b = add(`<div class="bar gatebtns"><button class="btn go" id="bIn">${ic('yes', 30)}${esc(t('letIn'))}</button>
       <button class="btn no" id="bOut">${ic('no', 30)}${esc(t('shoo'))}</button></div>`);
     $('#bIn', b).onclick = () => this.decide(true);
     $('#bOut', b).onclick = () => this.decide(false);
+    // the owl's eye: a round button beside the reference card while there is an eye to use (added before the dialog, so it is inert
+    // under it). It stands alone in the overlay, which lets taps through to the canvas: the button takes its own taps back.
+    this.eyeB = S.eye > 0 ? add(`<button class="btn round gold" id="bEye" style="position:absolute;pointer-events:auto" aria-label="${esc(t('eye_btn'))}">${ic('eyeI', 34)}</button>`) : null;
+    if (this.eyeB) { this.eyeB.onclick = () => this.eyeUse(); this.resize(); }
     owlSay(t('gateIntro'), { html: picsHtml([`badge:${this.badge.shape}:${this.badge.style}`, ...this.pass]), acts: [{ label: t('go'), cls: 'go', icon: 'play', fn: () => { this.run = true; this.at = V.t; } }] });
   },
   key(e) { if (e.key === 'ArrowLeft') this.decide(true); if (e.key === 'ArrowRight') this.decide(false); },
+  // One close look of the owl's at the visitor who waits: the wrong thing gets a ring (the badge first), a friend gets two ticks.
+  // The owl only points; the Chief still decides. Between visitors a tap does nothing and costs nothing; a second tap repeats the words.
+  eyeUse() {
+    const v = this.q[this.i];
+    if (!this.run || this.state !== 'ask' || S.eye < 1) return;
+    if (!v.eye) {
+      const same = k => v.badge && v.badge[k] === this.badge[k];
+      v.eye = !same('shape') || !same('style') ? 'badge' : v.pass.join() !== this.pass.join() ? 'pass' : 'ok';
+      S.eye--; save(); sfx.sparkle();
+      if (!S.eye && this.eyeB) { this.eyeB.remove(); this.eyeB = null; }
+    }
+    say(t('eye_' + v.eye)); speak(t('eye_' + v.eye));
+  },
+  // The eye's button stands beside the reference card: under it in portrait, to its left in landscape. There it covers
+  // neither the visitor nor the password bubble nor the two answers.
+  resize() {
+    if (!this.eyeB) return;
+    const r = this.ref.getBoundingClientRect(), u = ui.getBoundingClientRect(), st = this.eyeB.style;
+    if (wide()) { st.left = r.left - u.left - 60 + 'px'; st.top = r.top - u.top + 'px'; }
+    else { st.left = r.right - u.left - 52 + 'px'; st.top = r.bottom - u.top + 8 + 'px'; }
+  },
   decide(letIn) {
     if (!this.run || this.state !== 'ask') return;
     const v = this.q[this.i], ok = letIn === v.friend;
     v.letIn = letIn; this.state = 'out'; this.at = V.t;
     if (ok) {
       this.correct++; this.streak++;
-      letIn ? sfx.yes() : sfx.squawk();
+      if (letIn) sfx.yes(); else { sfx.squawk(); pieCaught(); }   // a trickster turned away kindly counts towards a new friend
       burst(V.w / 2, this.gy() - 80, letIn ? 14 : 10, letIn ? { speed: 160 } : { kind: 'feather', color: '#8fd08a', speed: 150 });
       // Five right in a row earns a bonus star, once per Night: a reward for steady checking, not for speed.
       const bonus = this.streak === 5 && S.gateStar !== S.night;
@@ -2657,6 +3704,16 @@ scenes.gate = {
       const ew = ctx.measureText(extra).width + 20, ex = clamp(x + 30 * s, 6, V.w - ew - 6), ey = gy - 40 * s;
       rr(ctx, ex, ey, ew, fs + 14, 10); ctx.fillStyle = '#fff6da'; ctx.fill(); ctx.fillStyle = '#2a1c05'; ctx.textAlign = 'left'; ctx.fillText(extra, ex + 10, ey + fs + 4);
     }
+    if (!v.eye) return;
+    // The owl's close look: a gold ring round the wrong thing, or a tick on each when all is right; its words lie on the ground by the gate.
+    const pu = still() ? 0 : Math.sin(t0 * 5) * 2, ring = () => { ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(7,13,42,.7)'; ctx.stroke(); ctx.lineWidth = 4; ctx.strokeStyle = '#ffd86b'; ctx.stroke(); };
+    if (v.eye === 'badge') { ctx.beginPath(); ctx.arc(bx, by, bs * .62 + 8 + pu, 0, TAU); ring(); }
+    else if (v.eye === 'pass') { rr(ctx, lx - 6 - pu, top - 6 - pu, bw + 12 + pu * 2, bh + 12 + pu * 2, 18); ring(); }
+    else for (const [tx, ty] of [[bx + bs * .55, by - bs * .55], [lx + bw - 2, top + 2]]) { circ(ctx, tx, ty, 12, '#3fae5e'); drawIcon(ctx, 'yes', tx, ty, 16); }
+    const msg = t('eye_' + v.eye), mh = fs + 14, mw = ctx.measureText(msg).width + mh + 14, mx = clamp(gx - 20 * g, 6, V.w - mw - 6);
+    rr(ctx, mx, gy + 6, mw, mh, 10); ctx.fillStyle = '#fff6da'; ctx.fill();
+    drawIcon(ctx, 'eyeI', mx + 5 + mh * .4, gy + 6 + mh / 2, mh * .8);
+    ctx.fillStyle = '#2a1c05'; ctx.textAlign = 'left'; ctx.fillText(msg, mx + mh + 6, gy + fs + 11);
   },
 };
 // ---------- Station three: Password Forge (long beats complicated; security you can measure) ----------
@@ -2726,6 +3783,7 @@ scenes.forge = {
   refresh() {
     this.sec = crackSeconds(this.tiles);
     $('#fSlots').innerHTML = this.tiles.map(this.tileHtml).join(''); paintIcons($('#fSlots'));
+    $('#fSlots').scrollLeft = 1e4;   // on a phone held sideways the bar is one scrolling row: the newest tile is in view
     $('#fVal').textContent = this.tiles.length ? crackLabel(this.sec) : '\u00a0';
     $('#fFill').style.width = meterPos(this.sec) * 100 + '%';
     say($('#fVal').textContent);
@@ -3928,15 +4986,17 @@ scenes.story = {
 };
 // ---------- Tinker Treehouse and raids: design, test, watch, improve ----------
 // Who comes tonight. Better station results mean fewer raiders; the plan is fixed per Night, so a test raid is a fair prediction.
+// From Night 9 the numbers stay at Night 8's and new tricks come instead (src/91-arc.js).
 function raidPlan(n, st) {
-  const routes = n <= 2 ? ['lt', 'rt'] : n <= 4 ? ['lt', 'rt', 'lb', 'rb'] : ['lt', 'rt', 'lb', 'rb', 'sky'];
-  const branch = Math.min(Math.ceil(n / 2) + (3 - st.cam), 7), gate = Math.min(3 - st.gate + (n >= 4 ? 1 : 0), 3), list = [];
+  const c = Math.min(n, 8), routes = c <= 2 ? ['lt', 'rt'] : c <= 4 ? ['lt', 'rt', 'lb', 'rb'] : ['lt', 'rt', 'lb', 'rb', 'sky'];
+  const branch = Math.min(Math.ceil(c / 2) + (3 - st.cam), 7), gate = Math.min(3 - st.gate + (c >= 4 ? 1 : 0), 3), list = [];
   let at = 1;
   for (let i = 0; i < branch; i++) {
-    list.push({ route: routes[((n >= 6 ? i >> 1 : i) + n) % routes.length], at });   // from Night 6 partners share a route
-    at += n >= 4 && i % 2 === 0 ? (n >= 6 ? .9 : .3) : 3.2;   // later Nights: partners arrive together
+    list.push({ route: routes[((c >= 6 ? i >> 1 : i) + n) % routes.length], at });   // from Night 6 partners share a route
+    at += c >= 4 && i % 2 === 0 ? (c >= 6 ? .9 : .3) : 3.2;   // later Nights: partners arrive together
   }
   for (let i = 0; i < gate; i++) list.push({ route: 'lad', at: 2 + i * 3.5 });
+  arcTricks(n, list);
   return list.sort((a, b) => a.at - b.at);
 }
 const covers = (d, key) => {
@@ -3945,12 +5005,18 @@ const covers = (d, key) => {
   for (let s = 100; s <= p.len; s += 25) { const [x, y] = routeAt(p, s); if (Math.hypot(x - d.x, y - d.y) < d.r) return true; }
   return false;
 };
-function makeRaid(plan, holds) {
-  const at = it => ({ t: it.t, x: MOUNTS[it.m][0], y: MOUNTS[it.m][1], r: ITEMS[it.t].r, cd: 0 });
-  const R = { t: 0, holds, shield: count('shield'), stolen: 0, reached: {}, covered: {}, beams: [], done: false, zipX: 500, zipY: 150,
+// The chosen helper (src/57-pals.js) and the weather of Night n (src/47-season.js) count in test raids too, so a test stays
+// fair. The raid passes its own Night: when it is over the Night has been counted, and the replay must not run in the
+// weather of the next one.
+function makeRaid(plan, holds, n = S.night) {
+  const P = palPerk(), W = nightWeather(n), cd = it => (ITEMS[it.t].cd || 0) * (P === 'post' && (it.t === 'cam' || it.t === 'bell') ? .8 : 1);
+  const at = it => ({ t: it.t, x: MOUNTS[it.m][0], y: MOUNTS[it.m][1], r: ITEMS[it.t].r * (P === 'lamp' && it.t === 'lamp' || P === 'music' && ITEMS[it.t].silly ? 1.2 : 1), cd: 0, cd0: cd(it) });
+  const R = { t: 0, holds: holds + (P === 'guard' ? 1 : 0), shield: count('shield') + (P === 'garden' ? 1 : 0), spd: 1 - (W.slow || 0), wind: W.k === 'wind',
+    stolen: 0, reached: {}, covered: {}, beams: [], done: false, zipX: 500, zipY: 150,
     cams: S.items.filter(i => i.t === 'cam' || i.t === 'bell').map(at), lamps: S.items.filter(i => i.t === 'lamp').map(at),
-    toys: S.items.filter(i => ITEMS[i.t].silly).map(at), fun: [], puffs: [], laughed: 0,
-    mags: plan.map(p => ({ route: p.route, at: p.at, d: 0, state: 'wait', bonked: new Set(), met: new Set(), fx: null, combo: 0, last: -9, carry: false, dizzy: 0 })) };
+    toys: S.items.filter(i => ITEMS[i.t].silly).map(at), arc: S.items.filter(i => ITEMS[i.t].arc).map(at), fun: [], puffs: [], laughed: 0, mags: plan.map(arcRaider) };
+  R.timed = R.cams.concat(R.arc);   // everything that recharges, for the rings the raid draws in every frame
+  if (P === 'baker' && R.mags.length) R.mags[0].at += 5;   // the first magpie stops for a bun
   for (const k in ROUTES) R.covered[k] = R.cams.some(d => covers(d, k));
   return R;
 }
@@ -3963,7 +5029,7 @@ function prank(R, m, g, x, y) {
   m.combo = R.t - m.last < 3 ? m.combo + 1 : 1; m.last = R.t;
   R.fun.push({ t: R.t, w: m.combo });
   R.puffs.push({ k: g.t, x: g.x, y: g.y - 20, t: 1.2, n: m.combo });
-  if (m.carry) { m.carry = false; m.state = 'sulk'; R.zipX = x; R.zipY = y - 60; sfx.sparkle(); }   // Zip catches the jar and takes it home
+  if (m.carry) { m.carry = false; m.state = 'sulk'; m.home = 1; R.zipX = x; R.zipY = y - 60; sfx.sparkle(); }   // Zip catches the jar and takes it home
   sfx[{ peel: 'slip', tramp: 'boing', tickle: 'giggle', bubbler: 'bubble', cannon: 'bang', disco: 'disco' }[g.t]]();
   buzz(20);
 }
@@ -3971,6 +5037,7 @@ const STEP = 1 / 60;   // raids run in fixed steps, so the same design always gi
 function stepRaid(R, dt) {
   R.t += dt;
   for (const d of R.cams) d.cd -= dt;
+  for (const d of R.arc) d.cd -= dt;
   for (const b of R.beams) b.t -= dt;
   for (const b of R.puffs) b.t -= dt;
   R.beams = R.beams.filter(b => b.t > 0); R.puffs = R.puffs.filter(b => b.t > 0);
@@ -3987,38 +5054,42 @@ function stepRaid(R, dt) {
       m.d = clamp(m.d + dt * a.dir * ({ slip: 300, boing: -260, bang: -300 }[a.k] || 0), 1, p.len - 1);
       if (a.t <= 0) {
         m.fx = null; m.dizzy = { slip: 1, boing: .6, bang: .8, bubble: .6 }[a.k] || 0;
-        if (m.met.size >= 3 && m.state === 'go') { m.state = 'flee'; m.happy = true; R.laughed++; }
+        if (m.met.size >= 3 && m.state === 'go') { m.state = 'flee'; m.happy = true; m.home = 1; R.laughed += m.n; }
       }
     } else if (m.dizzy > 0) m.dizzy -= dt;
-    else m.d += dt * 170 * { go: 1, back: -1.15, flee: -3, sulk: -1.3 }[m.state];
-    if (active || m.dizzy > 0 && m.state !== 'flee' && m.state !== 'sulk') {
+    else m.d += dt * 170 * R.spd * (R.wind && m.kind === 'balloon' ? .6 : 1) * { go: 1, back: -1.15, flee: -3, sulk: -1.3 }[m.state];
+    if (m.kind && active && arcStep(R, m, x, y)) continue;   // a trickster meets the gadget that answers it (src/91-arc.js)
+    // `home` marks a magpie sent home without a jar: it counts as caught kindly when a real raid ends
+    if (!arcIgnores(m, 'cam') && (active || m.dizzy > 0 && m.state !== 'flee' && m.state !== 'sulk')) {
       const cam = R.cams.find(d => d.cd <= 0 && (d.t === 'cam' || m.route === 'lad') && Math.hypot(x - d.x, y - d.y) < d.r);
       if (cam) {
-        cam.cd = ITEMS[cam.t].cd; m.state = 'flee'; m.dizzy = 0; m.carry = false; m.fx = null;
+        cam.cd = cam.cd0;
+        if (m.n > 1) arcSplit(R, m, x, y);   // two in a coat: one is caught, the other walks on
+        else { m.state = 'flee'; m.dizzy = 0; m.carry = false; m.fx = null; m.home = 1; }
         R.beams.push({ x1: cam.x, y1: cam.y - 20, x2: x, y2: y - 20, t: .45, bell: cam.t === 'bell' });
         R.zipX = cam.x; R.zipY = cam.y - 60; cam.t === 'bell' ? sfx.ding() : sfx.flash(); sfx.squawk();
         continue;
       }
     }
-    if (active && !m.fx && m.dizzy <= 0) {
+    if (active && !arcIgnores(m, 'lamp') && !m.fx && m.dizzy <= 0) {
       const lamp = R.lamps.find(l => !m.bonked.has(l) && Math.hypot(x - l.x, y - l.y) < l.r);
       if (lamp) { m.bonked.add(lamp); m.dizzy = 2.2; sfx.bonk(); }
     }
-    if (active && !m.fx && m.dizzy <= 0) {
+    if (active && !arcIgnores(m, 'toy') && !m.fx && m.dizzy <= 0) {
       const g = R.toys.find(q => !m.met.has(q) && Math.hypot(x - q.x, y - q.y) < q.r);
       if (g) {
         prank(R, m, g, x, y);
         // a disco ball and a confetti cannon catch everyone in reach at once
-        if (g.t === 'disco' || g.t === 'cannon') for (const q of R.mags) if (q !== m && (q.state === 'go' || q.state === 'back') && !q.fx && !q.met.has(g)) {
+        if (g.t === 'disco' || g.t === 'cannon') for (const q of R.mags) if (q !== m && (q.state === 'go' || q.state === 'back') && !q.fx && !q.met.has(g) && !arcIgnores(q, 'toy')) {
           const [qx, qy] = routeAt(ROUTES[q.route], q.d);
           if (Math.hypot(qx - g.x, qy - g.y) < g.r) prank(R, q, g, qx, qy);
         }
       }
     }
     if (m.state === 'go' && !m.fx && m.d >= p.len) {
-      R.reached[m.route] = (R.reached[m.route] || 0) + 1;
+      R.reached[m.route] = (R.reached[m.route] || 0) + 1; m.reach = 1;
       if (R.holds > 0) { R.holds--; m.state = 'sulk'; sfx.empty(); }
-      else if (R.shield > 0) { R.shield--; m.state = 'flee'; sfx.boing(); }
+      else if (R.shield > 0) { R.shield--; m.state = 'flee'; m.home = 1; sfx.boing(); }
       else if (R.stolen + R.mags.filter(q => q.carry).length < 3) { m.carry = true; m.state = 'back'; sfx.oops(); }
       else m.state = 'sulk';
     }
@@ -4031,17 +5102,20 @@ function observe(R) {
   if (!S.items.some(i => !ITEMS[i.t].deco)) return t('o_none');
   const hit = Object.keys(R.reached);
   if (!hit.length) return t(R.laughed ? 'o_silly' : 'o_great');
+  const trick = R.mags.find(m => m.reach && m.trick && !m.fixed);   // a trick that worked comes first: the owl names it and its gadget
+  if (trick) return t('o_' + trick.trick);
   const open = hit.find(r => !R.covered[r]);
   if (open === 'lad' && count('bell')) return t('o_bell');
   return t(open ? 'o_route' : 'o_busy', { r: t('r_' + (open || hit[0])) });
 }
 
-// The palette has two pages: defences and decorations, and the silly gadgets. The last button turns the page.
+// The palette has two pages: defences and decorations, and the silly gadgets; from Night 9 a third one with the new gadgets
+// (src/91-arc.js). The last button turns the page and shows the page that comes next.
 const PALETTE = ['cam', 'lamp', 'bell', 'shield', 'banner', 'flowers', 'scope', 'lights'], SILLY = ['peel', 'tramp', 'tickle', 'bubbler', 'cannon', 'disco'];
 scenes.tinker = {
   enter() {
     Object.assign(this, { hand: null, drag: false, px: 0, py: 0, sx: 0, sy: 0, kb: -1, page: this.page || 0 });
-    const bar = add(`<div class="hud"><button class="btn round go" id="tDone" aria-label="${esc(t('done'))}">${ic('yes', 28)}</button><span class="sp"></span>
+    const bar = add(`<div class="hud tbar"><button class="btn round go" id="tDone" aria-label="${esc(t('done'))}">${ic('yes', 28)}</button><span class="sp"></span>${palPill()}
       <button class="btn gold" id="tTest">${ic('pie', 26)}${esc(t('testRaid'))}</button><span class="pill" id="pBeams">${ic('beam', 22)}<b>${S.beams}</b></span></div>`);
     $('#tDone', bar).onclick = () => { sfx.click(); go('hub'); };
     $('#tTest', bar).onclick = () => { sfx.alarm(); go('raid', { test: true }); };
@@ -4051,8 +5125,11 @@ scenes.tinker = {
     else if (S.tinkered === 1 && S.night >= 2) { S.tinkered = 2; save(); owlSay(t('sillyIntro'), { html: picsHtml(['party', 'peel', 'tramp', 'disco']) }); }
   },
   fill() {
-    this.pal.innerHTML = (this.page ? SILLY : PALETTE).map(k => `<button class="pal" data-k="${k}" aria-label="${esc(t('i_' + k))}, ${ITEMS[k].cost}">${ic(k, 34)}<span>${ic('beam', 14)}${ITEMS[k].cost}</span></button>`).join('') +
-      `<button class="pal more" id="tPage" aria-label="${esc(t(this.page ? 'guards' : 'silly'))}">${ic(this.page ? 'cam' : 'party', 34)}<span>${ic('skipI', 14)}</span></button>`;
+    const pages = [PALETTE, SILLY].concat(arcNew().length ? [arcNew()] : []);
+    this.page %= pages.length;   // another player's save may have fewer pages
+    const next = (this.page + 1) % pages.length;
+    this.pal.innerHTML = pages[this.page].map(k => `<button class="pal" data-k="${k}" aria-label="${esc(t('i_' + k))}, ${ITEMS[k].cost}">${ic(k, 34)}<span>${ic('beam', 14)}${ITEMS[k].cost}</span></button>`).join('') +
+      `<button class="pal more" id="tPage" aria-label="${esc(t(['guards', 'silly', 'arc_new'][next]))}">${ic(['cam', 'party', 'fan'][next], 34)}<span>${ic('skipI', 14)}</span></button>`;
     paintIcons(this.pal);
     this.pal.querySelectorAll('.pal[data-k]').forEach(b => {
       b.onpointerdown = e => { const k = b.dataset.k; this.hand = this.hand === k && !this.drag ? null : k; this.drag = !!this.hand; [this.sx, this.sy] = [this.px, this.py] = [e.clientX, e.clientY]; sfx.click(); this.marks(); };
@@ -4064,7 +5141,7 @@ scenes.tinker = {
         this.marks(); b.blur(); e.preventDefault();
       };
     });
-    $('#tPage', this.pal).onclick = () => { sfx.pop(); this.page = 1 - this.page; this.hand = null; this.drag = false; this.fill(); $('#tPage', this.pal).focus({ preventScroll: true }); };
+    $('#tPage', this.pal).onclick = () => { sfx.pop(); this.page = next; this.hand = null; this.drag = false; this.fill(); $('#tPage', this.pal).focus({ preventScroll: true }); };
     this.marks();
   },
   marks() {
@@ -4078,7 +5155,7 @@ scenes.tinker = {
   // The tree gets whatever the palette leaves free: the space above it, or (low landscape) the space to its left.
   T() { const p = this.pal.getBoundingClientRect(); return p.top > V.h * .5 ? fitTree(0, 60, V.w, p.top - 64) : fitTree(0, 60, p.left, V.h - 64); },
   overPal(x, y) { const p = this.pal.getBoundingClientRect(); return x >= p.left && y >= p.top; },
-  free(type) { return MOUNTS.map((m, i) => i).filter(i => (type === 'shield') === (i === VAULT) && !S.items.some(it => it.m === i)); },
+  free(type) { const at = ITEMS[type].at; return MOUNTS.map((m, i) => i).filter(i => (type === 'shield') === (i === VAULT) && (!at || at.includes(i)) && !S.items.some(it => it.m === i)); },
   near(x, y, list, reach) {
     const T = this.T(), [lx, ly] = toTree(T, x, y);
     let best = -1, bd = Math.max(reach, 44 / T.k);
@@ -4147,10 +5224,10 @@ scenes.raid = {
     this.test = !!o.test; this.endT = 0; this.acc = 0; this.rp = null;
     this.rooms = rank();   // the Night is counted when the raid ends: a room won by it first shows at the ceremony, not here
     const st = this.test ? { cam: S.st.cam || 2, gate: S.st.gate || 2, forge: S.st.forge || 2 } : S.st;
-    this.plan = raidPlan(S.night, st); this.holds = st.forge - 1;
-    this.R = makeRaid(this.plan, this.holds);
+    this.n = S.night; this.plan = raidPlan(this.n, st); this.holds = st.forge - 1;
+    this.R = makeRaid(this.plan, this.holds, this.n);
     add(`<div class="hud">${this.test ? `<button class="btn round" id="rBack" aria-label="${esc(t('done'))}">${ic('no', 24)}</button>` : ''}
-      <span class="pill">${ic('pie', 24)}${esc(t(this.test ? 'testRaid' : 'raidGo'))}</span><span class="sp"></span></div>`);
+      <span class="pill">${ic('pie', 24)}${esc(t(this.test ? 'testRaid' : 'raidGo'))}</span><span class="sp"></span>${palPill()}</div>`);
     if (this.test) $('#rBack').onclick = () => { sfx.click(); go('tinker'); };   // a practice raid can be left at any time
     if (!this.test) later(() => toast(t('raidGo')), 100);
   },
@@ -4161,8 +5238,11 @@ scenes.raid = {
     if (this.endT) return;
     this.endT = V.t;
     // What the raid earned is counted and saved now; the replay and the owl's word come after.
-    if (!this.test) this.stars = closeNight(R.stolen);
-    else {
+    if (!this.test) {
+      const kind = R.mags.reduce((a, m) => a + (m.home ? m.n : 0), 0);   // sent home without a jar, or laughing
+      if (kind) pieCaught(kind);
+      this.stars = closeNight(R.stolen, R.laughed);
+    } else {
       this.clean = !Object.keys(R.reached).length && S.items.some(i => !ITEMS[i.t].deco); this.bonus = this.clean && S.testStar !== S.night;
       if (this.bonus) { S.testStar = S.night; S.stars++; S.beams += 10; save(); }
     }
@@ -4175,7 +5255,7 @@ scenes.raid = {
     if (!fun.length) return false;
     let best = 0, at = 0;
     for (const f of fun) { const w = fun.reduce((a, g) => a + (g.t >= f.t && g.t < f.t + 2.5 ? g.w : 0), 0); if (w > best) { best = w; at = f.t; } }
-    const R = makeRaid(this.plan, this.holds);
+    const R = makeRaid(this.plan, this.holds, this.n);
     quiet = true;
     while (R.t < at - .7 && !R.done) stepRaid(R, STEP);
     quiet = false;
@@ -4210,10 +5290,10 @@ scenes.raid = {
     const t0 = V.t, R = this.rp ? this.rp.R : this.R, T = fitTree(0, 56, V.w, V.h - 70);
     const carrying = R.mags.filter(m => m.carry).length, party = R.mags.some(m => m.fx && m.fx.k === 'dance');
     drawSky(ctx, t0);
-    drawTree(ctx, T, t0, { zones: true, jars: JARS.length - R.stolen - carrying, nest: R.stolen, rooms: this.rooms });
+    drawTree(ctx, T, t0, { zones: true, jars: JARS.length - R.stolen - carrying, nest: R.stolen, rooms: this.rooms, night: this.n });
     ctx.save(); ctx.translate(T.ox, T.oy); ctx.scale(T.k, T.k);
     owl(ctx, OWL[0], OWL[1], 1.05, t0, R.done ? (R.stolen ? 'idle' : 'cheer') : carrying ? 'no' : party ? 'cheer' : 'sleep');   // the disco ball wakes the owl too
-    for (const d of R.cams) if (d.cd > 0) { ctx.beginPath(); ctx.arc(d.x, d.y - 20, 30, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - d.cd / ITEMS[d.t].cd)); ctx.lineWidth = 6; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+    for (const d of R.timed) if (d.cd > 0) { ctx.beginPath(); ctx.arc(d.x, d.y - 20, 30, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - d.cd / d.cd0)); ctx.lineWidth = 6; ctx.strokeStyle = '#fff'; ctx.stroke(); }
     for (const b of R.beams) {
       ctx.globalAlpha = Math.min(1, b.t * 3);
       if (b.bell) { ctx.lineWidth = 5; ctx.strokeStyle = '#ff9ecb'; for (const r of [40, 70]) { ctx.beginPath(); ctx.arc(b.x1, b.y1, r * (1.45 - b.t), 0, TAU); ctx.stroke(); } }
@@ -4227,6 +5307,7 @@ scenes.raid = {
       if (b.k === 'cannon') for (let i = 0; i < 14; i++) { const a = hash(i + 3) * TAU, d = 30 + k * (60 + hash(i) * 90); ctx.fillStyle = ['#ff8a7a', '#ffd24a', '#6fdc95', '#58a6ff', '#ff9ecb'][i % 5]; ctx.fillRect(b.x + Math.cos(a) * d - 5, b.y + Math.sin(a) * d * .7 - 5 + k * k * 40, 10, 10); }
       else if (b.k === 'bubbler') for (let i = 0; i < 6; i++) { ctx.lineWidth = 2.5; ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(b.x + Math.sin(i * 2.1 + k * 4) * 26, b.y - k * (50 + i * 18), 6 + i % 3 * 4, 0, TAU); ctx.stroke(); }
       else if (b.k === 'disco') for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + (still() ? 0 : t0 * 3); circ(ctx, b.x + Math.cos(a) * 95, b.y + Math.sin(a) * 60, 16, ['rgba(255,138,122,.55)', 'rgba(255,210,74,.55)', 'rgba(111,220,149,.55)', 'rgba(88,166,255,.55)'][i % 4]); }
+      else if (ARC_PUFF[b.k]) ARC_PUFF[b.k](ctx, b, k);
       else { ctx.lineWidth = 5; ctx.strokeStyle = '#fff6da'; ctx.beginPath(); ctx.arc(b.x, b.y, 20 + k * 50, 0, TAU); ctx.stroke(); }
       if (b.n > 1) {
         ctx.font = '900 46px ui-rounded, "Segoe UI", Roboto, sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(7,13,42,.85)'; ctx.fillStyle = '#ffd86b';
@@ -4249,7 +5330,7 @@ scenes.raid = {
         else { rot = still() ? .25 : Math.sin(t0 * 9) * .3; dy = still() ? 0 : -Math.abs(Math.sin(t0 * 9)) * 14; }
       }
       ctx.save(); ctx.translate(x, y + dy - 30 * s); ctx.rotate(rot * dir);
-      magpie(ctx, 0, 30 * s, s, t0 + m.at, { dir, carry: m.carry, pose, face });
+      (m.kind ? arcMag : magpie)(ctx, 0, 30 * s, s, t0 + m.at, { dir, carry: m.carry, pose, face, m });   // tricksters: src/91-arc.js
       ctx.restore();
       const hy = y + dy - 88 * s;
       if (a && a.k === 'bubble') { ctx.beginPath(); ctx.arc(x, y + dy - 32 * s, 52 * s, 0, TAU); ctx.fillStyle = 'rgba(190,230,255,.28)'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke(); circ(ctx, x - 20 * s, y + dy - 54 * s, 7 * s, 'rgba(255,255,255,.8)'); }
@@ -4263,8 +5344,178 @@ scenes.raid = {
     if (this.rp) { ctx.fillStyle = 'rgba(7,13,42,.6)'; ctx.fillRect(0, 0, V.w, 58); ctx.fillRect(0, V.h - 40, V.w, 40); }   // film bars: this is a replay
   },
 };
+// ---------- Nights 9 to 30: new magpie tricks, the gadgets that answer them, and what the owl says about them ----------
+// Called by the other files:
+//   arcBrief(n)            the briefing of Night n when it brings something new: { text, pics } (text is ready to show,
+//                          pics are icon names), or null for the usual briefing (src/50-ui.js)
+//   arcTricks(n, list)     raidPlan: turns some of tonight's raiders into tricksters (entry.kind); nothing before Night 9
+//   arcRaider(entry)       makeRaid: a raider as the raid moves it
+//   arcIgnores(m, what)    stepRaid: a trickster that 'cam', 'lamp' or 'toy' (silly gadgets) cannot touch
+//   arcStep(R, m, x, y)    stepRaid: a trickster meets the gadget that answers it; true when it was sent home
+//   arcSplit(R, m, x, y)   stepRaid: a camera caught the twins in the coat: one flies home, the other walks on
+//   arcMag(c, x, y, s, t, o)  the raid draws a trickster as magpie() draws a magpie (o.m is the raider)
+//   ARC_PUFF[kind]         the raid draws what a new gadget throws out when it works
+//   arcNew()               the gadgets of the palette's third page that are unlocked tonight
+
+// The new gadgets: `arc` is the Night that unlocks one. A drum only thumps through wood and earth: the trunk and the ground.
+Object.assign(ITEMS, {
+  fan: { cost: 25, r: 150, cd: 3, arc: 9 }, honey: { cost: 20, r: 48, arc: 13 },
+  seesaw: { cost: 30, r: 60, arc: 17 }, drum: { cost: 35, r: 200, cd: 3, arc: 21, at: [12, 13, 14, 15, 16] },
+});
+const ARC_NEW = ['fan', 'honey', 'seesaw', 'drum'], arcNew = () => ARC_NEW.filter(k => S.night >= ITEMS[k].arc);
+const ARC_GADGET = { balloon: 'fan', stilts: 'honey', twins: 'seesaw', dig: 'drum' };
+// What a trickster cannot be touched by: a balloon floats over everything, a digger is under the ground,
+// stilts step over lanterns and silly gadgets (cameras still see them), the twins in the coat are touched by all.
+const ARC_IGNORE = { balloon: 'cam lamp toy', dig: 'cam lamp toy', stilts: 'lamp toy' };
+const arcIgnores = (m, what) => !!m.kind && (ARC_IGNORE[m.kind] || '').includes(what);
+// The digger stays under the ground along the ladder route until the top of the ladder.
+const ARC_UP = ROUTES.lad[0][0] - ROUTES.lad[1][0], ARC_POP = ARC_UP + ROUTES.lad[1][1] - ROUTES.lad[2][1];
+
+// Tricksters by Night (b balloon, s stilts, t twins, d digger): one or two at first, each new trick on its own;
+// from Night 25 three of mixed kinds, in a six-Night round.
+const ARC_PLAN = ['b', 'b', 'bb', 'bb', 's', 's', 'sb', 'ss', 't', 't', 'ts', 'tb', 'd', 'd', 'dt', 'db'], ARC_MIX = ['bsd', 'tdb', 'std', 'dbt', 'bts', 'sdb'];
+const ARC_KIND = { b: 'balloon', s: 'stilts', t: 'twins', d: 'dig' };
+const arcKinds = n => n < 9 ? [] : [...(n < 25 ? ARC_PLAN[n - 9] : ARC_MIX[(n - 25) % 6])].map(c => ARC_KIND[c]);
+// A trickster takes the place of a raider: first the second one of a pair (its partner keeps the camera busy), then
+// the first ones. The digger takes the ladder; stilts and the coat keep to the branches, only a balloon comes over the roof.
+function arcTricks(n, list) {
+  const br = list.filter(p => p.route !== 'lad'), slots = br.filter((p, i) => i % 2).concat(br.filter((p, i) => !(i % 2)), list.filter(p => p.route === 'lad'));
+  for (const k of arcKinds(n)) {
+    let p = slots.find(q => !q.kind && (k === 'dig' ? q.route === 'lad' : q.route !== 'lad' && (k === 'balloon' || q.route !== 'sky')));
+    // no branch left for the stilts or the coat: a balloon that took a branch moves over the roof and gives its branch up
+    const b = !p && k !== 'dig' && slots.find(q => q.kind === 'balloon' && q.route !== 'sky'), s = b && slots.find(q => !q.kind && q.route === 'sky');
+    if (s) { s.kind = 'balloon'; b.kind = ''; p = b; }
+    if (p) p.kind = k;
+  }
+}
+// `n` counts the magpies inside (two in the coat); `trick` remembers the trick for the owl's word, `fixed` that its gadget met it.
+function arcRaider(p) {
+  return { route: p.route, at: p.at, kind: p.kind || '', trick: p.kind || '', n: p.kind === 'twins' ? 2 : 1, d: 0, state: 'wait', bonked: new Set(), met: new Set(), fx: null, combo: 0, last: -9, carry: false, dizzy: 0 };
+}
+function arcStep(R, m, x, y) {
+  if (m.kind === 'dig' && m.d >= ARC_POP) { m.kind = ''; R.puffs.push({ k: 'dirt', x, y, t: 1.2 }); sfx.pop(); return false; }   // up at the top of the ladder
+  const g = R.arc.find(q => q.t === ARC_GADGET[m.kind] && q.cd <= 0 && Math.hypot(x - q.x, y - q.y) < q.r);
+  if (!g) return false;
+  g.cd = g.cd0;
+  R.puffs.push({ k: g.t, x: g.x, y: g.y - 20, tx: x, ty: y, t: 1.2 });
+  if (m.carry) { m.carry = false; m.state = 'sulk'; m.home = 1; R.zipX = x; R.zipY = y - 60; sfx.sparkle(); }   // a jar it carried pops free: Zip takes it home
+  if (m.kind === 'balloon') { m.state = 'flee'; m.home = 1; sfx.puff(); return true; }   // the fan blows it home
+  if (m.kind === 'twins') {   // one on each end of the seesaw: both fly off laughing
+    Object.assign(m, { kind: '', n: 1, state: 'flee', happy: true, home: 1, fx: null, dizzy: 0 });
+    R.mags.push(Object.assign(arcRaider({ route: m.route, at: m.at + .5 }), { d: Math.max(1, m.d - 30), state: 'flee', happy: true, home: 1 }));
+    R.laughed += 2; R.fun.push({ t: R.t, w: 2 }); sfx.boing(); sfx.giggle();
+    return true;
+  }
+  // honey: the stilts stick and the magpie climbs down; drum: the digger is shaken out. Both walk on dizzy, as plain magpies.
+  m.kind = ''; m.fixed = 1; m.dizzy = 2.2;
+  if (g.t === 'drum') { R.puffs.push({ k: 'dirt', x, y, t: 1.2 }); sfx.slam(); } else sfx.slip();
+  buzz(30);
+  return m.state === 'sulk';   // it carried a jar: without it, it sulks home
+}
+function arcSplit(R, m, x, y) {
+  m.kind = ''; m.n = 1;
+  R.mags.push(Object.assign(arcRaider({ route: m.route, at: m.at + .5 }), { d: m.d, state: 'flee', home: 1 }));
+  R.puffs.push({ k: 'coat', x, y, t: 1.2 });
+}
+
+// ----- Drawing. Every trick reads by its shape: a balloon above, long stilts below, a tall coat with two heads, a moving mound -----
+const ARC_K = '#1a1a22';
+// A small magpie head for the coat: o.face and o.pose as in magpie(); `hat` puts a hat on it.
+function arcHead(c, hx, hy, r, o, hat) {
+  circ(c, hx, hy, r, ARC_K); poly(c, [hx + r * .8, hy - r * .3, hx + r * 2.1, hy + r * .07, hx + r * .8, hy + r * .43], '#6a6a78');
+  const ex = hx + r * .35, ey = hy - r * .2;
+  if (o.pose === 'dizzy') line(c, [ex - 3, ey - 3, ex + 3, ey + 3, ex, ey, ex + 3, ey - 3, ex - 3, ey + 3], '#fff', 1.8);
+  else if (o.face === 'joy') line(c, [ex - 4, ey + 1.5, ex, ey - 2.5, ex + 4, ey + 1.5], '#fff', 2.2);
+  else { const big = o.face === 'shock' || o.face === 'worry'; circ(c, ex, ey, big ? 6 : 4.4, '#fff'); circ(c, ex + 1, ey, big ? 1.8 : 2.3, '#111'); if (o.face === 'sly') poly(c, [ex - 6, ey - 6, ex + 6, ey - 3, ex + 6, ey - 7], ARC_K); }
+  if (hat) { ell(c, hx - 1, hy - r + 2, r * 1.4, r * .32, '#3a2a4a'); rr(c, hx - r * .8, hy - r * 2, r * 1.5, r * 1.15, 3); c.fillStyle = '#4a3660'; c.fill(); rr(c, hx - r * .8, hy - r * 1.15, r * 1.5, r * .28, 1); c.fillStyle = '#ffd24a'; c.fill(); }
+}
+function arcMag(c, x, y, s, t, o) {
+  const k = o.m.kind, f = o.dir === -1 ? -1 : 1, calm = still(), w = !calm && (o.pose === 'sneak' || o.pose === 'walk' || o.pose === 'flee') ? Math.sin(t * 7) : 0;
+  if (k === 'balloon') {   // it floats a little above the way, the balloon's string in its beak
+    const bx = x + (30 * f + (calm ? 0 : Math.sin(t * 1.7) * 7)) * s, by = y - 190 * s;
+    line(c, [x + 44 * f * s, y - 73 * s, bx, by + 44 * s], '#dfe6f5', 3 * s);
+    ell(c, bx, by, 36 * s, 42 * s, '#ff8a7a'); ell(c, bx - 12 * s, by - 16 * s, 8 * s, 13 * s, 'rgba(255,255,255,.55)', .5);
+    poly(c, [bx - 7 * s, by + 47 * s, bx + 7 * s, by + 47 * s, bx, by + 40 * s], '#e0553f');
+    return magpie(c, x, y - 22 * s, s, t, { dir: f, carry: o.carry, face: o.face, pose: 'stand' });
+  }
+  if (k === 'stilts') {   // a wooden stilt under each foot, with a step for the foot
+    const L = 52 * s;
+    for (const [a, b] of [[-5, 1], [7, -1]]) {
+      const top = x + a * f * s;
+      line(c, [top, y - L - 10 * s, top - b * w * 12 * f * s, y], '#c8a070', 5 * s);
+      line(c, [top - 7 * s, y - L + 3 * s, top + 7 * s, y - L + 3 * s], '#8a6a3a', 4 * s);
+    }
+    return magpie(c, x, y - L, s, t, o);
+  }
+  c.save(); c.translate(x, y);
+  if (k === 'twins') {   // four feet under one long coat, a tail at the back, a head in a hat on top and one more peeking out in front
+    c.scale(s * f, s);
+    for (const [a, b] of [[-17, 1], [-7, -1], [7, 1], [17, -1]]) line(c, [a, -18, a + b * w * 6, 0], '#5a5a66', 2.4);
+    poly(c, [-28, -24, -64, -10, -60, -2, -26, -14], ARC_K); line(c, [-32, -18, -58, -8], '#3f6fe0', 2.5);
+    poly(c, [-22, -112, 22, -112, 31, -16, -31, -16], '#8a6236'); c.lineWidth = 2; c.strokeStyle = '#5a3e22'; c.stroke();
+    poly(c, [-22, -112, -2, -88, -8, -112], '#6e4c2a'); poly(c, [22, -112, 2, -88, 8, -112], '#6e4c2a');
+    rr(c, -28, -62, 56, 8, 2); c.fillStyle = '#5a3e22'; c.fill(); for (const by of [-98, -40, -28]) circ(c, 12, by, 2.6, '#ffd24a');
+    arcHead(c, 6, -126, 14, o, true); arcHead(c, 25, -78, 11, o);
+    if (o.pose === 'sulk') for (const i of [-8, 0, 8]) line(c, [6 + i, -164, 6 + i, -156], '#7fa0ff', 2);
+    if (o.pose === 'dizzy') for (let i = 0; i < 3; i++) { const a = (calm ? 0 : t * 5) + i * TAU / 3; starPath(c, 6 + Math.cos(a) * 16, -160 + Math.sin(a) * 4, 4, 1.8, 5); c.fillStyle = '#ffd24a'; c.fill(); }
+    if (o.carry) jar(c, 40, -56, 16, t, 1);
+  } else {   // the digger: a mound of earth with a magpie's tail behind it, along the ground and then up inside the trunk
+    const up = o.m.d > ARC_UP;
+    if (up) c.rotate(-Math.PI / 2);
+    c.scale(s * (up ? 1 : f), s);
+    poly(c, [-30, -4, -68, -26, -62, -34, -26, -12], ARC_K); line(c, [-34, -9, -60, -27], '#3f6fe0', 2.5);
+    c.beginPath(); c.ellipse(0, 0, 42, 28, 0, Math.PI, TAU); c.fillStyle = '#6b4a2e'; c.fill(); c.lineWidth = 3; c.strokeStyle = '#b08a5a'; c.stroke();   // a light rim: it shows on the bark too
+    for (const [a, b, r] of [[-20, -12, 6], [2, -20, 7], [20, -10, 5], [-6, -5, 4]]) circ(c, a, b, r, '#8a6040');
+    if (!calm) for (let i = 0; i < 3; i++) { const q = (t * 2.5 + i / 3) % 1; circ(c, 40 + q * 22, -8 - Math.sin(q * Math.PI) * 26, 4, '#8a6040'); }   // clods fly ahead
+  }
+  c.restore();
+}
+// What a new gadget throws out when it works (k runs from 0 to 1; the raid sets the fading alpha).
+const ARC_PUFF = {
+  fan: (c, b, k) => { for (let i = -1; i <= 1; i++) { c.beginPath(); for (let j = 0; j <= 10; j++) { const q = j / 10 * Math.min(1, k * 2.5), px = lerp(b.x, b.tx, q), py = lerp(b.y, b.ty - 50, q) + i * 18 + Math.sin(j * 1.3 + (still() ? 0 : k * 9)) * 7; c.lineTo(px, py); } c.lineWidth = 5; c.strokeStyle = '#dff0ff'; c.stroke(); } },
+  honey: (c, b) => { ell(c, b.tx, b.ty + 4, 44, 11, '#f2b93b'); line(c, [b.tx - 10, b.ty, b.tx - 20, b.ty - 62], '#c8a070', 6); line(c, [b.tx + 10, b.ty, b.tx + 22, b.ty - 58], '#c8a070', 6); },   // the stilts stay stuck
+  coat: (c, b, k) => { c.save(); c.translate(b.x, b.y); c.rotate(-.25 + k * .2); poly(c, [-48, -14, 44, -18, 50, 2, -44, 4], '#8a6236'); c.restore(); },   // the coat drops
+  seesaw: (c, b, k) => { for (let i = 0; i < 5; i++) { starPath(c, b.x + (i - 2) * 28, b.y - 30 - k * (60 + i % 2 * 40), 11, 4.5, 5); c.fillStyle = '#ffd86b'; c.fill(); } },
+  drum: (c, b, k) => { for (const r of [1, .6]) { c.beginPath(); for (let i = 0; i <= 24; i++) { const a = i / 24 * TAU, q = (40 + k * 160) * r * (i % 2 ? .9 : 1.06); c.lineTo(b.x + Math.cos(a) * q, b.y + Math.sin(a) * q); } c.lineWidth = 5; c.strokeStyle = '#ffd6a0'; c.stroke(); } },
+  dirt: (c, b, k) => { for (let i = 0; i < 8; i++) { const a = -Math.PI * (i + .5) / 8; circ(c, b.x + Math.cos(a) * k * 70, b.y + Math.sin(a) * k * 70 + k * k * 40, 6, '#8a6040'); } },
+};
+// Icons: the four gadgets, and each trick as a small picture for the briefing (ic('arcK:balloon')).
+ICON.fan = c => {
+  line(c, [0, .1, 0, .78], '#aeb9d0', .16); ell(c, 0, .82, .5, .13, '#aeb9d0'); circ(c, 0, -.22, .72, '#22306e');
+  for (let i = 0; i < 3; i++) { c.save(); c.translate(0, -.22); c.rotate(i * TAU / 3 + .3); ell(c, 0, -.34, .2, .32, '#7fd0ff'); c.restore(); }
+  circ(c, 0, -.22, .13, '#ffd24a'); c.lineWidth = .08; c.strokeStyle = '#dfe6f5'; c.beginPath(); c.arc(0, -.22, .72, 0, TAU); c.stroke();
+};
+ICON.honey = c => {
+  ell(c, 0, .6, .92, .3, '#f2b93b'); ell(c, -.35, .52, .3, .08, '#ffe08a');
+  rr(c, -.44, -.62, .88, .95, .3); c.fillStyle = '#c8813a'; c.fill(); ell(c, 0, -.62, .5, .14, '#8a5a2a');
+  rr(c, -.3, -.25, .6, .3, .08); c.fillStyle = '#fff6da'; c.fill(); ell(c, .32, -.38, .1, .24, '#f2b93b');
+};
+ICON.seesaw = c => {
+  poly(c, [-.34, .82, .34, .82, 0, .22], '#c8813a');
+  c.save(); c.translate(0, .16); c.rotate(-.32); rr(c, -.95, -.09, 1.9, .18, .06); c.fillStyle = '#e8c984'; c.fill();
+  line(c, [-.72, -.09, -.72, -.38], '#8a6a3a', .09); line(c, [.72, -.09, .72, -.38], '#8a6a3a', .09); c.restore();
+  starPath(c, .62, -.72, .24, .1, 5); c.fillStyle = '#ffd24a'; c.fill();
+};
+ICON.drum = c => {
+  ell(c, 0, .62, .64, .2, '#a8352a'); rr(c, -.64, -.22, 1.28, .84, .08); c.fillStyle = '#e0553f'; c.fill();
+  line(c, [-.6, -.15, -.3, .55, 0, -.15, .3, .55, .6, -.15], '#ffd24a', .08); ell(c, 0, -.22, .64, .2, '#fff6da');
+  line(c, [-.82, -.95, -.18, -.36], '#c8813a', .11); line(c, [.82, -.95, .18, -.36], '#c8813a', .11); circ(c, -.82, -.95, .11, '#fff6da'); circ(c, .82, -.95, .11, '#fff6da');
+};
+const ARC_ICON = { balloon: [-.25, .95, .0085], stilts: [-.05, .95, .013], twins: [.08, .97, .0122], dig: [.08, .55, .0142] };
+ICON.arcK = (c, k) => { const [x, y, s] = ARC_ICON[k]; arcMag(c, x, y, s, 0, { m: { kind: k, d: 0 }, dir: 1, face: 'sly', pose: 'stand' }); };
+
+// The briefing: a new trick is introduced on its first Night; on the other Nights from 10 the owl names tonight's tricks.
+const ARC_INTRO = { 9: 'balloon', 13: 'stilts', 17: 'twins', 21: 'dig' };
+function arcBrief(n) {
+  if (n < 9) return null;
+  if (n === 25) return { text: t('arc_b25'), pics: Object.keys(ARC_GADGET).map(k => 'arcK:' + k) };
+  if (ARC_INTRO[n]) return { text: t('arc_b' + n), pics: ['arcK:' + ARC_INTRO[n], ARC_GADGET[ARC_INTRO[n]]] };
+  const ks = [...new Set(arcKinds(n))];
+  return ks.length > 1 ? { text: t('arc_kmix'), pics: ks.map(k => 'arcK:' + k) } : { text: t('arc_k' + ks[0]), pics: ['arcK:' + ks[0], ARC_GADGET[ks[0]]] };
+}
 // ---------- The Baron's Night: Baron von Shiny's silly three-step plan falls apart, act by act ----------
-// go('boss', { then }) plays an owl intro, three acts and a finale; the result dialog's button calls then() (default: the hub).
+// go('boss', { then }) plays an owl intro, three acts and a finale; the result dialog's button calls then() (default: the hub),
+// after the next chapter of the Baron's story when one is due (src/95-saga.js).
 // Each act asks for one thing. A wrong choice is never a failure: a short funny moment, one tip from the owl, and the same
 // act goes on. Nothing is timed: every act waits for the player.
 // Progress of one animation step: eased, or complete at once when the player asked for reduced motion.
@@ -4668,7 +5919,7 @@ scenes.boss = {
     burst(V.w / 2, V.h * .35, 40, { colors: ['#ffd86b', '#fff', '#ff9ecb', '#7fd0ff'], speed: 320, life: 1.4, kind: 'star', size: 9 });
     owlSay(t('boss_win'), { title: t('s_boss'), stars: this.stars, mood: 'cheer', quiet: true,
       html: stickerHtml(this.fresh ? 'm6' : '') + `<div class="pics"><span class="pill pop">${ic('beam', 22)}<b>+${this.stars * 10}</b></span></div>`,
-      acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => this.then() }] });
+      acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => sagaAfter(this.then) }] });
   },
   draw() {
     const G = this.geo(), t0 = V.t, k = t0 - this.at, ph = this.ph, [yL, yR] = this.boughs(G);
@@ -4864,6 +6115,261 @@ scenes.boss = {
     if (!lift) bossSplat(ctx, XC, true);   // he sits in the cream
     if (k >= 6) [-30, 0, 30].forEach((d, i) => magpie(ctx, lerp(G.R + 60 + d, XC + d, mq) + off, 0, .72, t0 + i, { dir: off ? 1 : -1, pose: mq < 1 || off ? 'walk' : 'stand', face: 'joy' }));
     this.anchor = [XC + off - 18, by - 100];
+  },
+};
+// ---------- The Baron's story: three chapters after his Nights, ending with his Museum of Shiny Things ----------
+// go('saga', { ch: 1 | 2 | 3, then }) shows that chapter's three panels one at a time, like the story strips of
+// src/88-story.js, whose page turning, keys, taps and layout it borrows. After the last panel the chapter is saved in
+// S.saga and then() is called; chapter 3 first gives the Baron's present. At S.saga = 3 isBoss() is false for good.
+
+// After a won Baron's Night the next chapter comes once its Night is reached (10, 20, 30), one per Night; otherwise the
+// Night simply goes on.
+function sagaAfter(then) { if (S.saga < 3 && S.night >= 10 * (S.saga + 1)) go('saga', { ch: S.saga + 1, then }); else then(); }
+
+// ----- Panel pieces, drawn in the story strips' 360 x 300 box with the ground at y = 255 -----
+// The Baron's collection, one thing each, drawn around (0, 0) about 2 across: a spoon, a button, a key, a marble,
+// a hand mirror, a bell, a foil star, a ring.
+const SAGA_THINGS = [
+  c => { line(c, [0, -.1, .05, 1], '#c9d2e6', .24); ell(c, 0, -.42, .4, .56, '#e4eaf6'); ell(c, -.13, -.52, .1, .24, '#fff'); },
+  c => { circ(c, 0, 0, .82, '#ffcf4a'); circ(c, 0, 0, .6, '#f2b93b'); for (const [x, y] of [[-.2, -.2], [.2, -.2], [-.2, .2], [.2, .2]]) circ(c, x, y, .11, '#7a4c00'); },
+  c => { c.beginPath(); c.arc(-.55, 0, .34, 0, TAU); c.lineWidth = .22; c.strokeStyle = '#ffcf4a'; c.stroke(); line(c, [-.21, 0, .95, 0, .95, .34], '#ffcf4a', .22); line(c, [.62, 0, .62, .28], '#ffcf4a', .2); },
+  c => { circ(c, 0, 0, .72, '#3f8fe8'); c.beginPath(); c.arc(0, 0, .42, .3, 2.7); c.lineWidth = .18; c.strokeStyle = '#9fe0ff'; c.stroke(); circ(c, -.26, -.28, .16, '#fff'); },
+  c => { line(c, [0, .45, 0, 1.15], '#c9a25a', .28); ell(c, 0, -.15, .66, .76, '#e0b85a'); ell(c, 0, -.15, .5, .6, '#bfe6ff'); line(c, [-.26, 0, .12, -.46], '#fff', .12); },
+  c => drawIcon(c, 'bell', 0, 0, 1.9),
+  c => { starPath(c, 0, 0, .95, .42, 5); c.fillStyle = '#e4eaf6'; c.fill(); c.lineWidth = .1; c.strokeStyle = '#8f9ab8'; c.stroke(); },
+  c => { c.beginPath(); c.arc(0, .18, .55, 0, TAU); c.lineWidth = .22; c.strokeStyle = '#ffd24a'; c.stroke(); circ(c, 0, -.42, .27, '#e8436a'); circ(c, -.07, -.5, .08, '#fff'); },
+];
+function sagaThing(c, kind, x, y, s, r = 0) { c.save(); c.translate(x, y); c.rotate(r); c.scale(s, s); SAGA_THINGS[kind % 8](c); c.restore(); }
+// A four-point glint that comes and goes; with reduced motion it simply stays lit.
+function sagaGlint(c, x, y, r, T, i) {
+  const a = still() ? .8 : Math.max(0, Math.sin(T * 2.3 + i * 2.1));
+  if (a < .05) return;
+  starPath(c, x, y, r * (.4 + .6 * a), r * .16, 4); c.fillStyle = `rgba(255,255,240,${.35 + .65 * a})`; c.fill();
+}
+// A heap of shiny things, bottom centre at (x, y), w wide and h high. The same things lie in the same places every time
+// (hash, shifted by `seed`); the ones further back are drawn first, and every third one glints.
+function sagaHeap(c, x, y, w, h, T, n, seed = 0) {
+  c.beginPath(); c.ellipse(x, y, w / 2, h * .85, 0, Math.PI, TAU); c.fillStyle = '#4a3c28'; c.fill();
+  const s = w / 14, at = [...Array(n)].map((_, i) => { const u = hash(seed + i * 3 + 1) * 1.7 - .85; return [x + u * w / 2, y - h * Math.sqrt(1 - u * u) * (.92 - .8 * hash(seed + i * 3 + 2)), i]; }).sort((a, b) => a[1] - b[1]);
+  for (const [px, py, i] of at) sagaThing(c, i + seed, px, py, s * (.8 + .4 * hash(seed + i * 3 + 3)), hash(seed + i) * 3 - 1.5);
+  for (const [px, py, i] of at) if (i % 3 === 0) sagaGlint(c, px + s * .5, py - s * .5, s * 1.3, T, i + seed);
+}
+// The Baron's nest from close by, rim centre at (x, y), w wide: the back of the bowl, what is in it (`inner`), the woven front.
+function sagaNest(c, x, y, w, inner) {
+  ell(c, x, y, w / 2, w * .1, '#3e2a18');
+  inner();
+  c.beginPath(); c.ellipse(x, y, w / 2 + 6, w * .22, 0, 0, Math.PI); c.fillStyle = '#6b4a2e'; c.fill();
+  for (let r = 0; r < 2; r++) for (let i = 0; i < 9; i++) { const tx = x + (i - 4) * w * .1, ty = y + 5 + r * w * .07; line(c, [tx - w * .05, ty + (i % 2) * 6, tx + w * .05, ty + 6 - (i % 2) * 6], '#8a6a44', 3); }
+}
+// Something held in the beak of a standing magpie whose feet are at (x, y) (scale s, facing dir): thing() draws around
+// (0, 0), the tip of the beak, in the bird's units and the right way round.
+function sagaBeak(c, x, y, s, dir, thing) { c.save(); c.translate(x + dir * 47 * s, y - 51 * s); c.scale(s, s); thing(c); c.restore(); }
+// A tear by the eye of a standing magpie whose feet are at (x, y), on the side away from the Baron's monocle.
+function sagaTear(c, x, y, s, dir) { c.save(); c.translate(x + dir * 14 * s, y - 44 * s); c.scale(3.6 * s, 3.6 * s); c.beginPath(); SHAPES.drop(c); c.fillStyle = '#7fd0ff'; c.fill(); c.restore(); }
+// The lost cog from the Guess-o-Matic, polished: gold, with a red bow and a glint, centre at (x, y), radius r.
+function sagaCog(c, x, y, r, T) {
+  glow(c, x, y, r * 2.6, '255,216,107', .4);
+  bossCog(c, x, y, r, 0, '#ffd24a');
+  ell(c, x - r * .42, y - r * 1.02, r * .42, r * .26, '#e8436a', -.45); ell(c, x + r * .42, y - r * 1.02, r * .42, r * .26, '#e8436a', .45); circ(c, x, y - r * .98, r * .17, '#c0392b');
+  sagaGlint(c, x + r * .45, y - r * .3, r, T, 4);
+}
+// An idea: a light bulb with rays, centre at (x, y), grown by p (0..1) as it pops up.
+function sagaIdea(c, x, y, p, T) {
+  c.save(); c.translate(x, y); c.scale(p, p);
+  glow(c, 0, 0, 64, '255,230,140', .6);
+  for (let i = 0; i < 7; i++) { const a = -Math.PI + i * Math.PI / 6, r = 31 + (still() ? 0 : Math.sin(T * 6 + i) * 2); line(c, [Math.cos(a) * r, Math.sin(a) * r, Math.cos(a) * (r + 11), Math.sin(a) * (r + 11)], '#ffe9a3', 4); }
+  circ(c, 0, -4, 20, '#ffe27a'); c.beginPath(); c.arc(0, -4, 13, -2.7, -1.7); c.lineWidth = 3.5; c.lineCap = 'round'; c.strokeStyle = '#fff'; c.stroke();
+  rr(c, -9, 14, 18, 13, 3); c.fillStyle = '#aeb9d0'; c.fill(); line(c, [-9, 19, 9, 19], '#7d879c', 2); line(c, [-9, 23, 9, 23], '#7d879c', 2);
+  c.restore();
+}
+// The secret building site (bottom centre at x, y): a frame of posts and beams with a lantern, a sheet over the front,
+// and a magpie on the top beam who hammers.
+function sagaSite(c, x, y, T) {
+  for (const px of [-46, 0, 46]) line(c, [x + px, y, x + px, y - 116], '#a8703f', 8);
+  line(c, [x - 54, y - 114, x + 54, y - 114], '#a8703f', 8); line(c, [x - 52, y - 62, x + 52, y - 62], '#a8703f', 7);
+  line(c, [x - 58, y - 114, x, y - 152, x + 58, y - 114], '#a8703f', 7);
+  drawIcon(c, 'lamp', x - 23, y - 90, 26);
+  poly(c, [x - 50, y - 60, x + 50, y - 60, x + 57, y, x - 57, y], '#dfe6f5');
+  for (const fx of [-32, -8, 16, 38]) line(c, [x + fx, y - 56, x + fx + 4, y - 3], '#b9c4d8', 2);
+  magpie(c, x + 8, y - 118, .62, T, { face: 'smug' });
+  c.save(); c.translate(x + 40, y - 152); c.rotate(still() ? .4 : .2 + Math.max(0, Math.sin(T * 9)) * .7); drawIcon(c, 'hammer', 0, 0, 22); c.restore();
+}
+// An invitation: an envelope whose wax seal shows who it is for (an icon), centre at (x, y), scaled by s, turned by r.
+function sagaLetter(c, x, y, s, seal, r = 0) {
+  c.save(); c.translate(x, y); c.rotate(r); c.scale(s, s);
+  rr(c, -32, -21, 64, 42, 5); c.fillStyle = '#fff6da'; c.fill(); c.lineWidth = 2.5; c.strokeStyle = '#c9a25a'; c.stroke();
+  line(c, [-30, -19, 0, 4, 30, -19], '#c9a25a', 2.5);
+  circ(c, 0, 5, 14, '#e8503a'); circ(c, 0, 5, 11, '#fff6da'); drawIcon(c, seal, 0, 5, 19);
+  c.restore();
+}
+// The Museum of Shiny Things (bottom centre at x, y): steps, a hall with columns, a roof with a big glinting star, and
+// the cut ribbon by the door. `lit` 0..1: the fireflies have lit the windows and the open door.
+function sagaMuseum(c, x, y, lit, T) {
+  c.save(); c.translate(x, y);
+  glow(c, 0, -70, 170, '255,216,107', .4 * lit);
+  rr(c, -100, -12, 200, 12, 3); c.fillStyle = '#7d879c'; c.fill(); rr(c, -92, -22, 184, 12, 3); c.fillStyle = '#aeb9d0'; c.fill();
+  rr(c, -84, -128, 168, 108, 4); c.fillStyle = '#5a4685'; c.fill();
+  const win = `rgba(255,216,107,${.3 + .7 * lit})`;
+  for (const wx of [-52, 52]) { rr(c, wx - 13, -104, 26, 46, 13); c.fillStyle = win; c.fill(); }
+  rr(c, -20, -84, 40, 62, 20); c.fillStyle = win; c.fill();
+  for (const cx of [-74, -30, 30, 74]) { rr(c, cx - 6, -122, 12, 100, 3); c.fillStyle = '#e4dcf5'; c.fill(); rr(c, cx - 9, -130, 18, 8, 2); c.fill(); }
+  poly(c, [-106, -126, 0, -178, 106, -126], '#4a3470'); line(c, [-106, -126, 0, -178, 106, -126, -106, -126], '#ffd24a', 3);
+  starPath(c, 0, -146, 17, 6, 4); c.fillStyle = '#ffd24a'; c.fill(); sagaGlint(c, 9, -156, 13, T, 5);
+  line(c, [-20, -50, -30, -36, -25, -24], '#e8436a', 4); line(c, [20, -50, 30, -36, 25, -24], '#e8436a', 4);
+  c.restore();
+}
+
+// The nine panels: [chapter][panel](c, T, k), like storyPanels. T is the clock (frozen with reduced motion), k the
+// seconds since the panel appeared. SAGA_DARK: panels without the story strips' moon (a darker sky).
+const SAGA_DARK = [[0, 1, 1], [0, 0, 1], [0, 0, 0]];
+const SAGA_PANELS = [
+  [ // 1. The Baron's Nest
+    (c, T, k) => {   // his patched balloon drifts home past the warm treehouse; he looks back at it, all alone
+      storyHouse(c, 52, 255, .75);
+      storyNest(c, 314, 255, 1.05, T, 0, () => sagaHeap(c, 0, -128, 96, 26, T, 10, 7));
+      const q = still() ? 1 : ease(clamp(k / 4, 0, 1));
+      bossBalloon(c, lerp(118, 184, q), 210 + (still() ? 0 : Math.sin(T * 1.4) * 4), .92, T, { baron: true, face: 'sad' });
+    },
+    (c, T) => {   // his nest from close by: heaps of shiny things, and the Baron alone among them
+      sagaNest(c, 180, 228, 340, () => {
+        sagaHeap(c, 92, 232, 150, 84, T, 18, 20); sagaHeap(c, 272, 232, 160, 104, T, 20, 60);
+        bossBaron(c, 182, 238, 1, T, { face: 'worry' });
+      });
+    },
+    (c, T) => {   // under a big moon he holds a spoon up to the light in his beak; a tear: there is nobody to show it to
+      glow(c, 292, 62, 130, '255,240,200', .3); circ(c, 292, 62, 34, '#fff3c4'); circ(c, 280, 52, 6, '#f2e3a6'); circ(c, 302, 76, 4.5, '#f2e3a6');
+      storyHouse(c, 36, 255, .5);
+      sagaNest(c, 200, 240, 330, () => {
+        sagaHeap(c, 106, 242, 150, 64, T, 16, 80);
+        bossBaron(c, 226, 246, 1.15, T, { face: 'sad' }); sagaTear(c, 226, 246, 1.15, 1);
+        sagaBeak(c, 226, 246, 1.15, 1, () => { c.rotate(.5 + (still() ? 0 : Math.sin(T * 1.3) * .15)); sagaThing(c, 0, 0, -13, 13); sagaGlint(c, -1, -20, 15, T, 2); });
+      });
+    },
+  ],
+  [ // 2. A Secret Plan
+    (c, T, k) => {   // Zip flies in with the lost cog, polished and tied with a bow; the Baron peeks out of his nest
+      line(c, [420, 120, 250, 188], '#3a2716', 16); line(c, [330, 156, 356, 92], '#3a2716', 8); circ(c, 360, 82, 30, '#1f5a3c'); circ(c, 326, 104, 18, '#1a4c33');
+      sagaNest(c, 262, 182, 140, () => { sagaHeap(c, 290, 184, 72, 30, T, 8, 100); bossBaron(c, 236, 206, .9, T, { dir: -1, face: 'puppy' }); });
+      const q = still() ? 1 : ease(clamp(k / 2.2, 0, 1)), zx = lerp(-40, 92, q), zy = 92 + (still() ? 0 : Math.sin(T * 3) * 4);
+      zip(c, zx, zy, 1.5, T, 1);
+      line(c, [zx + 44, zy - 10, zx + 50, zy + 22], '#e8436a', 2);
+      sagaCog(c, zx + 50, zy + 40, 17, T);
+    },
+    (c, T, k) => {   // the Baron holds the shining cog up high, and an idea lights up over his head
+      sagaHeap(c, 72, 256, 150, 60, T, 14, 120);
+      zip(c, 122 + (still() ? 0 : Math.sin(T * 1.7) * 10), 128, 1.3, T, 1);
+      bossBaron(c, 250, 255, 1.2, T, { dir: -1, face: 'joy' });
+      sagaBeak(c, 250, 255, 1.2, -1, () => { line(c, [0, 0, -2, 14], '#e8436a', 2); sagaCog(c, -2, 30, 13, T); });
+      const p = still() ? 1 : ease(clamp((k - .5) / .45, 0, 1));
+      if (p > 0) sagaIdea(c, 226, 76, p, T);
+    },
+    (c, T, k) => {   // at night two magpies carry a long plank to a secret building site; the owl raises an eyebrow
+      sagaSite(c, 296, 255, T);
+      const q = still() ? 1 : ease(clamp(k / 2.6, 0, 1)), dx = lerp(-70, 0, q), walk = !still() && k < 2.6;
+      for (const [x, i] of [[132, 0], [196, 1]]) magpie(c, x + dx, 255, .78, T + i, { pose: walk ? 'walk' : 'stand', face: 'smug' });
+      rr(c, 102 + dx, 204, 128, 9, 2); c.fillStyle = '#c8935a'; c.fill();
+      owl(c, 40, 255, .72, T, 'idle', false); storyBrow(c, 40, 255, .72, T);
+      circ(c, 64, 172, 4, '#fff6da'); circ(c, 74, 160, 6, '#fff6da'); ell(c, 94, 134, 20, 17, '#fff6da');
+      c.font = '900 26px ui-rounded, "Segoe UI", Roboto, sans-serif'; c.textAlign = 'center'; c.fillStyle = '#4a3470'; c.fillText('?', 94, 143);
+    },
+  ],
+  [ // 3. The Grand Opening
+    (c, T, k) => {   // the Baron raises his hat; Zip carries an invitation to the owl, and one comes straight to you
+      storyGate(c, 62, 255); owl(c, 62, 255, .8, T, 'cheer');
+      bossBaron(c, 306, 255, 1, T, { dir: -1, face: 'joy', tip: still() ? 1 : Math.sin(Math.PI * clamp(k / 1.6, 0, 1)) });
+      const q = still() ? 1 : ease(clamp(k / 2, 0, 1)), zx = lerp(250, 150, q);
+      zip(c, zx, 92, 1.2, T, -1); line(c, [zx - 36, 84, zx - 36, 98], '#e8436a', 2); sagaLetter(c, zx - 36, 112, .62, 'owlI', .1);
+      const g = still() ? 1 : ease(clamp((k - .6) / .9, 0, 1));
+      sagaLetter(c, 196, 214 - 22 * g, .7 + .5 * g, 'rank:3', -.06);
+    },
+    (c, T, k) => {   // the museum opens: friends of the Watchwood arrive, and the fireflies stream in to light the hall
+      sagaMuseum(c, 256, 255, still() ? 1 : clamp(k / 2.4, 0, 1), T);
+      [[40, 0, .5], [92, 1, .48], [140, 2, .44]].forEach(([x, kind, s], i) => critter(c, x, 256, s, T + i, kind));
+      for (let i = 0; i < 16; i++) {
+        const u = still() ? (i + .5) / 16 : (T * .18 + i / 16) % 1, v = 1 - u, x = -10 * v * v + 240 * v * u + 256 * u * u, y = 6 * v * v - 40 * v * u + 206 * u * u;
+        glow(c, x, y, 12, '255,216,107', .55); circ(c, x, y, 2.6, '#fff3a0');
+      }
+    },
+    (c, T, k) => {   // inside: the cog has the place of honour, friends admire, and the Baron raises his hat to them
+      c.fillStyle = '#35295a'; c.fillRect(-300, -300, 960, 556);
+      c.fillStyle = '#7a5434'; c.fillRect(-300, 255, 960, 400);
+      for (let x = -290; x < 660; x += 36) line(c, [x, 256, x - 24, 400], '#68462a', 2);
+      // a garland of fireflies under the ceiling lights the hall
+      c.beginPath(); for (let i = 0; i <= 12; i++) c.lineTo(-20 + i * 33.3, 22 + 26 * Math.sin(i / 12 * Math.PI)); c.lineWidth = 1.5; c.strokeStyle = '#8a7ab0'; c.stroke();
+      for (let i = 0; i <= 12; i++) { const x = -20 + i * 33.3, y = 26 + 26 * Math.sin(i / 12 * Math.PI); glow(c, x, y, 22, '255,216,107', still() ? .5 : .4 + .15 * Math.sin(T * 2 + i)); circ(c, x, y, 3, '#fff3a0'); }
+      // three plinths: the hand mirror, the cog on the tallest one, the bell
+      for (const [px, ph, kind] of [[100, 50, 4], [182, 72, -1], [264, 50, 5]]) {
+        rr(c, px - 21, 255 - ph, 42, ph, 3); c.fillStyle = '#cfc3ea'; c.fill(); rr(c, px - 26, 249 - ph, 52, 9, 3); c.fillStyle = '#efe8fa'; c.fill();
+        if (kind < 0) sagaCog(c, px, 230 - ph, 18, T); else { sagaThing(c, kind, px, 228 - ph, 16); sagaGlint(c, px + 8, 218 - ph, 13, T, kind); }
+      }
+      owl(c, 38, 266, .72, T, 'cheer');
+      zip(c, 226 + (still() ? 0 : Math.sin(T * 1.2) * 16), 104, 1.1, T, -1);
+      critter(c, 144, 298, .44, T, 1); critter(c, 222, 298, .4, T + 1, 3);
+      bossBaron(c, 318, 268, .9, T, { dir: -1, face: 'joy', tip: still() ? 1 : ease(clamp(k / .9, 0, 1)) });
+    },
+  ],
+];
+
+scenes.saga = {
+  // the story strip's page turning (Next after the third panel calls then), keys, sparkles on a tap, and panel layout
+  next: scenes.story.next, key: scenes.story.key, down: scenes.story.down, rect: scenes.story.rect,
+  enter(o = {}) {
+    const ch = this.ch = clamp(o.ch | 0, 1, 3), then = o.then || (() => go('hub'));
+    this.i = 0;
+    music.mood(ch === 3 ? 'party' : 'night');
+    this.then = () => {
+      S.saga = Math.max(S.saga, ch);
+      if (ch < 3) { save(); return then(); }
+      // The Baron's present comes with the last chapter and is saved at once: moonbeams, and the crown when the
+      // wardrobe does not have it yet.
+      const crown = has(WEAR, 'crown') && !S.own.crown;
+      S.beams += 50; if (crown) S.own.crown = 1;
+      save(); refreshHud(); sfx.fanfare();
+      burst(V.w / 2, V.h * .35, 40, { colors: ['#ffd86b', '#fff', '#c9a0ff', '#7fd0ff'], speed: 320, life: 1.4, kind: 'star', size: 9 });
+      owlSay(t('saga_gift'), { title: t('s_boss'), mood: 'cheer', quiet: true,
+        html: `<div class="pics">${crown ? `<span class="pill pop">${ic('wear:crown', 30)}<b>${esc(t('w_crown'))}</b></span>` : ''}<span class="pill pop">${ic('beam', 22)}<b>+50</b></span></div>`,
+        acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: then }] });
+    };
+    this.hud = hud(() => go('home'), '', true);   // to the title: the Night menu would bring a chapter that was cut short straight back
+    // The caption card is the story strip's; three caption lines are reserved, so the panel keeps its size.
+    this.box = $('.dlg', add(`<div class="bar badgebar"><div class="dlg" style="width:min(26em,100%)"><h2>${esc(t('saga_t' + ch))}</h2>
+      <p id="sgCap" style="margin:.2em 0;font-size:1.15em;font-weight:800;min-height:3.9em;display:flex;align-items:center;justify-content:center"></p>
+      <div class="pics" id="sgDots" aria-hidden="true"></div>
+      <div class="acts"><button class="btn go big" id="sgNext">${ic('play', 30)}${esc(t('st_next'))}</button></div></div></div>`));
+    $('#sgNext').onclick = () => this.next();
+    $('#sgNext').focus({ preventScroll: true });
+    this.show();
+  },
+  show() {
+    this.at = V.t;
+    const cap = t(`saga_c${this.ch}${this.i + 1}`);
+    $('#sgCap').textContent = cap;
+    // page dots as in the story strips: pages seen are filled, the current one is bigger
+    $('#sgDots').innerHTML = [0, 1, 2].map(j => { const z = j === this.i ? 20 : 14; return `<span style="width:${z}px;height:${z}px;border-radius:50%;border:3px solid var(--gold);background:${j <= this.i ? 'var(--gold)' : 'none'}"></span>`; }).join('');
+    say(cap); speak(cap);
+    if (this.i < 2) return sfx.pop();
+    // each chapter's last panel lands with its own sound: a wistful one, hammer taps, a sparkle
+    const p = this.rect();
+    [() => sfx.wish(), () => [0, .24, .48].forEach(w => tone(250, .07, 'square', .08, w, 170)), () => sfx.sparkle()][this.ch - 1]();
+    burst(p.x + p.w / 2, p.y + p.h * .5, 24, [{ colors: ['#fff6da', '#ffe9a3'], speed: 110, g: 20, life: 1.4, size: 6 },
+      { colors: ['#e8c984', '#c8935a'], speed: 160, size: 5 }, { kind: 'star', colors: ['#ffd86b', '#fff', '#c9a0ff', '#7fd0ff'], speed: 240, size: 8 }][this.ch - 1]);
+  },
+  // the story strip's frame and box, with this chapter's panels
+  draw() {
+    const T = still() ? 1 : V.t, k = still() ? 99 : V.t - this.at, p = this.rect(), pop = still() ? 1 : ease(clamp(k / .35, 0, 1)), i = Math.min(this.i, 2);
+    this.panel = [p.x, p.y, p.w, p.h];
+    drawSky(ctx, T); fireflies(ctx, T, 8);
+    ctx.save(); ctx.translate(p.x + p.w / 2, p.y + p.h / 2); ctx.scale(.94 + .06 * pop, .94 + .06 * pop); ctx.translate(-p.w / 2, -p.h / 2);
+    rr(ctx, 0, 7, p.w, p.h, 18); ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fill();
+    rr(ctx, 0, 0, p.w, p.h, 18); ctx.fillStyle = '#fff6da'; ctx.fill();
+    ctx.save(); rr(ctx, 6, 6, p.w - 12, p.h - 12, 13); ctx.clip();
+    const u = Math.min((p.w - 12) / 360, (p.h - 12) / 300);
+    ctx.translate(p.w / 2 - 180 * u, p.h - 6 - 300 * u); ctx.scale(u, u);
+    storyBg(ctx, T, SAGA_DARK[this.ch - 1][i]);
+    SAGA_PANELS[this.ch - 1][i](ctx, T, k);
+    ctx.restore();
+    if (pop < 1) { rr(ctx, 6, 6, p.w - 12, p.h - 12, 13); ctx.fillStyle = `rgba(255,246,218,${1 - pop})`; ctx.fill(); }
+    ctx.restore();
   },
 };
 // ---------- Toy mode: Be the Magpie (the Gate Check seen from the other side: why badge and password stay secret) ----------
@@ -5386,9 +6892,16 @@ scenes.pie = {
   S.briefed = int(S.briefed, 0, S.night); S.testStar |= 0; S.gateStar |= 0; S.boss |= 0; S.fooled |= 0;
   S.name = String(S.name || '').slice(0, 16); S.mute = !!S.mute; S.promo = !!S.promo; S.voice = S.voice !== false;
   S.day = S.day < 0 ? +(S.night > 1) : S.day ? 1 : 0;   // a career from before there were days meets its first morning at once
-  for (const k of ['stk', 'own', 'gifts', 'bed']) if (!S[k] || typeof S[k] !== 'object' || Array.isArray(S[k])) S[k] = {};
+  const str = (v, re) => typeof v === 'string' && re.test(v) ? v : '';
+  for (const k of ['stk', 'own', 'gifts', 'bed', 'pals', 'visit', 'mem']) if (!S[k] || typeof S[k] !== 'object' || Array.isArray(S[k])) S[k] = {};
   for (const k in S.gifts) if (GIFTS.includes(k)) S.gifts[k] = 1; else delete S.gifts[k];
   S.bedN = int(S.bedN, 0, 5); S.bed = { d: String(S.bed.d || '').slice(0, 10), n: int(S.bed.n, 0, 99), more: int(S.bed.more, 0, 99) };
+  // the newer fields: counters in range, ids and dates in their plain shapes (they are used as keys and never shown as HTML)
+  S.caught = int(S.caught, 0, 1e9); S.lit = int(S.lit, 0, 1e6); S.grow = int(S.grow, 0, 3); S.eye = int(S.eye, 0, 3); S.bdayY = int(S.bdayY, 0, 9999); S.saga = int(S.saga, 0, 3);
+  for (const k in S.pals) if (/^[a-z0-9]{1,12}$/.test(k) && S.pals[k]) S.pals[k] = 1; else delete S.pals[k];
+  S.helper = str(S.helper, /^[a-z0-9]{0,12}$/); S.flag = str(S.flag, /^[0-9a-z]{0,200}$/); S.bday = str(S.bday, /^\d{1,2}-\d{1,2}$/); S.memD = str(S.memD, /^[\d-]{0,10}$/); S.sup = str(S.sup, /^\d{0,24}$/);
+  S.visit = { d: str(S.visit.d, /^[\d-]{0,10}$/), done: S.visit.done ? 1 : 0, n: int(S.visit.n, 0, 1e6) };
+  S.mem = { d: str(S.mem.d, /^[\d-]{0,10}$/), k: str(S.mem.k, /^[a-z]{0,10}$/) };
   for (const k in S.stk) if (has(STK, k)) S.stk[k] = S.stk[k] === 2 ? 2 : 1; else delete S.stk[k];
   for (const k in S.own) if (has(WEAR, k)) S.own[k] = 1; else delete S.own[k];
   for (const k of ['hat', 'scarf', 'zhat', 'zscarf']) S[k] = has(WEAR, S[k]) && has(S.own, S[k]) && WEAR[S[k]].hat === k.endsWith('hat') ? S[k] : '';   // only things this player owns

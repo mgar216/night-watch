@@ -29,7 +29,31 @@ Object.assign(PRE, {
   paint() { S.look.boat = 2; S.look.col = 3; S.look.hat = 'wizard'; },
   still() { Object.defineProperty(calm, 'matches', { value: true }); },
   learn() { S.tut = {}; },
+  // the Night Watch's save: how many Nights went by without a lost jar (one lantern each)
+  lit0() { nwSave = { ...nwSave, lit: 0 }; },
+  lit9() { nwSave = { ...nwSave, lit: 9 }; },
+  lit24() { nwSave = { ...nwSave, lit: 24 }; },
+  // all six silly gadgets stand on the Night Watch's tree: their six lures are in the tackle box
+  nwlures() { nwSave.items = ['peel', 'tramp', 'tickle', 'bubbler', 'cannon', 'disco'].map((g, m) => ({ t: g, m })); nwlSync(); },
 });
+// Lures from the Night Watch: exactly one per silly gadget on its tree, nothing from a damaged save, free and never for sale,
+// and gone with the gadget (the worm is tied on again).
+const nwlChecks = check => {
+  const got = () => Object.values(ITEMS).filter(it => it.nw).map(it => it.nw).sort().join(), all = ['peel', 'tramp', 'tickle', 'bubbler', 'cannon', 'disco'], bought = [];
+  on('buy', d => bought.push(d.id));
+  nwSave.items = [{ t: 'peel', m: 0 }, { t: 'disco', m: 4 }]; nwlSync(); check(got() === 'disco,peel', 'the peel and the disco ball give exactly their two lures: ' + got());
+  for (const g of ['x', [null, { t: 'zzz' }], null, 7]) { nwSave.items = g; nwlSync(); check(got() === '', 'no gadget lures from ' + JSON.stringify(g) + ': ' + got()); }
+  nwSave.items = [{ t: 'peel', m: 0 }]; nwlSync(); S.rig.lure = 'nwl_peel'; check(rig().lure.id === 'nwl_peel', 'a gadget lure can be tied on');
+  nwSave.items = []; nwlSync(); check(rig().lure.id === 'worm' && S.rig.lure === 'worm', 'without its gadget the lure goes and the worm is tied on again');
+  nwSave.items = all.map((g, m) => ({ t: g, m })); nwlSync(); check(got() === [...all].sort().join(), 'six gadgets give six lures: ' + got());
+  shopTab = 'lure'; if (scene === scenes.shop) scenes.shop.render(); else go('shop'); const m0 = S.moons; for (const g of all) scenes.shop.buy('nwl_' + g);
+  check(all.every(g => ITEMS['nwl_' + g].free && !owns('nwl_' + g) && !$(`[data-buy="nwl_${g}"]`) && !!$(`[data-use="nwl_${g}"]`)) && S.moons === m0 && !bought.length, 'gadget lures are free, have no price button and cannot be bought');
+  // lent lures do not fill the trophy of ten lures of one's own; each one names the shop lure it copies (the logbook falls back on it)
+  const own0 = S.own; S.own = { rod0: 1, line0: 1, reel0: 1, dough: 1, cricket: 1, corn: 1 };
+  check(!ACHS.lureLibrary.ok() && NWL.every(it => has(ITEMS, it.like) && !ITEMS[it.like].nw), 'lures lent by the Night do not fill the Lure Library, and each knows the shop lure it copies');
+  S.own = own0;
+  nwSave.items = []; nwlSync(); for (const g of all) scenes.shop.buy('nwl_' + g); check(S.moons === m0 && !bought.length && all.every(g => !owns('nwl_' + g)), 'nor once their gadget is gone');
+};
 
 // ----- Screen poses -----
 const tapAt = (x, y) => { hold.on = true; scene.down(x, y); hold.on = false; scene.up(x, y); };
@@ -50,6 +74,10 @@ Object.assign(POSES, {
   gate() { S.at = 'falls'; go('map'); sim(.3); tapPlace('chapel'); arrive('chapel'); },
   byday() { day = true; go(scene.name, scene.arg); if (scene.name === 'map') toast(t('day_start'), 60000); },   // the screen as it is on a day between two Nights
   locked() { tapPlace('creek'); },
+  lantap() { const q = LAN[0]; tapAt(mapSX(q.x), mapSY(q.y - 20)); },    // the first post's word
+  lancheck() { const out = []; let n = 0; lanChecks((ok, msg) => { n++; if (!ok || msg.includes('frames')) out.push((ok ? 'ok   ' : 'FAIL ') + msg); }); document.body.insertAdjacentHTML('beforeend', `<pre style="position:fixed;inset:0;z-index:99;margin:0;background:#fff;color:#000;font:12px monospace;white-space:pre-wrap">lantern checks: ${n}, failed: ${out.filter(s => s[0] === 'F').length}\n${out.join('\n')}</pre>`); },
+  // the tackle box scrolled to the gadget lures
+  nwlbox() { SP.box(true); $('[data-id="nwl_peel"]').scrollIntoView({ block: 'start' }); },
   // fishing
   shadow() { SP.card(SP.pop.findIndex(f => !f.decoy)); },
   known() { const f = SP.pop.find(q => !q.decoy); S.log[f.id] = { n: 1, best: 200, seen: 1 }; SP.card(SP.pop.indexOf(f)); },
@@ -74,6 +102,27 @@ Object.assign(POSES, {
   page() { go('book', { back: () => go('hub'), area: 'pond', sp: 'biscuit' }); },
   blank() { go('book', { back: () => go('hub'), area: 'chapel', sp: 'bell' }); },
 });
+// Lanterns on the map: as many posts lit as Nights without a lost jar (at most 24; garbage counts as none), a lit stretch walked
+// faster, a tap on a post that tells and a tap on a place that still walks, every post beside its way, inside the map and clear
+// of the places, and every water with a post nearest to it.
+const lanChecks = check => {
+  const lanAt = v => { nwSave = { ...nwSave, lit: v }; fresh(); go('map'); return LAN.filter(lanLit).length; };
+  for (const [v, n] of [[0, 0], [9, 9], [24, 24], [999, 24], ['x', 0], [-5, 0], [undefined, 0]]) { const got = lanAt(v); check(got === n && $('#lanPill b').textContent === n + '/24', `lit ${v}: ${n} posts lit, got ${got}`); }
+  const walk = v => { lanAt(v); mapGo('pond'); let f = 0; while (mapRt && f < 900) { scene.update(1 / 30); f++; } return S.at === 'pond' ? f : 1e9; };
+  const slow = walk(0), fast = walk(1);
+  check(fast < slow && slow / fast > 1.25 && slow / fast < 1.55, `the way to the pond lit takes ${fast} frames, unlit ${slow}`);
+  const told = k => [...document.querySelectorAll('.toast')].filter(n => n.textContent === t(k)).length, q0 = LAN[0];
+  for (const [v, k] of [[1, 'lan_on'], [0, 'lan_off']]) { lanAt(v); tapAt(mapSX(q0.x), mapSY(q0.y - 20)); tapAt(mapSX(q0.x), mapSY(q0.y - 20)); check(!mapRt && told(k) === 1 && !$('.veil'), `a tap on the first post says ${k} once, and nobody walks`); }
+  tapPlace('pond'); check(!!mapRt, 'a tap on the pond beside the first post still walks there');
+  const near = q => MAP_PLACES.reduce((b, n) => Math.hypot(q.x - MAP_NODE[n][0], q.y - MAP_NODE[n][1]) < Math.hypot(q.x - MAP_NODE[b][0], q.y - MAP_NODE[b][1]) ? n : b);
+  for (const q of LAN) check(mapDistPoly(q.x, q.y, q.e.pts) <= 13 && q.x > 20 && q.x < MAP_W - 20 && q.y > 50 && q.y < MAP_H - 10, `post ${q.i} stands beside its way, inside the map`);
+  for (const q of LAN) check(MAP_PLACES.every(n => Math.hypot(q.x - MAP_NODE[n][0], q.y - MAP_NODE[n][1]) > 44), `post ${q.i} keeps clear of the places (their marks and the Chief)`);
+  check(AREAS.every(a => LAN.some(q => near(q) === a.id)), 'every water has a post nearest to it');
+  nwSave = { ...nwSave, lit: 0 };
+  // The last tap left the Chief walking to the pond. The game's own frames go on while the suite waits for the server, so
+  // on a busy machine the walk would arrive and open the pond's dialog in the middle of later checks: stop it here.
+  mapRt = null; if (closeDlg) closeDlg();
+};
 
 (async () => {
   const mode = location.hash.slice(1).split(','), run = +new URLSearchParams(location.search).get('run') || 0;
@@ -221,6 +270,7 @@ Object.assign(POSES, {
     go('map'); sim(.2); mapAct(); check(!!$('.veil .btn.go') && !$('#dlgText').textContent.includes(t('gate1')), 'after a yes it never asks again'); clickDlg(0);
     mapToggle(); sim(1.5); mapToggle(); sim(1.5);
     S.at = 'tree'; go('map'); sim(.2); scene.key({ key: 'Enter', target: document.body }); check(scene.name === 'hub', 'Enter at the treehouse goes in, got ' + scene.name);
+    where = 'lanterns'; lanChecks(check);
     await note('map checked, problems so far: ' + out.errors.length);
 
     // --- the treehouse: shop, logbook, trophies, records, the save code ---
@@ -235,6 +285,7 @@ Object.assign(POSES, {
     const lock = $('[data-buy="rodp3"]'); check(!!lock && lock.disabled, 'a rod above the angler\'s rank is locked'); lock.click(); check(!owns('rodp3'), 'a locked rod cannot be bought');
     shopTab = 'lure'; scenes.shop.render(); const c0 = owns('cricket'); $('[data-buy="cricket"]').click(); check(owns('cricket') === c0 + ITEMS.cricket.pack, 'lures come in packs');
     check(!!shopLock(ITEMS.aurorajig), 'a top lure waits for its trophy');
+    where = 'gadget lures'; nwlChecks(check);
     where = 'trophies';
     const m1 = S.moons; emit('catch', { id: 'roach', area: 'pond', grams: 140, first: false, record: false, moons: 3, clean: true, jumps: 3, firstBite: false, tier: 1 });
     check(!!S.ach.softHands, 'Soft Hands for a fish that jumped three times'); const had = JSON.stringify(S.own);
@@ -255,6 +306,11 @@ Object.assign(POSES, {
     const low = () => [...document.querySelectorAll('.toast')].filter(n => n.textContent === t('day_low')).length;
     dayCatch = 4; dayTold = false; go('map'); check(low() === 0, 'four catches are not a full day yet');
     emit('catch', { id: 'perch' }); go('map'); check(low() === 1, 'after five catches the map says once that the sun is getting low');
+    // the day's note for the owl of the Night Watch: the fish so far; at the third fish it becomes a new note (supper)
+    const dayKey = 'firstlight.day' + (nwSlot ? '.' + (nwSlot + 1) : ''), dayNote = () => JSON.parse(localStorage.getItem(dayKey) || '{}');
+    dayCatch = 1; emit('catch', { id: 'perch' }); const n2 = dayNote(); emit('catch', { id: 'perch' }); const n3 = dayNote();
+    check(n2.n === 2 && n3.n === 3 && Number.isSafeInteger(n2.id) && n3.id === n2.id + 1, 'the note counts the day\'s fish and is a new note from the third on: ' + JSON.stringify([n2, n3]));
+    localStorage.removeItem(dayKey);
     go('map'); check(low() === 0, 'and it does not say so again');
     go('home'); check($('#bSister').getAttribute('href') === '../index.html#night', 'the title leads back to the Night as well'); day = false;
     await note('shop, trophies and logbook checked, problems so far: ' + out.errors.length);
@@ -398,6 +454,7 @@ Object.assign(POSES, {
       for (const tab of ['rod', 'line', 'reel', 'lure', 'gear', 'style']) { shopTab = tab; go('shop'); sim(.2); look('shop, ' + tab); }
       PRE.all(); for (const tab of ['rod', 'lure', 'gear', 'style']) { shopTab = tab; go('shop'); sim(.2); look('shop with everything owned, ' + tab); }
       S.tut = {}; go('shop'); sim(.2); look('shop, first visit'); if (closeDlg) closeDlg(); S.tut = Object.assign({}, LESSONS);
+      PRE.mid(); PRE.nwlures(); shopTab = 'lure'; go('shop'); sim(.2); look('shop, lures from the Night'); go('spot', { area: 'pond' }); sim(.5); POSES.box(); look('tackle box with lures from the Night'); nwSave.items = []; nwlSync();
       for (const [pre, tag] of [[PRE.mid, 'some'], [PRE.all, 'all'], [PRE.fresh, 'none']]) {
         pre(); go('book', { back: () => go('hub') }); sim(.2); look(`logbook (${tag})`);
         for (const [area, sp] of [['pond', 'biscuit'], ['pier', 'lanternjaw'], ['chapel', 'bell'], ['deep', 'postman']]) { go('book', { back: () => go('hub'), area, sp }); sim(.2); look(`logbook page (${tag})`); }

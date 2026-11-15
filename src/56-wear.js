@@ -10,9 +10,11 @@ scenes.wear = {
     this.from = o.from || this.from || 'home'; this.who = o.who || this.who || 'owl'; this.sel = '';
     tryOn = null;
     const bar = add(`<div class="hud"><button class="btn round" id="wBack" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
-      <span class="pill">${ic('hanger', 24)}<span class="extra">${esc(t('wardrobe'))}</span></span><span class="sp"></span>
+      <span class="pill">${ic('hanger', 24)}<span class="extra">${esc(t('wardrobe'))}</span></span>
+      <button class="btn round" id="wFlag" aria-label="${esc(t('flagT'))}">${ic('flagI', 30)}</button><span class="sp"></span>
       <span class="pill" id="pBeams">${ic('beam', 22)}<b>${S.beams}</b></span></div>`);
     $('#wBack', bar).onclick = () => { sfx.click(); go(this.from); };
+    $('#wFlag', bar).onclick = () => { sfx.pop(); go('flag', { from: 'wear' }); };   // the treehouse wears something too: its flag
     this.panel = add(`<div class="side wearbar"><div class="row"><div class="langs" role="group">
       <button class="btn" data-w="owl" aria-label="${esc(t('k_owl'))}">${ic('owlI', 40)}</button><button class="btn" data-w="zip" aria-label="${esc(t('k_zip'))}">${ic('zipI', 40)}</button></div>
       <button class="btn gold" id="wBuy" disabled>${ic('beam', 24)}<b></b><span>${esc(t('buy'))}</span></button></div>

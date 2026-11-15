@@ -45,7 +45,7 @@ scenes.cam = {
     this.batt -= 1; f.flashT = .4; sfx.flash();
     const [x, y, w, h] = this.rect(i), exposed = m && m.state === 'walk' && m.x > .03 && m.x < .97 && f.staticT <= 0;
     if (exposed && !m.decoy) {
-      m.state = 'caught'; m.dir = m.phase === 'in' ? -m.dir : m.dir; this.caught++;
+      m.state = 'caught'; m.dir = m.phase === 'in' ? -m.dir : m.dir; this.caught++; pieCaught();   // caught kindly: it counts towards a new friend
       sfx.squawk(); burst(x + m.x * w, y + h * .6, 12, { kind: 'feather', color: '#dfe6f5', speed: 140, size: 7 });
       if (m.carry) { m.carry = false; floatText(x + m.x * w, y + h * .4, '+1', '#ffd86b'); burst(x + m.x * w, y + h * .5, 14, { speed: 120 }); sfx.sparkle(); }
       $('#pCatch b').textContent = this.caught;

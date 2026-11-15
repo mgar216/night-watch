@@ -92,6 +92,8 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
 .who > .btn:first-child { flex: 1; min-width: 0; justify-content: flex-start; }
 .who > .btn:first-child span { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .who.me > .btn:first-child { background: #f2b93b; color: #3a2400; border-color: #fff3c4; }
+.bday { gap: 1em; }
+.bday select { font: inherit; font-weight: 800; min-width: 3.6em; min-height: 48px; margin-left: .3em; border-radius: .6em; border: 2px solid #8fa4d8; background: #fff; color: #1b2550; }
 #print { display: none; }
 @media print {
   @page { size: landscape; margin: 10mm; }
@@ -177,6 +179,7 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
   .hud .pill { padding: .1em .45em; font-size: .82em; }
   .hud .btn.round { width: 48px; height: 48px; }
   .gatebtns .btn { font-size: 1.1em; gap: .3em; padding: .3em .6em; }
+  .tbar .helper > span { display: none; }   /* the Tinker Treehouse's bar: the helper's picture only, so that the test button keeps its words */
 }
 /* phones and anything lower: smaller tiles keep the Password Forge scene large */
 @media (max-height: 700px) {
@@ -195,6 +198,11 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
 /* A phone on its side: station bars drop the extra pills, and the Tinker palette becomes a two-column strip on the right. */
 @media (min-aspect-ratio: 23/20) and (max-height: 520px) {
   .hud.slim .extra, .hud.slim #pStars, .hud.slim #pBeams { display: none; }
+  .whos { display: grid; grid-template-columns: 1fr 1fr; }   /* the players two by two, so that the settings under them stay on the screen */
+  /* the Password Forge: the bar keeps to one row and scrolls sideways when it holds more tiles than fit (a second row lay
+     under the tray, out of sight and out of reach); auto margins keep a short row in the middle */
+  .slots { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; }
+  .slots .tile { flex: none; } .slots > :first-child { margin-left: auto; } .slots > :last-child { margin-right: auto; }
   .palette { left: auto; top: 4.6em; width: 15.6em; align-content: flex-start; border-top: 0; border-left: 2px solid var(--line); overflow-y: auto; }   /* three columns: a page of nine fits without scrolling */
   .pal { flex: 1 0 28%; min-height: 52px; }
   /* the gate reference card stands as a narrow column at the right edge, clear of the visitor's speech bubble */

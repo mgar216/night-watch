@@ -86,7 +86,7 @@ defTro('wealth', 'item:spinner', 'firstBuy', ['Good Customer', 'Хороший �
 defTro('wealth', 'moon', 'fullPurse', ['Full Purse', 'Полный кошелёк', 'Borsellino pieno'], ['Have 1000 moons in your purse at once.', 'Накопи в кошельке 1000 лун.', 'Metti insieme 1000 lune nel borsellino.'],
   { moons: 50, on: 'moons', ok: () => S.moons >= 1000 });
 defTro('wealth', 'item:minnow', 'lureLibrary', ['Lure Library', 'Библиотека приманок', 'Biblioteca di esche'], ['Own 10 different lures.', 'Собери 10 разных приманок.', 'Colleziona 10 esche diverse.'],
-  { item: 'minnow', on: ['buy', 'catch'], ok: () => Object.values(ITEMS).filter(i => i.kind === 'lure' && (i.free || owns(i.id))).length >= 10 });   // 'catch': a lure may arrive as a trophy's reward
+  { item: 'minnow', on: ['buy', 'catch'], ok: () => Object.values(ITEMS).filter(i => i.kind === 'lure' && (i.free && !i.nw || owns(i.id))).length >= 10 });   // 'catch': a lure may arrive as a trophy's reward; lures from the Night are only lent
 defTro('wealth', 'item:rodp4', 'fullyRigged', ['Fully Rigged', 'Полный арсенал', 'Attrezzatura completa'], ['Own every rod.', 'Собери все удочки.', 'Colleziona tutte le canne.'],
   { moons: 1000, on: 'buy', ok: () => Object.values(ITEMS).every(i => i.kind !== 'rod' || owns(i.id)) });
 defTro('wealth', 'cake', 'oldBiscuit', ['Old Biscuit', 'Старый Сухарик', 'Vecchio Biscotto'], ['Beat your own record with {biscuit}.', 'Побей свой рекорд: {biscuit}.', 'Batti il tuo record: {biscuit}.'],

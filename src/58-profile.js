@@ -73,11 +73,23 @@ function showPlayers() {
       <button class="btn round" data-del="${i}" aria-label="${esc(t('erase'))}: ${esc(d.name || t('nameDef'))}">${ic('bin', 24)}</button></div>`
       : `<div class="who"><button class="btn" data-new="${i}">${ic('plus', 24)}<span>${esc(t('newPlayer'))}</span></button></div>`;
   }).join('');
+  const [bm, bd] = S.bday.split('-');
   const v = modal(`<h2>${esc(t('players'))}</h2><div class="whos">${rows}</div><div class="acts"><button class="btn" id="wBed">${ic('moon', 24)}${esc(t('bedSet'))}: ${S.bedN || esc(t('bedOff'))}</button>
+    <button class="btn" id="wBday">${ic('wear:party', 24)}${esc(t('bdaySet'))}: ${S.bday ? bd + '.' + bm : '?'}</button>
     <button class="btn go" id="wOk">${ic('yes', 26)}${esc(t('ok'))}</button></div>`, t('players'));
   // Bedtime: the sum first, then after how many Nights a day the owl says good night (off, or one to five).
   $('#wBed', v).onclick = () => { sfx.click(); askGrownUp(() => owlSay(t('bedAsk'), { quiet: true, mood: 'idle',
     acts: [0, 1, 2, 3, 4, 5].map(n => ({ label: n ? String(n) : t('bedOff'), cls: n === S.bedN ? 'go' : '', fn: () => { S.bedN = n; save(); showPlayers(); } })) })); };
+  // The birthday of this player: the sum first, then the day and the month (no year). On that day the owl keeps it.
+  $('#wBday', v).onclick = () => { sfx.click(); askGrownUp(() => {
+    const opts = (n, sel) => `<option value="0">?</option>` + [...Array(n).keys()].map(i => `<option value="${i + 1}"${i + 1 === +sel ? ' selected' : ''}>${i + 1}</option>`).join('');
+    const w = modal(`<h2>${esc(t('bdaySet'))}</h2><div class="pics bday"><label>${esc(t('bdayDay'))} <select id="bdD">${opts(31, bd)}</select></label>
+      <label>${esc(t('bdayMon'))} <select id="bdM">${opts(12, bm)}</select></label></div>
+      <div class="acts"><button class="btn go" id="bdOk">${ic('yes', 26)}${esc(t('ok'))}</button></div>`, t('bdaySet'));
+    // a day the month does not have becomes its last day (the 31st of a short month would never come)
+    $('#bdOk', w).onclick = () => { sfx.click(); const m = +$('#bdM', w).value, d = Math.min(+$('#bdD', w).value, [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1] || 0); S.bday = d && m ? m + '-' + d : ''; save(); showPlayers(); };
+    $('#bdOk', w).focus({ preventScroll: true });
+  }); };
   v.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { sfx.click(); +b.dataset.go === slot ? closeDlg() : playAs(+b.dataset.go); });
   v.querySelectorAll('[data-new]').forEach(b => b.onclick = () => { sfx.pop(); playAs(+b.dataset.new, { lang: S.lang, mute: S.mute, voice: S.voice }); });
   v.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
@@ -87,7 +99,7 @@ function showPlayers() {
       // The current player starts afresh in the same language; another player's row becomes free. The player's fishing career goes too.
       try {
         i === slot ? localStorage.setItem(slotKey(i), JSON.stringify({ lang: S.lang, mute: S.mute, voice: S.voice })) : localStorage.removeItem(slotKey(i));
-        localStorage.removeItem('firstlight.v1' + (i ? '.' + (i + 1) : ''));
+        for (const k of ['firstlight.v1', 'firstlight.day']) localStorage.removeItem(k + (i ? '.' + (i + 1) : ''));
       } catch (e) { /* nothing was saved */ }
       i === slot ? location.reload() : showPlayers();
     });
