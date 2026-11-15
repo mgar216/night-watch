@@ -56,7 +56,7 @@ const picsHtml = names => `<div class="pics">${names.map(n => ic(n, 40)).join(''
 // Top bar used by most screens. `slim` bars drop the Night, star and moonbeam pills on low landscape screens.
 function hud(backFn, extra = '', slim = false) {
   const n = add(`<div class="hud${slim ? ' slim' : ''}"><button class="btn round" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
-    <span class="pill extra">${esc(t('night', { n: S.night }))}</span><span class="sp"></span>${extra}
+    <span class="pill extra">${esc(practice ? t('g_practice') : t('night', { n: S.night }))}</span><span class="sp"></span>${extra}
     <span class="pill" id="pStars">${ic('star', 22)}<b>${S.stars}</b></span><span class="pill" id="pBeams">${ic('beam', 22)}<b>${S.beams}</b></span></div>`);
   $('button', n).onclick = () => { sfx.click(); backFn(); };
   return n;
@@ -75,6 +75,7 @@ const extraOf = night => night >= 2 ? EXTRAS[(night - 2) % EXTRAS.length] : null
 // The first win of a station in a Night also brings a sticker for the album.
 let newStk = '';
 function award(id, stars) {
+  if (practice) { newStk = ''; return 0; }   // tried from the guide: no stars, no moonbeams, no sticker
   const k = EXTRAS.includes(id) ? 'extra' : id, gain = Math.max(0, stars - S.st[k]);
   newStk = stars && !S.st[k] ? stickAny() : '';
   S.st[k] = Math.max(S.st[k], stars); S.stars += gain; S.beams += gain * 5; save();
@@ -118,7 +119,8 @@ scenes.home = {
     this.cheer = 0;
     const fresh = STK_SETS.flat().some(id => S.stk[id] === 1);
     const n = add(`<div class="home"><h1 class="title">${esc(t('title'))}</h1><div class="mid"></div>
-      <div class="row"><button class="btn gold big pulse" id="bPlay">${ic('play', 30)}${esc(t('play'))}</button></div>
+      <div class="row"><button class="btn gold big pulse" id="bPlay">${ic('play', 30)}${esc(t('play'))}</button>
+      <button class="btn round" id="bGuide" aria-label="${esc(t('guide'))}">${ic('help', 34)}${S.toured ? '' : '<i class="dot"></i>'}</button></div>
       <div class="row shelf"><button class="btn round" id="bAlbum" aria-label="${esc(t('album'))}">${ic('album', 30)}${fresh ? '<i class="dot"></i>' : ''}</button>
       <button class="btn round" id="bWear" aria-label="${esc(t('wardrobe'))}">${ic('hanger', 30)}</button>
       <button class="btn round" id="bPie" aria-label="${esc(t('s_pie'))}">${ic('pie', 32)}</button>
@@ -128,7 +130,9 @@ scenes.home = {
       <button class="btn round" id="bSnd" aria-label="${esc(t('sound'))}" aria-pressed="${!S.mute}">${ic('snd:' + (S.mute ? 0 : 1), 28)}</button>
       <button class="btn round" id="bVoice" aria-label="${esc(t('voice'))}" aria-pressed="${S.voice}">${ic('talk:' + (S.voice ? 1 : 0), 28)}</button></div>
       <p class="foot">${esc(t('foot'))}</p></div>`);
-    $('#bPlay', n).onclick = () => { sfx.pop(); S.name || S.night > 1 || S.briefed ? go('hub') : askName(() => go('hub')); };
+    // a new player tells the owl a name, and is offered the tour of the guide once (src/53-guide.js)
+    $('#bPlay', n).onclick = () => { sfx.pop(); S.name || S.night > 1 || S.briefed ? go('hub') : askName(() => tourAsk(() => go('hub'))); };
+    $('#bGuide', n).onclick = () => { sfx.pop(); go('guide', { from: 'home' }); };
     $('#bSnd', n).onclick = () => { setMute(!S.mute); sfx.click(); go('home'); };
     $('#bVoice', n).onclick = () => { S.voice = !S.voice; save(); sfx.click(); go('home'); if (S.voice) speak(t('win')); };
     $('#bBadge', n).onclick = () => { sfx.click(); go('badge', { from: 'home' }); };
@@ -181,6 +185,7 @@ scenes.hub = {
       <button class="btn gold ${ready ? 'pulse' : ''}" id="bRaid" ${ready ? '' : 'disabled'}>${ic(boss ? 'stk:m6' : 'jar', 28)}${esc(t(boss ? 'bossGo' : 'raidGo'))}</button></div></div>`);
     n.querySelectorAll('.card').forEach(b => b.onclick = () => { sfx.pop(); go(b.dataset.s); });
     $('#bTinker', n).onclick = () => { sfx.pop(); go('tinker'); };
+    hubHint(n, ready);   // with hints on: what comes next, and the way into the guide (src/53-guide.js)
     $('#bRaid', n).onclick = () => { sfx.alarm(); boss ? go('boss', { then: () => go('raid') }) : go('raid'); };
     // News first (a gift from a Legendary fish, a new friend, an addition to the treehouse), then the day's first words,
     // then the Night's briefing.

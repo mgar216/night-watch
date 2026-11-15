@@ -47,9 +47,10 @@
   const answer = right => { const [a, b] = $('#owlText').textContent.match(/\d+/g).map(Number); [...document.querySelectorAll('.veil .acts .btn')].find(x => (+x.textContent === a + b) === right).click(); };
   const reset = n => { Object.assign(S, { night: n, st: { cam: 0, gate: 0, forge: 0, extra: 0 }, beams: 300, stars: 0, items: [{ t: 'cam', m: 1 }], nest: 0, testStar: 0, gateStar: 0, briefed: n, promo: false, tinkered: 2, name: 'Mia',
     voice: true, stk: {}, own: {}, hat: '', scarf: '', zhat: '', zscarf: '', boss: 0, fooled: 0, day: 0, gifts: {}, bedN: 0, bed: { d: '', n: 0, more: 0 },
-    // the newer things start quiet: no news of a friend (a Chief already has the guard), no visitor's wish today, the day's first words already said
-    caught: 0, pals: n > 7 ? { guard: 1 } : {}, helper: '', lit: 0, grow: 0, visit: { d: today(), done: 1, n: 0 }, mem: { d: '', k: '' }, memD: today(), eye: 0, flag: '', bday: '', bdayY: 0, sup: '', saga: 0 });
-    tryOn = null; scenes.tinker.page = 0; };
+    // the newer things start quiet: no news of a friend (a Chief already has the guard), no visitor's wish today, the day's
+    // first words already said, no hints (a reminder would speak into other checks) and the guide already seen
+    caught: 0, pals: n > 7 ? { guard: 1 } : {}, helper: '', lit: 0, grow: 0, visit: { d: today(), done: 1, n: 0 }, mem: { d: '', k: '' }, memD: today(), eye: 0, flag: '', bday: '', bdayY: 0, sup: '', saga: 0, hints: 0, toured: 1 });
+    tryOn = null; scenes.tinker.page = 0; practice = null; };
   const worth = () => S.beams + S.items.reduce((a, i) => a + ITEMS[i.t].cost, 0);   // moonbeams in hand plus moonbeams built into the tree
   const key = (k, target = document.body) => target.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
   const ptr = (type, x, y, target = cv) => target.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, bubbles: true, cancelable: true, pointerId: 1 }));
@@ -142,6 +143,82 @@
     const TS = { k: .32, ox: 0, oy: 17 }; check(!palTap(690, 917, TS) && palTap(760, 905, TS), 'on a phone held sideways the heron keeps its taps and the helper its own');   // there the two tap circles overlap
   };
 
+  // The guide, practice from the guide, and hints (src/53-guide.js).
+  const guideChecks = async () => {
+    where = 'the guide';
+    const blank = n => { const cn = document.createElement('canvas'); cn.width = cn.height = 40; const g = cn.getContext('2d'); drawIcon(g, n, 20, 20, 40); return !g.getImageData(0, 0, 40, 40).data.some(v => v); };
+    for (const [id, pics] of GUIDE) check(!!L['g_' + id] && guideTitle(id).length > 1 && pics.every(p => !blank(p)), `the guide's topic "${id}" has its text, its title and pictures that show`);
+    check(!blank('help') && !blank('bulb:1') && !blank('bulb:0'), 'the help icon and both bulbs show');
+    check(new Set(GUIDE.map(g => g[1][0])).size === GUIDE.length, 'no two topics of the guide share their picture in the list');
+    reset(3); go('guide', { from: 'home' });
+    check(document.querySelectorAll('.gtopics .btn').length === GUIDE.length && !$('.veil'), 'the guide lists every topic');
+    $('[data-g="2"]').click();
+    check($('#owlText').textContent === t('g_cam') && $('.veil h2').textContent.includes(t('s_cam')) && document.querySelectorAll('.veil .acts .btn').length === 2, 'a topic opens as a card that the owl reads, with "Try it" and OK');
+    clickDlg(); check(!$('.veil') && scene.id === 'guide', 'OK closes the card');
+    $('#gTour').click(); let seen = 0;
+    for (let i = 0; i < GUIDE.length; i++) { if ($('#owlText') && $('#owlText').textContent === t('g_' + GUIDE[i][0])) seen++; clickDlg(); }
+    check(seen === GUIDE.length && !$('.veil') && scene.id === 'guide', `"All in order" walks through every card and ends at the list (${seen} of ${GUIDE.length})`);
+    $('#gTour').click(); clickDlg(0); check(!$('.veil') && scene.id === 'guide', '"All topics" leaves the tour');
+    $('[data-g="0"]').click(); check(document.querySelectorAll('.veil .acts .btn').length === 1, 'after leaving the tour a card stands alone again'); clickDlg();
+    $('#gBack').click(); check(scene.id === 'home', 'the guide\'s home button leads back to where the guide was opened');
+
+    // practice: every mini-game can be tried; nothing is saved, and every way out leads back to its card
+    where = 'practice from the guide';
+    for (const i of GUIDE.map((g, n) => g[2] ? n : -1).filter(n => n >= 0)) {
+      const [sc, , inside = [sc]] = GUIDE[i][2];
+      reset(6); Object.assign(S, { stars: 44, beams: 77, stk: { m1: 1 }, caught: 12, st: { cam: 2, gate: 1, forge: 0, extra: 0 } }); save();
+      const before = JSON.stringify(S), stored = localStorage.getItem(SAVE);
+      go('guide', { from: 'home' }); $(`[data-g="${i}"]`).click(); clickDlg(0);   // "Try it" is the first button of a card that stands alone
+      const began = scene.id === sc && !!practice && practice.page === i;
+      const pill = $('.hud .pill.extra'); if (pill) check(pill.textContent === t('g_practice'), `the bar of ${sc} says that this is practice: ${pill.textContent}`);
+      if (closeDlg) closeDlg(); sim(.6);
+      S.beams += 5; S.stars += 3; S.caught += 2; save(); const paid = award(sc, 3);
+      if (inside.includes('raid')) { go('raid', { test: true }); sim(1); check(!!practice && scene.id === 'raid', 'the test raid belongs to the Tinker\'s practice'); go('tinker'); sim(.2); if (closeDlg) closeDlg(); }
+      if (i % 2) { stationWin(sc, 3, 0); clickDlg(); } else $('.hud button') ? $('.hud button').click() : go('hub');   // out by the win dialog's OK, or by the bar's home button
+      check(began && scene.id === 'guide' && practice === null && paid === 0 && JSON.stringify(S) === before && localStorage.getItem(SAVE) === stored && !!$('.veil') && $('#owlText').textContent === t('g_tried'),
+        `practice of ${sc} saves nothing and leads back to its card (began ${began}, now ${scene.id}, paid ${paid}, same save ${JSON.stringify(S) === before}, same storage ${localStorage.getItem(SAVE) === stored})`);
+      clickDlg();
+    }
+    reset(6); Object.assign(S, { bedN: 1, bed: { d: today(), n: 1, more: 0 } }); go('guide', { from: 'home' }); $('[data-g="2"]').click(); clickDlg(0);
+    check(scene.id === 'bed' && practice === null, 'at bedtime the stations sleep in the guide too');
+
+    // hints: the bulb switches them, the Night menu says what comes next, a station reminds after a quiet while
+    where = 'hints';
+    reset(3); go('guide', { from: 'home' }); check($('#gHints').getAttribute('aria-pressed') === 'false', 'the bulb shows that the hints are off');
+    $('#gHints').click();
+    check(S.hints === 1 && JSON.parse(localStorage.getItem(SAVE)).hints === 1 && $('#gHints').getAttribute('aria-pressed') === 'true' && [...document.querySelectorAll('.toast')].pop().textContent === t('g_on'), 'the bulb switches the hints on, says so and saves it');
+    go('hub'); check(!!$('#bHint') && $('#bHint').textContent === t('h_stations') && $('.card.pulse') === $('.card[data-s="cam"]'), 'with hints the Night menu says what comes next, and the first station pulses');
+    S.st = { cam: 3, gate: 0, forge: 0, extra: 0 }; go('hub'); check($('.card.pulse') === $('.card[data-s="gate"]'), 'the next station not played yet pulses');
+    S.st = { cam: 1, gate: 1, forge: 1, extra: 0 }; go('hub'); check($('#bHint').textContent === t('h_ready') && !$('.card.pulse'), 'when the stations are done the hint points on to the Tinker Treehouse and the raid');
+    $('#bHint').click(); check(scene.id === 'guide' && $('#owlText').textContent === t('g_night'), 'the hint line opens the guide at "One Night"');
+    clickDlg(); $('#gBack').click(); check(scene.id === 'hub', 'and from there the guide leads back to the Night menu');
+    // a reminder after a quiet while (sixteen seconds in the Tinker Treehouse, where no round runs out meanwhile)
+    const reminders = () => [...document.querySelectorAll('.toast')].filter(n => n.textContent === t('tinkerIntro')).length, wipe = () => ui.querySelectorAll('.toast').forEach(n => n.remove());
+    hintAt = -99; S.tinkered = 0; go('tinker'); lastTouch = V.t; sim(20); hintTick(); check(!!$('.veil') && reminders() === 0, 'no reminder over the owl\'s first word');
+    clickDlg(); lastTouch = V.t; sim(15); hintTick(); const early = reminders(); sim(2); hintTick();
+    check(early === 0 && reminders() === 1, `sixteen quiet seconds in the Tinker Treehouse bring the owl's reminder (${early} before, ${reminders()} after)`);
+    wipe(); sim(10); hintTick(); const soon = reminders(); sim(11); hintTick();
+    check(soon === 0 && reminders() === 1, 'the reminder waits a while before it comes again');
+    wipe(); sim(30); lastTouch = V.t - 3; hintTick(); check(reminders() === 0, 'a touch a moment ago keeps the owl quiet');
+    S.hints = 0; lastTouch = V.t - 99; hintTick(); check(reminders() === 0, 'without hints the owl does not remind');
+    S.hints = 1; hintAt = -99; go('raid', { test: true }); lastTouch = V.t - 99; hintTick(); check(!document.querySelector('.toast'), 'a raid is watched in peace'); S.hints = 0;
+    check(Object.keys(HINT).every(k => !!scenes[k] && HINT[k][0] >= 6 && typeof HINT[k][1]() === 'string' && HINT[k][1]().length > 5 && sentences(HINT[k][1]()).every(s => !!clipOf(s))), 'every station\'s reminder is a line the owl has a clip for');
+
+    // a new player is offered the tour once; "Show me" walks through every card and ends at the Night menu
+    where = 'the tour of a new player';
+    const novice = h => { reset(1); Object.assign(S, { name: '', briefed: 0, hints: h, toured: 0 }); go('home'); };
+    novice(1); check(!!$('#bGuide .dot'), 'the guide\'s button carries a mark until the guide was seen');
+    $('#bPlay').click(); clickDlg();   // the name
+    check(!!$('.veil') && $('#owlText').textContent === t('g_ask') && S.toured === 1, 'a new player is offered the tour');
+    clickDlg(0); check(scene.id === 'hub', '"Just play" leads to the Night'); clickDlg(); go('home'); check(!$('#bGuide .dot'), 'and the offer is not made again');
+    novice(1); $('#bPlay').click(); clickDlg(); clickDlg();   // the name, then "Show me"
+    check(scene.id === 'guide' && $('#owlText').textContent === t('g_goal'), '"Show me" starts the tour at its first card');
+    for (let i = 0; i < GUIDE.length; i++) clickDlg();
+    check(scene.id === 'hub', 'the tour of a new player ends at the Night menu, now at ' + scene.id); clickDlg();
+    novice(0); $('#bPlay').click(); clickDlg(); check(scene.id === 'hub', 'without hints nobody is asked'); clickDlg();
+    go('guide', { from: 'home' }); check(S.toured === 1, 'opening the guide takes the mark away'); reset(1);
+  };
+
   if (mode[0] === 'shot') {
     // a screenshot shows the final state of dialogs and toasts, not the first frame of their pop-in
     document.head.appendChild(Object.assign(document.createElement('style'), { textContent: '*, *::before { animation: none !important; transition: none !important; }' }));
@@ -172,6 +249,9 @@
     if (P.includes('pals6')) Object.assign(S, { pals: Object.fromEntries(PALS.map(id => [id, 1])), helper: 'guard', caught: 333, saga: 3 });
     if (P.includes('palspots')) S.items.push({ t: 'cam', m: 0 }, { t: 'lamp', m: 3 }, { t: 'bell', m: 4 }, { t: 'flowers', m: 6 }, { t: 'cam', m: 9 }, { t: 'scope', m: 10 }, { t: 'banner', m: 17 }, { t: 'lights', m: 18 });
     if (P.includes('palnews')) Object.assign(S, { caught: 30, pals: {} });
+    if (P.includes('hint')) S.hints = 1;                                                                            // the hint line of the Night menu (src/53-guide.js)
+    if (P.includes('ready')) S.st = { cam: 2, gate: 2, forge: 2, extra: 0 };                                        // the stations are done: the raid can begin
+    if (P.includes('novice')) Object.assign(S, { name: '', briefed: 0, hints: 1, toured: 0 });                      // a new player: the guide's button carries its mark
     if (P.includes('tricks') || P.includes('page3')) Object.assign(S, { pals: { guard: 1, lamp: 1 }, helper: 'lamp' });   // the helper's pill is in the top bars
     go(mode[1], mode[1] === 'badge' ? { promo: mode[4] === '1', told: true } : mode[1] === 'raid' ? { test: true } : mode[1] === 'story' ? { rank: +mode[4] || 1, then: () => go('home') } : mode[1] === 'boss' ? { then: () => go('hub') } : mode[1] === 'saga' ? { ch: +mode[4] || 1, then: () => go('hub') } : undefined);
     localStorage.removeItem('firstlight.v1'); localStorage.removeItem('firstlight.day');
@@ -211,6 +291,11 @@
       growjoke: () => { lifeT.fill(V.t - 1); lifeWho = 2; },
       visicons: () => modal(LIFE_WISH.map(w => `<div class="pics">${w.map((id, j) => j ? `<span class="pill">${ic(lifeIc(id), 44)}${esc(t('vis_' + id))}</span>` : `<span class="pill" style="background:#fff6da">${ic(id, 44)}</span>`).join('')}</div>`).join(''), 'icons'),
       paltap: () => { const T = treeArea(); scene.down(T.ox + 745 * T.k, T.oy + 895 * T.k); sim(.2); },
+      // the guide (src/53-guide.js): gcardN opens card N (see below), gtour starts the tour, gask is the offer to a new
+      // player, gtry is a practice round of Camera Watch
+      gtour: () => $('#gTour').click(),
+      gask: () => tourAsk(() => {}),
+      gtry: () => { tryOut(2); clickDlg(); sim(2); },
       // tricks (src/91-arc.js): every trick at once, mid-way (a second digger already inside the trunk); each trick at the
       // moment it meets its gadget; the palette's third page; the new gadgets on the tree with every gift (collision test)
       tricks: () => { go('raid', { test: true }); scene.plan = [{ route: 'sky', at: 0, kind: 'balloon' }, { route: 'rb', at: 0, kind: 'stilts' }, { route: 'lb', at: 0, kind: 'twins' }, { route: 'lad', at: 0, kind: 'dig' }, { route: 'lad', at: 0, kind: 'dig' }]; scene.R = makeRaid(scene.plan, 1); scene.R.mags[4].d = 340; sim(1.6); },
@@ -219,6 +304,7 @@
       arcgifts: () => S.items.push({ t: 'fan', m: 20 }, { t: 'honey', m: 2 }, { t: 'seesaw', m: 6 }, { t: 'drum', m: 14 }, { t: 'fan', m: 21 }),
     };
     for (const p of P) if (has(pose, p)) { pose[p](); sim(.1); }
+    for (const p of P) { const m = /^gcard(\d+)$/.exec(p); if (m) scenes.guide.page(+m[1]); }   // the guide's card N
     return;
   }
 
@@ -537,6 +623,7 @@
 
     where = 'owl\'s eye'; eyeChecks();
     where = 'friends'; palChecks();
+    await guideChecks();
     // --- full Nights 1..8 ---
     for (let n = 1; n <= 8; n++) {
       reset(n); setLang(n % 3);
@@ -767,6 +854,16 @@
       reset(3); localStorage.setItem('firstlight.day', JSON.stringify({ id: 5, n: 4 })); go('hub'); localStorage.removeItem('firstlight.day'); look('fish for supper'); clickDlg();
       reset(3); go('badge', { from: 'home' }); showPlayers(); $('#wBday').click(); answer(true); look('birthday setting'); $('#bdOk').click(); closeDlg();
       reset(3); go('hub'); finishNight(0); look('a Night\'s end with the first lantern'); clickDlg();
+      // the guide (src/53-guide.js): its list, every card, a card in a tour, the Night menu with its hint line, a practice
+      // round's bar, the card after the practice, the offer to a new player and the mark on the home screen
+      reset(3); go('guide', { from: 'home' }); sim(.2); look('guide, the list of topics');
+      for (let i = 0; i < GUIDE.length; i++) { $(`[data-g="${i}"]`).click(); look('guide card ' + GUIDE[i][0]); clickDlg(); }
+      $('#gTour').click(); clickDlg(); clickDlg(); look('guide card in a tour'); clickDlg(0);   // the third card: all topics, try it, next
+      // the tallest menu first: the Baron's Night (four cards, a longer button), before and after the stations
+      reset(5); S.hints = 1; go('hub'); look('hub on the Baron\'s Night with its hint'); S.st = { cam: 1, gate: 1, forge: 1, extra: 1 }; go('hub'); look('hub on the Baron\'s Night, ready, with its hint');
+      reset(3); S.hints = 1; go('hub'); look('hub with its hint'); S.st = { cam: 1, gate: 1, forge: 1, extra: 0 }; go('hub'); look('hub ready, with its hint');
+      go('guide', { from: 'home' }); $('[data-g="2"]').click(); clickDlg(0); look('practice, first word'); clickDlg(); sim(1); look('practice'); $('.hud button').click(); look('guide card after its practice'); clickDlg();
+      reset(1); Object.assign(S, { name: '', briefed: 0, hints: 1, toured: 0 }); go('home'); sim(.2); look('home of a new player'); tourAsk(() => {}); look('the tour is offered'); clickDlg(0); reset(1);
       // Be the Magpie
       go('pie'); look('magpie intro'); clickDlg(); sim(7); look('magpie, after spying'); scene.shop(); sim(.3); look('magpie workshop');
       Object.assign(scene.fake, { dis: 5, pass: [...scene.pass] }); scene.marks(); look('magpie workshop, ready'); $('#pieReady').click(); look('magpie, who checks');
@@ -926,6 +1023,7 @@
       want(Object.keys(S.stk).every(k => has(STK, k)) && Object.keys(S.own).every(k => has(WEAR, k)) && Object.keys(S.gifts).every(k => GIFTS.includes(k)), 'stk, own, gifts');
       want(['hat', 'scarf', 'zhat', 'zscarf'].every(k => S[k] === '' || has(S.own, S[k])), 'what is worn is owned');
       want(int(S.caught, 0, 1e9 + 1e6) && int(S.lit, 0, 1e6 + 1e3) && int(S.grow, 0, 3) && int(S.eye, 0, 3) && int(S.saga, 0, 3) && int(S.bedN, 0, 5) && int(S.bdayY, 0, 9999), 'caught, lit, grow, eye, saga, bedN, bdayY');
+      want((S.hints === 0 || S.hints === 1) && (S.toured === 0 || S.toured === 1), 'hints, toured');
       want(str(S.helper, 12) && str(S.flag, 200) && str(S.bday, 5) && str(S.memD, 10) && str(S.sup, 24) && str(S.visit.d, 10) && str(S.mem.d, 10) && str(S.mem.k, 10) && str(S.bed.d, 10), 'helper, flag, bday, memD, sup, visit, mem, bed');
       want(Object.keys(S.pals).every(k => /^[a-z0-9]{1,12}$/.test(k) && S.pals[k] === 1), 'pals');
       want(JSON.stringify(S).length < 8000, 'the save is small (' + JSON.stringify(S).length + ' characters)');
@@ -943,7 +1041,13 @@
     await open('home');
     await open('hub');                                 // whatever is pending comes first: news, first light, bedtime, a promotion, a chapter
     for (const s of ['cam', 'gate', 'forge', ...EXTRAS, 'tinker', 'wear', 'badge', 'pie', 'bed', 'dawn']) await open(s);
-    await open('pals', { from: 'album' }); await open('flag', { from: 'home' });
+    await open('pals', { from: 'album' }); await open('flag', { from: 'home' }); await open('guide', { from: 'home', page: 2 });
+    if (!asleep()) {   // a practice round from the guide changes neither the save nor the storage
+      where = 'tour: practice'; go('guide', { from: 'home' }); const keep = JSON.stringify(S), kept = localStorage.getItem(SAVE);
+      tryOut(2); sim(.5); await answerAll(); sim(1); S.stars += 7; save(); go('hub'); markup('the card after practice');
+      check(scene.id === 'guide' && practice === null && JSON.stringify(S) === keep && localStorage.getItem(SAVE) === kept, `tour: a practice round leaves the save and the storage as they were (now at ${scene.id})`);
+      await answerAll();
+    }
     for (let p = 0; p < 3; p++) await open('album', { page: p });
     where = 'tour: certificate and players'; go('badge'); showCert(); markup('certificate'); if (closeDlg) closeDlg(); showPlayers(); markup('players'); if (closeDlg) closeDlg();
     for (let r = 1; r <= 3; r++) { await open('story', { rank: r, then: () => go('home') }); for (let i = 0; i < 4 && scene.id === 'story'; i++) { scene.next(); sim(.4); } }

@@ -95,6 +95,8 @@ const ICON = {
   snd: (c, on) => { poly(c, [-.8, -.25, -.45, -.25, 0, -.65, 0, .65, -.45, .25, -.8, .25], '#fff'); c.lineWidth = .13; c.strokeStyle = '#fff'; c.lineCap = 'round'; if (on === '1') { c.beginPath(); c.arc(.05, 0, .45, -.8, .8); c.stroke(); c.beginPath(); c.arc(.05, 0, .8, -.8, .8); c.stroke(); } else line(c, [.3, -.35, .9, .35, .6, 0, .9, -.35, .3, .35], '#ff8a7a', .13); },
   home: c => { poly(c, [-.95, -.05, 0, -.9, .95, -.05], '#fff'); rr(c, -.65, -.1, 1.3, .95, .1); c.fillStyle = '#fff'; c.fill(); rr(c, -.18, .3, .36, .55, .05); c.fillStyle = '#2b3f8f'; c.fill(); },
   play: c => poly(c, [-.5, -.8, .85, 0, -.5, .8], '#fff'),
+  // "How to play" (the Night Watch's guide, the fishing game's lessons): a question mark on a gold disc
+  help: c => { circ(c, 0, 0, .92, '#ffd24a'); c.beginPath(); c.arc(0, -.26, .3, Math.PI * 1.05, Math.PI * .5); c.lineTo(0, .2); c.lineWidth = .2; c.strokeStyle = '#2a1c05'; c.stroke(); circ(c, 0, .55, .13, '#2a1c05'); },
   retry: c => { c.beginPath(); c.arc(0, 0, .65, -.3, TAU - 1.4); c.lineWidth = .22; c.strokeStyle = '#fff'; c.lineCap = 'round'; c.stroke(); poly(c, [.25, -.95, .95, -.5, .3, -.15], '#fff'); },
   yes: c => line(c, [-.7, .05, -.2, .6, .75, -.6], '#fff', .3),
   no: c => line(c, [-.6, -.6, .6, .6, 0, 0, .6, -.6, -.6, .6], '#fff', .3),

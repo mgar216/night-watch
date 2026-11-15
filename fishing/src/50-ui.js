@@ -80,12 +80,15 @@ function askName(then) {
 scenes.home = {
   enter() {
     const n = add(`<div class="home"><h1 class="title">${esc(t('title'))}</h1><p class="subtitle">${esc(t('sub'))}</p><div class="mid"></div>
-      <div class="row"><button class="btn gold big pulse" id="bPlay">${ic('play', 30)}${esc(t('play'))}</button></div>
+      <div class="row"><button class="btn gold big pulse" id="bPlay">${ic('play', 30)}${esc(t('play'))}</button>
+      <button class="btn round" id="bLessons" aria-label="${esc(t('lessons'))}">${ic('help', 34)}</button></div>
       <div class="row"><div class="langs" role="group" aria-label="${esc(t('lang'))}">${LANGS.map((l, i) => `<button class="btn" data-l="${i}" aria-label="${esc(L.langName[i])}" aria-pressed="${i === lang}">${ic('bird:' + i, 30)}${l.toUpperCase()}</button>`).join('')}</div></div>
       <div class="row"><button class="btn round" id="bSnd" aria-label="${esc(t('sound'))}" aria-pressed="${!S.mute}">${ic('snd:' + (S.mute ? 0 : 1), 28)}</button>
       <input type="range" id="bVol" min="0" max="100" value="${Math.round(S.vol * 100)}" aria-label="${esc(t('volume'))}">
       <a class="btn" id="bSister" href="../index.html${day ? '#night' : ''}">${ic('jar', 26)}${esc(t('sister'))}</a></div></div>`);
     $('#bPlay', n).onclick = () => { sfx.pop(); S.name || allLogged() ? go('map') : askName(() => go('map')); };
+    // the owl's lessons (the map, the shop, the five steps of a catch at the pond) are given once; this asks for them again
+    $('#bLessons', n).onclick = () => { S.tut = {}; save(); sfx.chirp(); ui.querySelectorAll('.toast').forEach(x => x.remove()); toast(t('lessonsSay'), 2800); };
     $('#bSnd', n).onclick = () => { setMute(!S.mute); sfx.click(); go('home'); };
     $('#bVol', n).oninput = e => { setVol(e.target.value / 100); };
     $('#bVol', n).onchange = () => sfx.pop();

@@ -12,6 +12,7 @@
   S.bedN = int(S.bedN, 0, 5); S.bed = { d: String(S.bed.d || '').slice(0, 10), n: int(S.bed.n, 0, 99), more: int(S.bed.more, 0, 99) };
   // the newer fields: counters in range, ids and dates in their plain shapes (they are used as keys and never shown as HTML)
   S.caught = int(S.caught, 0, 1e9); S.lit = int(S.lit, 0, 1e6); S.grow = int(S.grow, 0, 3); S.eye = int(S.eye, 0, 3); S.bdayY = int(S.bdayY, 0, 9999); S.saga = int(S.saga, 0, 3);
+  S.hints = S.hints === 0 ? 0 : 1; S.toured = S.toured ? 1 : 0;   // hints stay on unless they were switched off
   for (const k in S.pals) if (/^[a-z0-9]{1,12}$/.test(k) && S.pals[k]) S.pals[k] = 1; else delete S.pals[k];
   S.helper = str(S.helper, /^[a-z0-9]{0,12}$/); S.flag = str(S.flag, /^[0-9a-z]{0,200}$/); S.bday = str(S.bday, /^\d{1,2}-\d{1,2}$/); S.memD = str(S.memD, /^[\d-]{0,10}$/); S.sup = str(S.sup, /^\d{0,24}$/);
   S.visit = { d: str(S.visit.d, /^[\d-]{0,10}$/), done: S.visit.done ? 1 : 0, n: int(S.visit.n, 0, 1e6) };

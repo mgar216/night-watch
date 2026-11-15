@@ -16,6 +16,8 @@ const L = {
   sound: ['Sound', 'Звук', 'Suono'],
   volume: ['Volume', 'Громкость', 'Volume'],
   sister: ['The Night Watch', 'Ночной патруль', 'La Guardia Notturna'],
+  lessons: ['Lessons again', 'Объяснить заново', 'Lezioni da capo'],
+  lessonsSay: ['The owl will explain everything once more.', 'Сова объяснит всё ещё раз.', 'Il gufo ti spiegherà tutto ancora una volta.'],
   day_start: ['First light. The day is yours, Chief!', 'Рассвет. Весь день твой, командир!', 'Prime luci. La giornata è tua, Capo!'],
   day_low: ['The sun is getting low. The treehouse is waiting.', 'Солнце клонится к закату. Домик на дереве ждёт.', 'Il sole sta calando. La casa sull\'albero ti aspetta.'],
   day_back: ['Night Watch', 'Ночной патруль', 'Guardia Notturna'],   // short: four buttons share two rows of the treehouse panel on a phone held sideways

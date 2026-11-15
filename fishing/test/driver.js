@@ -484,6 +484,13 @@ const lanChecks = check => {
         ni.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
         check(named === 1 && !$('.veil') && S.name === 'Mia' && ni.getAttribute('enterkeyhint') === 'done', `Enter in the name field presses OK (${named} times, name "${S.name}")`);
       }
+      // "Lessons again" on the title: every lesson of the owl is given once more, and the first one comes at the pond
+      fresh(); go('home'); sim(.2); $('#bLessons').click(); look('home, lessons asked again');
+      // (a trophy banner of an earlier step may still stand beside the owl's line)
+      const again = JSON.parse(localStorage.getItem(SAVE)).tut, said = [...document.querySelectorAll('.toast')].map(n => n.textContent);
+      check(Object.keys(S.tut).length === 0 && !!again && Object.keys(again).length === 0 && said.includes(t('lessonsSay')),
+        `the lessons button asks for every lesson again, saves it and says so (lessons kept: ${Object.keys(S.tut)}; stored: ${JSON.stringify(again)}; said: ${JSON.stringify(said)})`);
+      go('spot', { area: 'pond' }); await sleep(750); check(!!$('.veil') && S.tut.b1 === 1, 'and the first lesson comes again at the pond'); if (closeDlg) closeDlg(); S.tut = Object.assign({}, LESSONS);
       // the map: followed, whole, the cards, the gate
       PRE.mid(); S.tut = {}; go('map'); sim(.5); look('map, first time'); S.tut = Object.assign({}, LESSONS);
       go('map'); sim(.3); look('map');

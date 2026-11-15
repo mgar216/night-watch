@@ -15,7 +15,8 @@ const second = (night, more) => Object.assign(first(night), { st: { cam: 3, gate
   day: 0, gifts: {}, bedN: 3, bed: { d: '2026-11-14', n: 2, more: 0 } }, more);
 const third = (night, more) => Object.assign(second(night), { caught: 140, pals: { guard: 1, baker: 1, lamp: 1 }, helper: 'baker', lit: 7, grow: 1,
   visit: { d: '2026-11-14', done: 1, n: 4 }, mem: { d: '2026-11-14', k: 'laugh' }, memD: '2026-11-14', eye: 0, flag: '', bday: '3-14', bdayY: 2026, sup: '', saga: 0 }, more);
-const largest = third(31, { stars: 99999, beams: 99999, caught: 99999, lit: 500, grow: 3, saga: 3, eye: 3, boss: 30, fooled: 999,
+const now = (night, more) => Object.assign(third(night), { hints: 1, toured: 1 }, more);   // with the guide and its hints
+const largest = now(31, { stars: 99999, beams: 99999, caught: 99999, lit: 500, grow: 3, saga: 3, eye: 3, boss: 30, fooled: 999,
   pals: { guard: 1, baker: 1, lamp: 1, post: 1, garden: 1, music: 1 }, helper: 'music', flag: '01234567'.repeat(12),
   items: [...Array(22)].map((_, m) => ({ t: ['cam', 'lamp', 'bell', 'peel', 'tramp', 'tickle', 'disco', 'bubbler', 'cannon', 'fan', 'honey', 'seesaw', 'drum'][m % 13], m })) });
 const career = { name: 'Mia', moons: 900, earned: 2400, log: { biscuit: { n: 1, best: 900, seen: 1, id: 1 }, aurora: { n: 2, best: 4200, seen: 1, id: 1 }, bluegill: { n: 6, best: 210, seen: 1, id: 1, lure: 'worm' } },
@@ -23,7 +24,7 @@ const career = { name: 'Mia', moons: 900, earned: 2400, log: { biscuit: { n: 1, 
 
 // ----- Damage -----
 const every = (keys, v) => Object.fromEntries(keys.map(k => [k, v]));
-const NWK = Object.keys(third(3)), FLK = ['lang', 'mute', 'vol', 'name', 'look', 'moons', 'earned', 'log', 'own', 'rig', 'ach', 'stat', 'at', 'gate', 'tut'];
+const NWK = Object.keys(now(3)), FLK = ['lang', 'mute', 'vol', 'name', 'look', 'moons', 'earned', 'log', 'own', 'rig', 'ach', 'stat', 'at', 'gate', 'tut'];
 const JUNK = [null, -1, 0, 1e21, 1.5, '', 'x', X, 'constructor', '__proto__', 'length', '1', true, false, [], [X], {}, { a: X }, { [X]: X }, 'x'.repeat(3000)];
 // a small seeded generator, so that a failing seed can be run again
 const rng = seed => () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
@@ -43,7 +44,7 @@ const nested = { name: X, lang: 'length', st: { cam: X, gate: -5, forge: 99, ext
   items: [{ t: X, m: X }, { t: 'cam', m: 1.5 }, { t: 'cam', m: -1 }, { t: 'shield', m: 0 }, { t: 'cam', m: 2 }, { t: 'lamp', m: 2 }, null, X, 5, [], { t: 'constructor', m: 3 }],
   stk: { [X]: X, m1: X, constructor: 1 }, own: { [X]: 1, wizard: X, __proto__: 1 }, hat: 'crown', scarf: X, zhat: 'wizard', gifts: { [X]: 1, biscuit: X },
   bed: { d: X, n: X, more: X }, bedN: X, pals: { [X]: 1, guard: X, nobody: 1 }, helper: X, visit: { d: X, done: X, n: X }, mem: { d: X, k: X }, memD: X,
-  flag: X, bday: X, bdayY: X, sup: X, saga: X, eye: X, grow: X, lit: X, caught: X, night: 6, briefed: X, day: X, promo: X, tinkered: X, boss: X, fooled: X };
+  flag: X, bday: X, bdayY: X, sup: X, saga: X, eye: X, grow: X, lit: X, caught: X, night: 6, briefed: X, day: X, promo: X, tinkered: X, boss: X, fooled: X, hints: X, toured: X };
 
 const nw = [
   ['no save at all', {}],
@@ -54,6 +55,8 @@ const nw = [
   ['version 2 from before there were days, with the bedtime reached long ago', { [NW]: j(second(9, { day: -1, bed: { d: '2026-01-01', n: 9, more: 0 } })) }],
   ['version 3, Night 3', { [NW]: j(third(3)) }],
   ['version 3, everything at its largest', { [NW]: j(largest), [FL]: j(career), 'firstlight.day': j({ id: 123456, n: 9 }) }],
+  ['today\'s save with the hints switched off', { [NW]: j(now(6, { hints: 0 })) }],
+  ['a new player who has only told a name', { [NW]: j({ lang: 0, name: 'Mia' }) }],
   ['a save that is not JSON', { [NW]: '{{{' }],
   ['a save that is the word null', { [NW]: 'null' }],
   ['a save that is a list', { [NW]: '[1,2,3]' }],
@@ -72,7 +75,7 @@ const nw = [
   ['the notes of the fishing game hold markup', { [NW]: j(third(4)), [FL]: j({ log: { [X]: { n: 1 }, biscuit: { n: X }, aurora: X, heron: null } }), 'firstlight.day': j({ id: X, n: X }) }],
   ['the notes of the fishing game hold huge numbers', { [NW]: j(third(4)), [FL]: j({ log: { biscuit: { n: 1e300 } } }), 'firstlight.day': j({ id: 1e300, n: 1e300 }) }],
   ['the notes of the fishing game are lists', { [NW]: j(third(4)), [FL]: '[[]]', 'firstlight.day': '[3]' }],
-  ...[...Array(14)].map((_, i) => { const r = rng(1000 + i); return [`random damage, seed ${1000 + i}`, { [NW]: j(damage(i % 2 ? largest : third(4 + i), r)), [FL]: j(damage(career, r)), 'firstlight.day': j(damage({ id: 5, n: 4 }, r)) }]; }),
+  ...[...Array(14)].map((_, i) => { const r = rng(1000 + i); return [`random damage, seed ${1000 + i}`, { [NW]: j(damage(i % 2 ? largest : now(4 + i), r)), [FL]: j(damage(career, r)), 'firstlight.day': j(damage({ id: 5, n: 4 }, r)) }]; }),
 ];
 
 // ----- First Light Fishing: its own save, and the Night Watch's save that it reads (name, language, lanterns, gadgets) -----

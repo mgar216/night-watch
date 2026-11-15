@@ -87,6 +87,15 @@ input.name { font: inherit; font-weight: 800; text-align: center; width: min(14e
 a.btn { text-decoration: none; }
 .btn.round { position: relative; }
 .dot { position: absolute; top: 1px; right: 1px; width: 15px; height: 15px; border-radius: 50%; background: var(--gold); border: 2px solid #fff; box-shadow: 0 0 8px var(--gold); }
+/* How to play (53-guide.js): the list of topics under the top bar, and the hint line of the Night menu */
+.guide { position: absolute; inset: 4.2em .5em .5em; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.guide > * { pointer-events: auto; }
+.gbox { width: min(44em, 100%); padding: .5em; }
+.gbox h2 { font-size: 1.1em; }
+.gtopics { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.2em, 1fr)); gap: .3em; }
+.gtopics .btn { flex-direction: column; gap: .1em; padding: .25em .15em; min-height: 58px; font-size: max(11px, .74em); line-height: 1.1; border-radius: 1em; }
+.hintline { font-size: max(11px, .84em); padding: .3em .9em; min-height: 48px; max-width: min(30em, 100%); text-align: left; white-space: normal; background: rgba(24, 34, 92, .9); }
+@media (max-height: 520px) { .gbox h2 { display: none; } .gtopics .btn { min-height: 50px; } }
 .certdlg { width: min(46em, 100%); }
 img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fit: contain; border-radius: .6em; }
 .whos { display: flex; flex-direction: column; gap: .4em; margin: .4em 0; }

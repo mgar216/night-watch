@@ -33,10 +33,14 @@ const S = { lang: -1, mute: false, name: '', night: 1, st: { cam: 0, gate: 0, fo
   flag: '',                                 // the flag the player painted (src/59-flag.js)
   bday: '', bdayY: 0,                       // birthday as month-day, and the year it was last kept
   sup: '',                                  // the last day's fishing that was counted (its id), so that supper comes once
-  saga: 0 };                                // chapters of the Baron's story seen; at 3 his museum is open and he raids no more
+  saga: 0,                                  // chapters of the Baron's story seen; at 3 his museum is open and he raids no more
+  hints: 1, toured: 0 };                    // hints while playing (src/53-guide.js); 1 once the guide was offered or opened
 // Only the fields this game knows are taken from a save: anything else in it (a hand-edited or damaged save) is left behind.
 try { const o = JSON.parse(localStorage.getItem(SAVE) || '{}'); for (const k in S) if (has(o, k)) S[k] = o[k]; } catch (e) { /* private mode, or not a save: play from the start */ }
-function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
+// Practice (a station tried from the guide, src/53-guide.js): { page, keep, in }. While it is set nothing is saved, and
+// the first step out of the screens named in `in` leads back to the guide with the save as it was kept.
+let practice = null;
+function save() { if (practice) return; try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 const rankAt = night => night > 7 ? 3 : night > 4 ? 2 : night > 2 ? 1 : 0;
 const rank = () => rankAt(S.night);
 function setLang(i) {
@@ -78,6 +82,11 @@ let scene = null;
 // The music follows the scene (src/33-music.js); a scene that is not listed is a station.
 const MOOD = { home: 'night', hub: 'night', tinker: 'night', album: 'night', wear: 'night', badge: 'night', pals: 'night', flag: 'night', story: 'night', saga: 'night', raid: 'raid', boss: 'raid', dawn: 'dawn', bed: 'bed' };
 function go(name, arg) {
+  if (practice && !practice.in.includes(name)) {   // the practice is over: the save is put back, and the way leads to the guide's card
+    const p = practice; practice = null;
+    for (const k in S) S[k] = p.keep[k];
+    name = 'guide'; arg = { page: p.page, tried: true };
+  }
   if (scene && scene.exit) scene.exit();
   timers.forEach(clearTimeout); timers = [];
   ui.innerHTML = '';
@@ -165,7 +174,8 @@ addEventListener('devicemotion', e => {
 });
 // (the event comes along as a last argument, for a scene that must tell one finger from another: the flag's painter)
 cv.addEventListener('pointerdown', e => { audioOn(); lastTouch = V.t; const p = ptr(e); swipe = [p[0], p[1], V.t]; if (scene && scene.down) scene.down(...p, e); });
-addEventListener('pointermove', e => { if (scene && scene.move) scene.move(...ptr(e), e); });
+// (a finger that moves is playing too: a long drag must not look like a quiet while to the owl)
+addEventListener('pointermove', e => { if (e.buttons || e.pointerType === 'touch') lastTouch = V.t; if (scene && scene.move) scene.move(...ptr(e), e); });
 addEventListener('pointerup', e => {
   const p = ptr(e);
   if (swipe && V.t - swipe[2] < .4 && Math.hypot(p[0] - swipe[0], p[1] - swipe[1]) > Math.min(V.w, V.h) * .35) scatter();
@@ -185,6 +195,7 @@ function frame(ms) {
   last = ms; V.t += dt;
   if (scene) {
     if (scene.update) scene.update(dt);
+    hintTick();
     scene.draw(dt);
     drawFx(dt);
     drawPortrait();
