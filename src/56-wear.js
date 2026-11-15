@@ -1,7 +1,7 @@
 // ---------- Dress-up: hats and scarves for the owl and for Zip, bought with moonbeams and worn in every scene ----------
 // The things themselves (WEAR, WEARS) are drawn in src/45-chars.js, beside the characters that wear them.
 ICON.wear = (c, id) => { c.translate(0, WEAR[id].hat ? .72 : -.35); c.scale(WEAR[id].hat ? .6 : .82, WEAR[id].hat ? .6 : .82); WEAR[id].draw(c); };
-ICON.owlI = c => owl(c, 0, .93, .0185, 0, 'idle', false);
+ICON.owlI = c => owl(c, 0, .93, .0185, 1, 'idle', false);   // (at time 0 the owl is in the middle of a blink)
 ICON.zipI = c => zip(c, -.2, .2, .052, 0, 1);
 ICON.hanger = c => { c.beginPath(); c.arc(0, -.6, .2, Math.PI * .9, Math.PI * 2.4); c.lineWidth = .12; c.strokeStyle = '#fff'; c.stroke(); line(c, [0, -.4, -.9, .3, .9, .3, 0, -.4], '#fff', .14); poly(c, [-.6, .3, .6, .3, .45, .8, -.45, .8], '#ff9ecb'); };
 
@@ -15,7 +15,7 @@ scenes.wear = {
       <span class="pill" id="pBeams">${ic('beam', 22)}<b>${S.beams}</b></span></div>`);
     $('#wBack', bar).onclick = () => { sfx.click(); go(this.from); };
     $('#wFlag', bar).onclick = () => { sfx.pop(); go('flag', { from: 'wear' }); };   // the treehouse wears something too: its flag
-    this.panel = add(`<div class="side wearbar"><div class="row"><div class="langs" role="group">
+    this.panel = add(`<div class="side wearbar"><div class="row"><div class="langs" role="group" aria-label="${esc(t('wardrobe'))}">
       <button class="btn" data-w="owl" aria-label="${esc(t('k_owl'))}">${ic('owlI', 40)}</button><button class="btn" data-w="zip" aria-label="${esc(t('k_zip'))}">${ic('zipI', 40)}</button></div>
       <button class="btn gold" id="wBuy" disabled>${ic('beam', 24)}<b></b><span>${esc(t('buy'))}</span></button></div>
       <div class="wears">${WEARS.map(k => `<button class="pal" data-k="${k}">${ic('wear:' + k, 36)}<span></span></button>`).join('')}</div></div>`);

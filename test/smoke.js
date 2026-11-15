@@ -2,6 +2,8 @@
 //   node test/smoke.js                 full play-through at phone size, then the layout and input audit at several screen sizes
 //   node test/smoke.js calm            the same with "reduce motion" switched on
 //   node test/smoke.js audit 360,640   only the audit, only at that size (any number of W,H sizes)
+//   node test/smoke.js perf            frame rate of the heaviest screens (numbers to read, nothing is asserted)
+//   node test/smoke.js tour            the game started on each old, damaged and randomly broken save of test/saves.js
 // Headless Firefox keeps a 1366 x 682 window unless it is taking a screenshot, so every run happens
 // inside an <iframe> of the wanted size; the game sees the iframe as its window.
 const http = require('http'), fs = require('fs'), os = require('os'), path = require('path');
@@ -10,7 +12,11 @@ const { execFileSync, spawn } = require('child_process');
 const root = path.join(__dirname, '..'), page = path.join(os.tmpdir(), `nw-test-${process.pid}.html`);
 const args = process.argv.slice(2), calm = args.includes('calm'), sizes = args.filter(a => /^\d+,\d+$/.test(a));
 const AUDIT = ['360,640', '640,360', '768,1024', '1280,720'];
-const runs = args.includes('audit') ? (sizes.length ? sizes : AUDIT).map(s => ['audit', s]) : [['smoke', '412,800'], ...AUDIT.map(s => ['audit', s])];
+const only = ['audit', 'perf'].find(m => args.includes(m));
+// `tour`: the game starts once on each prepared save of test/saves.js (`tour only=seed` runs the saves whose name holds "seed")
+const part = (args.find(a => a.startsWith('only=')) || '').slice(5);
+const saves = args.includes('tour') ? require('./saves.js').nw.filter(([name]) => name.includes(part)) : [];
+const runs = saves.length ? saves.map(([name]) => ['tour', '412,800', name]) : only ? (sizes.length ? sizes : only === 'perf' ? ['412,800'] : AUDIT).map(s => [only, s]) : [['smoke', '412,800'], ...AUDIT.map(s => ['audit', s])];
 execFileSync(path.join(root, 'build.sh'), [page, path.join(__dirname, 'driver.js')]);
 
 // Static check: every literal t('key') in the sources exists in the localization table.
@@ -45,11 +51,12 @@ const server = http.createServer((req, res) => {
   }
   else {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.end(`<!DOCTYPE html><body style="margin:0;background:#333"><script>
-      const runs = ${JSON.stringify(runs)}; let i = 0;
+    res.end(`<!DOCTYPE html><meta name="viewport" content="width=device-width, initial-scale=1"><body style="margin:0;background:#333"><script>
+      const runs = ${JSON.stringify(runs)}, stores = ${JSON.stringify(saves.map(s => s[1])).replace(/</g, '\\u003c')}; let i = 0;
       function next() {
         if (i >= runs.length) return;
         const [mode, size] = runs[i], [w, h] = size.split(','), f = document.createElement('iframe');
+        if (stores[i]) { localStorage.clear(); for (const k in stores[i]) localStorage.setItem(k, stores[i][k]); }   // a tour starts on a prepared storage
         f.style.cssText = 'border:0;display:block;width:' + w + 'px;height:' + h + 'px';
         f.src = '/game?run=' + i++ + '#' + mode;
         document.body.replaceChildren(f);          // one run at a time
@@ -59,6 +66,10 @@ const server = http.createServer((req, res) => {
     </script></body>`);
   }
 }).listen(0, '127.0.0.1', () => {
-  ff = spawn('firefox', ['--headless', '--no-remote', '--profile', profile, `http://127.0.0.1:${server.address().port}/`], { stdio: 'ignore' });
+  // NW_OPEN='command with {url}' opens the suite in another browser instead of headless Firefox, for example real Chrome on
+  // the phone through Shizuku: NW_OPEN='rish -c "am start -a android.intent.action.VIEW -d {url} com.android.chrome"'
+  const url = `http://127.0.0.1:${server.address().port}/`;
+  if (process.env.NW_OPEN) spawn('sh', ['-c', process.env.NW_OPEN.replace('{url}', url)], { stdio: 'inherit' });
+  else ff = spawn('firefox', ['--headless', '--no-remote', '--profile', profile, url], { stdio: 'ignore' });
   alive();
 });

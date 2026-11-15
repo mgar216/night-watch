@@ -27,10 +27,23 @@ resize();
 // The day leaves a note for the owl in the shared storage (how many fish, and which day it was): three fish or more are
 // supper, and supper sharpens the owl's eyes for tonight's Gate Check. At the third fish the note's id moves on by one, so
 // that a note the owl read too early (a look at the Night Watch and back) still becomes supper.
-const dayId = Date.now();
+// The note also names its day: the number of the Night that follows (from the Night Watch's save). The page can be loaded
+// again in the middle of a day (a phone drops a background tab, or the child comes back for more before the same Night):
+// the count then goes on from the note, so the fish already landed still count, and a supper that the owl has read
+// does not come a second time.
+const NOTE = 'firstlight.day' + (nwSlot ? '.' + (nwSlot + 1) : '');
+let dayId = 0, dayOf = 0;
+function dayBegin() {
+  dayId = Date.now(); dayCatch = 0; dayOf = Number.isInteger(nwSave.night) ? nwSave.night : 0;
+  if (day) try {
+    const r = JSON.parse(localStorage.getItem(NOTE) || 'null');
+    if (r && r.k === dayOf && Number.isSafeInteger(r.id) && Number.isInteger(r.n) && r.n > 0 && r.n < 1e6) { dayCatch = r.n; dayId = r.id - (r.n >= 3); }
+  } catch (e) { /* no note, or nothing can be read here */ }
+}
+dayBegin();
 on('catch', () => {
   dayCatch++;
-  if (day) try { localStorage.setItem('firstlight.day' + (nwSlot ? '.' + (nwSlot + 1) : ''), JSON.stringify({ id: dayId + (dayCatch >= 3), n: dayCatch })); } catch (e) { /* nothing can be saved here */ }
+  if (day) try { localStorage.setItem(NOTE, JSON.stringify({ id: dayId + (dayCatch >= 3), n: dayCatch, k: dayOf })); } catch (e) { /* nothing can be saved here */ }
 });
 on('enter', d => { if (day && d && d.home && dayCatch >= 5 && !dayTold) { dayTold = true; toast(t('day_low'), 3200); } });
 // By day (from the Night Watch) the Chief is already on the way: no title screen, straight to the map.

@@ -97,7 +97,7 @@ css(`
   background: rgba(6, 10, 32, .94); border-top: 3px solid var(--line); border-radius: 1.2em 1.2em 0 0; pointer-events: auto; }
 .spot-box h2 { margin: 0; font-size: 1.1em; color: var(--gold); display: flex; align-items: center; gap: .4em; }
 .spot-box h2 .sp { flex: 1; }
-.spot-list { overflow-y: auto; touch-action: pan-y; display: flex; flex-direction: column; gap: .3em; min-height: 0; }
+.spot-list { overflow-y: auto; touch-action: pan-y; display: flex; flex-direction: column; gap: .3em; min-height: 0; scrollbar-width: thin; scrollbar-color: rgba(255, 216, 107, .55) transparent; }
 .spot-kind { font-size: max(11px, .75em); opacity: .85; margin: .2em 0 0; }
 .spot-row { display: flex; gap: .35em; flex-wrap: wrap; }
 .spot-it { display: flex; align-items: center; gap: .4em; min-height: 52px; padding: .25em .6em .25em .3em; border-radius: .9em; border: 3px solid var(--line); background: #22327a;

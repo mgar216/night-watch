@@ -34,7 +34,8 @@ const S = { lang: -1, mute: false, name: '', night: 1, st: { cam: 0, gate: 0, fo
   bday: '', bdayY: 0,                       // birthday as month-day, and the year it was last kept
   sup: '',                                  // the last day's fishing that was counted (its id), so that supper comes once
   saga: 0 };                                // chapters of the Baron's story seen; at 3 his museum is open and he raids no more
-try { Object.assign(S, JSON.parse(localStorage.getItem(SAVE) || '{}')); } catch (e) { /* private mode: play without saving */ }
+// Only the fields this game knows are taken from a save: anything else in it (a hand-edited or damaged save) is left behind.
+try { const o = JSON.parse(localStorage.getItem(SAVE) || '{}'); for (const k in S) if (has(o, k)) S[k] = o[k]; } catch (e) { /* private mode, or not a save: play from the start */ }
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 const rankAt = night => night > 7 ? 3 : night > 4 ? 2 : night > 2 ? 1 : 0;
 const rank = () => rankAt(S.night);
@@ -43,7 +44,8 @@ function setLang(i) {
   document.documentElement.lang = LANGS[i];
   document.title = t('title');
 }
-setLang(LANGS[S.lang] ? S.lang : Math.max(0, LANGS.indexOf((navigator.language || 'en').slice(0, 2))));
+// (a whole number only: in a damaged save, LANGS['length'] and LANGS['1'] would pass as languages too)
+setLang(Number.isInteger(S.lang) && LANGS[S.lang] ? S.lang : Math.max(0, LANGS.indexOf((navigator.language || 'en').slice(0, 2))));
 
 // DOM helpers: scenes build their overlay from small HTML snippets.
 function add(html, parent = ui) {
@@ -56,9 +58,11 @@ function add(html, parent = ui) {
 }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function say(text) { $('#live').textContent = text; }
-function toast(text, ms = 1600) {
+// `at`: a point on the screen that the line belongs to (a friend's name goes over that friend); it stays inside the screen.
+function toast(text, ms = 1600, at) {
   const n = add(`<div class="toast">${esc(text)}</div>`);
   n.style.animationDuration = ms + 'ms';   // a longer line stays longer
+  if (at) { const r = ui.getBoundingClientRect(), w = n.offsetWidth / 2 + 6; n.style.left = clamp(at[0] - r.left, w, Math.max(w, r.width - w)) + 'px'; n.style.top = Math.max(6, at[1] - r.top - n.offsetHeight) + 'px'; }
   say(text); speak(text, 'owl', true);
   setTimeout(() => n.remove(), ms);
 }
@@ -138,6 +142,9 @@ function resize() {
 }
 addEventListener('resize', resize);
 addEventListener('orientationchange', resize);
+// The phone's keyboard covers the lower part of the page without resizing it. Its height goes into --kb (style.css), so
+// that a dialog with a text field (the player's name) moves up and keeps its button in view.
+if (window.visualViewport) visualViewport.addEventListener('resize', () => ui.style.setProperty('--kb', (visualViewport.scale === 1 ? Math.max(0, Math.round(innerHeight - visualViewport.height)) : 0) + 'px'));
 
 // Input: pointer events cover touch, mouse and pen; keys go to the scene.
 const ptr = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
@@ -163,9 +170,9 @@ addEventListener('pointerup', e => {
   const p = ptr(e);
   if (swipe && V.t - swipe[2] < .4 && Math.hypot(p[0] - swipe[0], p[1] - swipe[1]) > Math.min(V.w, V.h) * .35) scatter();
   swipe = null;
-  if (scene && scene.up) scene.up(...p);
+  if (scene && scene.up) scene.up(...p, false, e);
 });
-addEventListener('pointercancel', e => { swipe = null; if (scene && scene.up) scene.up(...ptr(e), true); });
+addEventListener('pointercancel', e => { swipe = null; if (scene && scene.up) scene.up(...ptr(e), true, e); });
 // While a dialog is open the keys belong to its buttons, not to the scene underneath.
 addEventListener('keydown', e => { audioOn(); lastTouch = V.t; if (scene && scene.key && !$('.veil') && !/INPUT/.test(e.target.tagName)) scene.key(e); });
 addEventListener('contextmenu', e => e.preventDefault());

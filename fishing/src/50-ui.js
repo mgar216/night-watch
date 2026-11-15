@@ -68,9 +68,12 @@ function plaqueHtml(id, extra = '') {
 }
 
 function askName(then) {
-  const v = talk(t('nameAsk'), { html: `<div class="pics"><input class="name" maxlength="16" autocomplete="off" placeholder="${esc(t('nameDef'))}" value="${esc(S.name)}" aria-label="${esc(t('nameAsk'))}"></div>`,
+  const v = talk(t('nameAsk'), { html: `<div class="pics"><input class="name" maxlength="16" autocomplete="off" enterkeyhint="done" placeholder="${esc(t('nameDef'))}" value="${esc(S.name)}" aria-label="${esc(t('nameAsk'))}"></div>`,
     acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => { save(); then(); } }] });
-  $('input', v).oninput = e => { S.name = e.target.value.trim().slice(0, 16); };
+  const inp = $('input', v);
+  inp.oninput = () => { S.name = inp.value.trim().slice(0, 16); };
+  // the keyboard's own "done" key presses OK: on a phone the keyboard can cover the button
+  inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); inp.blur(); $('.acts .btn', v).click(); } };
 }
 
 // ----- Home -----

@@ -11,6 +11,8 @@ const sim = (sec, each) => { for (let i = 0; i < sec * 30; i++) { V.t += 1 / 30;
 const clickDlg = (i = -1) => { const b = [...document.querySelectorAll('.veil .acts .btn')]; if (!b.length) return false; b[i < 0 ? b.length - 1 : i].click(); return true; };
 const SP = scenes.spot;
 const until = (fn, sec = 20) => { sim(sec, () => !fn()); return fn(); };
+// test/cycle.js (the day cycle across both games, with real page changes) lands a fish and reads the lent lures through this
+window.flfTest = { land: id => emit('catch', { id: id || 'bluegill' }), lures: () => Object.keys(ITEMS).filter(id => id.startsWith('nwl_')) };
 
 // ----- Saves -----
 const LESSONS = { map: 1, shop: 1, b1: 1, b2: 1, b3: 1, b4: 1, b5: 1 };
@@ -245,6 +247,13 @@ const lanChecks = check => {
     fresh(); check(rank() === 0, 'a new angler is a Reed'); AREAS.forEach((a, i) => { logArea(a.id, 99); logLeg(LEGENDS[i]); }); check(rank() === 7 && allLogged() === 85, 'everything logged is rank Bell');
     for (let r = 2; r <= 7; r++) { const before = AREAS.filter(a => a.tier < r).reduce((n, a) => n + a.fish.length, 0); check(RANKS[r] <= before, `rank ${r} (tackle of tier ${r}) can be reached in gentler waters: needs ${RANKS[r]}, they hold ${before}`); }
     await note('tables and unlock graph checked, problems so far: ' + out.errors.length);
+    // a browser that refuses to save (private mode, storage full, storage switched off): the game goes on, nothing throws
+    where = 'a browser that refuses to save'; fresh();
+    const setItem0 = Storage.prototype.setItem, getItem0 = Storage.prototype.getItem, errs0 = out.errors.length;
+    Storage.prototype.setItem = Storage.prototype.getItem = () => { throw new DOMException('refused', 'QuotaExceededError'); };
+    try { go('map'); sim(.3); if (closeDlg) closeDlg(); go('hub'); sim(.3); go('shop'); sim(.3); emit('catch', { id: 'bluegill' }); save(); go('spot', { area: 'pond' }); sim(.5); if (closeDlg) closeDlg(); go('home'); sim(.3); }
+    catch (e) { bad('a browser that refuses to save breaks the game: ' + (e.stack || e)); } finally { Storage.prototype.setItem = setItem0; Storage.prototype.getItem = getItem0; mapRt = null; }
+    check(out.errors.length === errs0, `a browser that refuses to save does not stop the game (${out.errors.length - errs0} errors)`);
 
     // --- travel on the map: taps, keys, the boat, the Chapel's gate ---
     where = 'map';
@@ -310,7 +319,20 @@ const lanChecks = check => {
     const dayKey = 'firstlight.day' + (nwSlot ? '.' + (nwSlot + 1) : ''), dayNote = () => JSON.parse(localStorage.getItem(dayKey) || '{}');
     dayCatch = 1; emit('catch', { id: 'perch' }); const n2 = dayNote(); emit('catch', { id: 'perch' }); const n3 = dayNote();
     check(n2.n === 2 && n3.n === 3 && Number.isSafeInteger(n2.id) && n3.id === n2.id + 1, 'the note counts the day\'s fish and is a new note from the third on: ' + JSON.stringify([n2, n3]));
-    localStorage.removeItem(dayKey);
+    // a page loaded again in the middle of the day (a phone drops a background tab) goes on from the note: two fish before
+    // and one after are supper; a supper that was earned stays earned and is the same note; another day starts at nothing
+    const night0 = nwSave.night; nwSave = { ...nwSave, night: 7 };
+    localStorage.removeItem(dayKey); dayBegin(); emit('catch', { id: 'perch' }); emit('catch', { id: 'perch' }); const before = dayNote();
+    dayBegin(); const kept = dayCatch; emit('catch', { id: 'perch' }); const after = dayNote();
+    check(kept === 2 && after.n === 3 && after.id === before.id + 1 && after.k === 7, 'a reload after two fish keeps them, and the third is supper: ' + JSON.stringify([before, kept, after]));
+    dayBegin(); emit('catch', { id: 'perch' }); const more = dayNote();
+    check(dayCatch === 4 && more.id === after.id, 'a reload after supper keeps the same note, so supper does not come twice: ' + JSON.stringify(more));
+    const now1 = Date.now; Date.now = () => now1() + 60000;   // the next day begins later, not in the same millisecond
+    nwSave = { ...nwSave, night: 8 }; dayBegin(); Date.now = now1; const fresh8 = dayCatch; emit('catch', { id: 'perch' }); const next = dayNote();
+    check(fresh8 === 0 && next.n === 1 && next.k === 8 && next.id !== more.id, 'the day before another Night starts its own count: ' + JSON.stringify(next));
+    for (const junk of ['{{{', 'null', '[3]', JSON.stringify({ id: 'x', n: 5, k: 8 }), JSON.stringify({ id: 5, n: 1e300, k: 8 }), JSON.stringify({ id: 5, n: -2, k: 8 }), JSON.stringify({ id: 5, n: 2.5, k: 8 })]) { localStorage.setItem(dayKey, junk); dayBegin(); check(dayCatch === 0, 'a damaged note starts the day at nothing: ' + junk); }
+    day = false; localStorage.setItem(dayKey, JSON.stringify({ id: 5, n: 2, k: 8 })); dayBegin(); check(dayCatch === 0, 'a visit of its own does not read the note'); day = true;
+    nwSave = { ...nwSave, night: night0 }; localStorage.removeItem(dayKey); dayBegin();
     go('map'); check(low() === 0, 'and it does not say so again');
     go('home'); check($('#bSister').getAttribute('href') === '../index.html#night', 'the title leads back to the Night as well'); day = false;
     await note('shop, trophies and logbook checked, problems so far: ' + out.errors.length);
@@ -421,6 +443,22 @@ const lanChecks = check => {
     const look = screen => {
       where = screen;
       if (document.documentElement.scrollWidth > W + 1) flag(screen, document.documentElement, 'page scrolls sideways');
+      // every button that is not under a dialog takes a tap at its middle (a test's click() would press a covered button too);
+      // a button that a scrolling panel has scrolled out of view is not judged. The open tackle box is a dialog too: it
+      // covers the buttons under it on purpose.
+      const veil = $('#ui .veil') || $('#ui .spot-box');
+      const scrolledOut = (el, x, y) => { for (let p = el.parentElement; p && p !== ui; p = p.parentElement) { const o = getComputedStyle(p), q = p.getBoundingClientRect(), l = q.left + p.clientLeft, u = q.top + p.clientTop; if ((o.overflowX !== 'visible' || o.overflowY !== 'visible') && (x < l + 1 || x > l + p.clientWidth - 1 || y < u + 1 || y > u + p.clientHeight - 1)) return true; } return false; };
+      for (const el of document.querySelectorAll('#ui button, #ui a.btn')) {
+        const r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+        if (!r.width || el.disabled || veil && !veil.contains(el) || r.left < 0 || r.right > W || r.top < 0 || r.bottom > H || scrolledOut(el, x, y)) continue;
+        const hit = document.elementFromPoint(x, y);
+        if (hit !== el && !el.contains(hit)) flag(screen, el, 'cannot be tapped: ' + (hit ? name(hit) : 'nothing') + ' takes the tap');
+      }
+      // every control and every picture with a meaning has a name for a screen reader: its text, a label, or the dialog's text
+      for (const el of document.querySelectorAll('#ui button, #ui a.btn, #ui input, #ui select, #ui textarea, #ui [role="img"], #ui [role="dialog"], #ui [role="group"]')) {
+        const by = el.getAttribute('aria-labelledby');
+        if (el.getBoundingClientRect().width && !((el.getAttribute('aria-label') || '').trim() || el.textContent.trim() && !el.matches('select') || el.closest('label') || by && document.getElementById(by))) flag(screen, el, 'has no name for a screen reader');
+      }
       for (const el of document.querySelectorAll('#ui button, #ui a.btn, #ui .pill, #ui .dlg, #ui .plaque, #ui .toast, #ui input, #ui .title, #ui .bubble, #ui .card')) {
         const r = el.getBoundingClientRect();
         if (!r.width && !r.height) continue;
@@ -441,6 +479,11 @@ const lanChecks = check => {
     for (let l = 0; l < 3; l++) {
       setLang(l);
       fresh(); go('home'); sim(.5); look('home'); askName(() => {}); look('name dialog'); clickDlg();
+      if (!l) {   // the keyboard's own "done" key presses OK: on a phone the keyboard covers the button (seen on a real phone)
+        let named = 0; S.name = ''; askName(() => named++); const ni = $('.veil input'); ni.focus(); ni.value = ' Mia '; ni.dispatchEvent(new Event('input', { bubbles: true }));
+        ni.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        check(named === 1 && !$('.veil') && S.name === 'Mia' && ni.getAttribute('enterkeyhint') === 'done', `Enter in the name field presses OK (${named} times, name "${S.name}")`);
+      }
       // the map: followed, whole, the cards, the gate
       PRE.mid(); S.tut = {}; go('map'); sim(.5); look('map, first time'); S.tut = Object.assign({}, LESSONS);
       go('map'); sim(.3); look('map');
@@ -478,8 +521,72 @@ const lanChecks = check => {
     for (const f of found.values()) bad(`${f.text} [${[...f.langs].join(' ')}]`);
   }
 
-  if (mode[0] !== 'smoke' && mode[0] !== 'audit') return;
-  try { await (mode[0] === 'smoke' ? smoke() : audit()); } catch (e) { bad(`driver crashed at [${where}]: ${e.stack || e}`); }
+  // #tour: the game has started on a prepared browser storage (../../test/saves.js: its own save and the Night Watch's,
+  // old, damaged, hand-edited or randomly broken). Whatever they were: the repaired career is sound, every screen opens,
+  // every dialog can be answered, a fish can be landed, nothing throws, and no text of a save reaches the page as markup.
+  async function tour() {
+    scenes.hub.leave = () => {};                      // the way back to the Night Watch must not leave the test page
+    const int = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi, str = (v, n) => typeof v === 'string' && v.length <= n;
+    const sound = at => {
+      const wrong = [], want = (ok, what) => { if (!ok) wrong.push(what); };
+      want(int(S.lang, 0, 2) && S.lang === lang && typeof S.mute === 'boolean' && S.vol >= 0 && S.vol <= 1 && str(S.name, 16), 'lang, mute, vol, name');
+      want(int(S.moons, 0, 2e9) && int(S.earned, 0, 2e9) && (S.gate === 0 || S.gate === 1) && (S.at === 'tree' || has(AREA, S.at)), 'moons, earned, gate, at');
+      want(int(S.look.col, 0, 5) && int(S.look.boat, 0, 5) && (S.look.hat === '' || has(WEAR, S.look.hat)), 'look');
+      want(Object.keys(S.log).every(id => has(SPECIES, id) && int(S.log[id].n, 0, 2e6) && int(S.log[id].best, 0, 2e7)), 'log');
+      want(Object.keys(S.own).every(id => (has(ITEMS, id) || NWL.some(it => it.id === id)) && int(S.own[id], 0, 2000)), 'own');
+      want(Object.keys(S.ach).every(id => has(ACHS, id)) && Object.values(S.stat).every(v => int(v, 0, 2e9)) && Object.values(S.tut).every(v => v === 1), 'ach, stat, tut');
+      want(['rod', 'line', 'reel', 'lure'].every(k => has(ITEMS, S.rig[k])), 'rig: ' + JSON.stringify(S.rig));
+      want(JSON.stringify(S).length < 30000, 'the save is small (' + JSON.stringify(S).length + ' characters)');
+      want(Object.getPrototypeOf(S) === Object.prototype && !Object.keys(S).some(k => k === 'constructor' || k === '__proto__' || k.startsWith('extra') || k.includes('<') || /^\d+$/.test(k)), 'only the fields the game knows: ' + Object.keys(S).filter(k => !/^[a-zA-Z]+$/.test(k) || k.startsWith('extra')).join());
+      want(({}).polluted === undefined && !window.xss && !document.getElementById('xss'), 'nothing of a save ran or reached the page');
+      check(!wrong.length, `tour, ${at}: not sound: ${wrong.join('; ')} in ${JSON.stringify(S).slice(0, 400)}`);
+    };
+    const markup = at => check(!window.xss && !document.getElementById('xss'), 'text of a save reached the page as markup: ' + at);
+    const answerAll = async () => { for (let i = 0; i < 12 && $('.veil'); i++) { clickDlg(); sim(.4); await sleep(40); } };
+    const open = async (name, arg, label = name) => {
+      where = 'tour: ' + label;
+      try { go(name, arg); sim(.7); markup(label); await answerAll(); sim(1.2); markup(label + ', after its dialogs'); } catch (e) { bad(`tour: ${label} threw ${e.stack || e}`); }
+    };
+    sound('after the repair');
+    await open('home'); await open('map'); await open('hub');
+    for (const [tab] of SHOP_TABS) { shopTab = tab; await open('shop', undefined, 'shop, ' + tab); }
+    await open('book', { back: () => go('hub') });
+    for (const a of AREAS) await open('book', { back: () => go('hub'), area: a.id, sp: a.fish[0] }, 'logbook page of ' + a.id);
+    await open('records'); await open('trophies');
+    for (const a of AREAS) await open('spot', { area: a.id }, 'water ' + a.id);
+    // one fish landed in the pond, with whatever tackle the save left
+    where = 'tour: a catch'; S.tut = Object.assign({}, LESSONS); go('spot', { area: 'pond' }); sim(.3); SP.pop.length = 0;
+    if (toBite()) { SP.strike(); hold.on = true; sim(1); hold.on = false; const F = SP.F; if (F) { F.tired = true; F.Lm = 2.5; F.runT = 0; sim(.4); F.netT = .625; SP.netTry(); await sleep(60); } }
+    check(SP.st === 'card', 'tour: a fish can be landed, got to ' + SP.st); markup('the catch card'); await answerAll();
+    go('map'); sim(.5); await answerAll(); mapRt = null;
+    markup('the end'); sound('after a catch');
+    check(JSON.stringify(JSON.parse(localStorage.getItem(SAVE))) === JSON.stringify(S), 'tour: what is stored is the repaired career');
+  }
+
+  // #perf: the frame rate of the heaviest screens, measured with the browser's own animation frames (numbers to read)
+  async function perf() {
+    const raf = () => new Promise(r => requestAnimationFrame(r));
+    const measure = async label => {
+      where = 'perf ' + label; await sleep(500);
+      const ts = []; for (let i = 0; i <= 120; i++) ts.push(await raf());
+      const d = ts.slice(1).map((x, i) => x - ts[i]).sort((a, b) => a - b), t0 = performance.now();
+      for (let i = 0; i < 40; i++) { if (scene.update) scene.update(1 / 60); scene.draw(1 / 60); drawFx(1 / 60); drawPortrait(); }
+      await note(`${label}: a frame every ${d[60].toFixed(1)} ms (95th ${d[113].toFixed(1)}, worst ${d[119].toFixed(1)}); update and draw cost ${((performance.now() - t0) / 40).toFixed(2)} ms`);
+    };
+    await note(`viewport ${innerWidth}x${innerHeight}, pixel ratio ${devicePixelRatio}, reduced motion ${calm.matches ? 'on' : 'off'}`);
+    PRE.all(); nwSave = { ...nwSave, lit: 24 }; go('home'); await measure('title');
+    go('map'); if (closeDlg) closeDlg(); await measure('map with 24 lit lanterns'); mapToggle(); await measure('whole map'); mapRt = null;
+    go('hub'); await measure('treehouse'); go('shop'); await measure('shop'); go('book', { back: () => go('hub') }); await measure('logbook'); go('trophies'); await measure('trophies');
+    for (const area of ['pond', 'reef', 'deep', 'chapel']) {
+      go('spot', { area }); if (closeDlg) closeDlg(); await measure(`${area}, reading the water`);
+      if (toBite()) { SP.strike(); hold.on = true; await measure(`${area}, a fight`); hold.on = false; }
+    }
+    go('home');
+  }
+
+  const modes = { smoke, audit, tour, perf };
+  if (!has(modes, mode[0])) return;
+  try { await modes[mode[0]](); } catch (e) { bad(`driver crashed at [${where}]: ${e.stack || e}`); }
   await post(out);
   if (parent !== window) parent.postMessage('flf-done', '*');
 })();

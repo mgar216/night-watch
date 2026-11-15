@@ -3,7 +3,7 @@
 (() => {
   const int = (v, lo, hi) => clamp(v | 0, lo, hi);
   S.night = int(S.night, 1, 1e6); S.beams = int(S.beams, 0, 1e9); S.stars = int(S.stars, 0, 1e9); S.nest = int(S.nest, 0, 3);
-  S.briefed = int(S.briefed, 0, S.night); S.testStar |= 0; S.gateStar |= 0; S.boss |= 0; S.fooled |= 0;
+  S.briefed = int(S.briefed, 0, S.night); S.testStar |= 0; S.gateStar |= 0; S.boss |= 0; S.fooled |= 0; S.tinkered = int(S.tinkered, 0, 2);
   S.name = String(S.name || '').slice(0, 16); S.mute = !!S.mute; S.promo = !!S.promo; S.voice = S.voice !== false;
   S.day = S.day < 0 ? +(S.night > 1) : S.day ? 1 : 0;   // a career from before there were days meets its first morning at once
   const str = (v, re) => typeof v === 'string' && re.test(v) ? v : '';

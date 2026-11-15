@@ -58,11 +58,13 @@ button { font: inherit; color: inherit; }
 .langs .btn[aria-pressed=true] { background: #f2b93b; color: #3a2400; border-color: #fff3c4; }
 .foot { font-size: max(11px, .72em); font-weight: 600; opacity: .85; max-width: 34em; margin: .2em 0 calc(.2em + env(safe-area-inset-bottom)); text-shadow: 0 1px 3px #000; }
 
-.veil { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: .7em; background: rgba(6, 10, 32, .55); pointer-events: auto; }
+/* the phone's keyboard covers the lower part of the page: --kb is its height (20-core.js), and a dialog keeps clear of it */
+.veil { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: .7em; padding-bottom: calc(.7em + var(--kb, 0px)); background: rgba(6, 10, 32, .55); pointer-events: auto; }
 .veil.day { background: rgba(255, 196, 140, .08); }   /* first light: the sunrise behind the dialog stays bright */
 .veil.clear { background: rgba(6, 10, 32, .16); }     /* news of a gift: the tree and the sky stay in view */
+/* (where a panel scrolls on a desktop browser, its scrollbar is thin and in the game's colours, not a white strip) */
 .dlg { width: min(34em, 100%); max-height: 100%; overflow: auto; padding: .8em; border-radius: 1.4em; background: var(--panel);
-  border: 3px solid var(--line); text-align: center; box-shadow: 0 0 40px rgba(255, 200, 80, .25); }
+  border: 3px solid var(--line); text-align: center; box-shadow: 0 0 40px rgba(255, 200, 80, .25); scrollbar-width: thin; scrollbar-color: rgba(255, 216, 107, .55) transparent; }
 .dlg h2 { margin: 0 0 .3em; font-size: 1.3em; color: var(--gold); }
 .owlrow { display: flex; align-items: center; gap: .5em; text-align: left; }
 .bubble { position: relative; flex: 1; padding: .6em .8em; border-radius: 1.1em; background: var(--cream); color: #2a1c05; font-size: 1.1em; font-weight: 800; }
@@ -496,6 +498,9 @@ function resize() {
 }
 addEventListener('resize', resize);
 addEventListener('orientationchange', resize);
+// The phone's keyboard covers the lower part of the page without resizing it. Its height goes into --kb (style.css), so
+// that a dialog with a text field (the player's name) moves up and keeps its button in view.
+if (window.visualViewport) visualViewport.addEventListener('resize', () => ui.style.setProperty('--kb', (visualViewport.scale === 1 ? Math.max(0, Math.round(innerHeight - visualViewport.height)) : 0) + 'px'));
 
 // Input. Pointer events cover touch, mouse and pen; keys go to the scene.
 // `hold` is the one "hold to reel" control, the same for every input: a finger or a mouse button held on the scene,
@@ -1157,9 +1162,12 @@ function plaqueHtml(id, extra = '') {
 }
 
 function askName(then) {
-  const v = talk(t('nameAsk'), { html: `<div class="pics"><input class="name" maxlength="16" autocomplete="off" placeholder="${esc(t('nameDef'))}" value="${esc(S.name)}" aria-label="${esc(t('nameAsk'))}"></div>`,
+  const v = talk(t('nameAsk'), { html: `<div class="pics"><input class="name" maxlength="16" autocomplete="off" enterkeyhint="done" placeholder="${esc(t('nameDef'))}" value="${esc(S.name)}" aria-label="${esc(t('nameAsk'))}"></div>`,
     acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => { save(); then(); } }] });
-  $('input', v).oninput = e => { S.name = e.target.value.trim().slice(0, 16); };
+  const inp = $('input', v);
+  inp.oninput = () => { S.name = inp.value.trim().slice(0, 16); };
+  // the keyboard's own "done" key presses OK: on a phone the keyboard can cover the button
+  inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); inp.blur(); $('.acts .btn', v).click(); } };
 }
 
 // ----- Home -----
@@ -3276,7 +3284,7 @@ css(`
   background: rgba(6, 10, 32, .94); border-top: 3px solid var(--line); border-radius: 1.2em 1.2em 0 0; pointer-events: auto; }
 .spot-box h2 { margin: 0; font-size: 1.1em; color: var(--gold); display: flex; align-items: center; gap: .4em; }
 .spot-box h2 .sp { flex: 1; }
-.spot-list { overflow-y: auto; touch-action: pan-y; display: flex; flex-direction: column; gap: .3em; min-height: 0; }
+.spot-list { overflow-y: auto; touch-action: pan-y; display: flex; flex-direction: column; gap: .3em; min-height: 0; scrollbar-width: thin; scrollbar-color: rgba(255, 216, 107, .55) transparent; }
 .spot-kind { font-size: max(11px, .75em); opacity: .85; margin: .2em 0 0; }
 .spot-row { display: flex; gap: .35em; flex-wrap: wrap; }
 .spot-it { display: flex; align-items: center; gap: .4em; min-height: 52px; padding: .25em .6em .25em .3em; border-radius: .9em; border: 3px solid var(--line); background: #22327a;
@@ -6701,10 +6709,23 @@ resize();
 // The day leaves a note for the owl in the shared storage (how many fish, and which day it was): three fish or more are
 // supper, and supper sharpens the owl's eyes for tonight's Gate Check. At the third fish the note's id moves on by one, so
 // that a note the owl read too early (a look at the Night Watch and back) still becomes supper.
-const dayId = Date.now();
+// The note also names its day: the number of the Night that follows (from the Night Watch's save). The page can be loaded
+// again in the middle of a day (a phone drops a background tab, or the child comes back for more before the same Night):
+// the count then goes on from the note, so the fish already landed still count, and a supper that the owl has read
+// does not come a second time.
+const NOTE = 'firstlight.day' + (nwSlot ? '.' + (nwSlot + 1) : '');
+let dayId = 0, dayOf = 0;
+function dayBegin() {
+  dayId = Date.now(); dayCatch = 0; dayOf = Number.isInteger(nwSave.night) ? nwSave.night : 0;
+  if (day) try {
+    const r = JSON.parse(localStorage.getItem(NOTE) || 'null');
+    if (r && r.k === dayOf && Number.isSafeInteger(r.id) && Number.isInteger(r.n) && r.n > 0 && r.n < 1e6) { dayCatch = r.n; dayId = r.id - (r.n >= 3); }
+  } catch (e) { /* no note, or nothing can be read here */ }
+}
+dayBegin();
 on('catch', () => {
   dayCatch++;
-  if (day) try { localStorage.setItem('firstlight.day' + (nwSlot ? '.' + (nwSlot + 1) : ''), JSON.stringify({ id: dayId + (dayCatch >= 3), n: dayCatch })); } catch (e) { /* nothing can be saved here */ }
+  if (day) try { localStorage.setItem(NOTE, JSON.stringify({ id: dayId + (dayCatch >= 3), n: dayCatch, k: dayOf })); } catch (e) { /* nothing can be saved here */ }
 });
 on('enter', d => { if (day && d && d.home && dayCatch >= 5 && !dayTold) { dayTold = true; toast(t('day_low'), 3200); } });
 // By day (from the Night Watch) the Chief is already on the way: no title screen, straight to the map.

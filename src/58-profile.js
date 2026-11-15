@@ -22,7 +22,7 @@ function certCanvas() {
   line(c, [520, 850, 1010, 850], '#8a7a5a', 3);
   text(t('certSign'), 765, 894, font(600, 28), '#4a3a1a', 520);
   text(new Date().toLocaleDateString(LANGS[lang], { year: 'numeric', month: 'long', day: 'numeric' }), 300, 894, font(600, 28), '#4a3a1a', 300);
-  owl(c, 1215, 912, 2, 0, 'idle', false);
+  owl(c, 1215, 912, 2, 1, 'idle', false);   // (time 1: at time 0 the owl is in the middle of a blink, and a certificate is kept)
   zip(c, 1085, 770, 2.4, 0, -1);
   return el;
 }

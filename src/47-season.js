@@ -96,9 +96,9 @@ function seasonFx(c, t, n = S.night) {
     else ell(c, x, y, (s === 1 ? 3 : 4.2) * z, 2 * z, s === 1 ? 'rgba(244,184,212,.7)' : SEA_FALL[i % 3], sway * 1.2 + i);
   }
   c.beginPath();
-  if (k === 'rain') {
-    for (let i = 0; i < 26; i += step) { const x = seaWrap(hash(i + 101) * w - tt * 120, w) - 20, y = seaWrap(hash(i + 131) * h + tt * (520 + hash(i + 161) * 160), h) - 20; c.moveTo(x, y); c.lineTo(x - 3.2 * z, y + 16 * z); }
-    c.lineWidth = 1.2 * z; c.strokeStyle = 'rgba(190,214,255,.4)'; c.stroke();
+  if (k === 'rain') {   // enough drops to be seen on a phone at arm's length, thin enough to hide nothing
+    for (let i = 0; i < 56; i += step) { const x = seaWrap(hash(i + 101) * w - tt * 120, w) - 20, y = seaWrap(hash(i + 131) * h + tt * (520 + hash(i + 161) * 160), h) - 20; c.moveTo(x, y); c.lineTo(x - 4.4 * z, y + 22 * z); }
+    c.lineWidth = 1.6 * z; c.strokeStyle = 'rgba(190,214,255,.5)'; c.stroke();
   } else if (k === 'wind') {
     for (let i = 0; i < 12; i += step) { const L = (60 + hash(i + 191) * 70) * z, x = seaWrap(hash(i + 201) * (w + L) + tt * (420 + hash(i + 221) * 200), w + L) - L, y = V.h * (.08 + hash(i + 241) * .8) + Math.sin(tt * 2 + i) * 8; c.moveTo(x, y); c.quadraticCurveTo(x + L * .25, y - 8 * z, x + L * .5, y); c.quadraticCurveTo(x + L * .75, y + 8 * z, x + L, y); }
     c.lineWidth = 1.8 * z; c.strokeStyle = 'rgba(226,236,255,.45)'; c.stroke();

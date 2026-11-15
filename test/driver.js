@@ -55,6 +55,12 @@
   const ptr = (type, x, y, target = cv) => target.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, bubbles: true, cancelable: true, pointerId: 1 }));
   const tOrig = t;
   t = (k, v) => { if (!L[k]) bad('missing i18n key ' + k); return tOrig(k, v); };
+  // Every sentence the owl says during a run is looked up: one without a recorded clip is a silent owl. Meant to be
+  // without a clip (tools/voice.js): a line with a number in it, the questions for grown-ups, the word on a cracked
+  // password, the player's own name, and a friend's name with its job on a toast.
+  const unvoiced = new Set(), speak0 = speak;
+  const quiet = s => /\d/.test(s) || s.includes(' · ') || s === 'test' || s.replace(/[.!?…]+$/, '') === S.name || ['cracked', 'bedAsk'].some(k => sentences(L[k][lang]).includes(s));   // ('test': the audit's own toast)
+  speak = (text, who = 'owl', strict) => { if (who !== 'pie' && VOICE.size) for (const s of sentences(text)) if (!clipOf(s) && !quiet(s)) unvoiced.add(`${LANGS[lang]}: ${s}`); return speak0(text, who, strict); };
   // The owl's eye at the gate: no button without an eye; a look between visitors is free; a look at a visitor costs the
   // eye, rings the right check for every kind of trickster (the badge first) and takes the button away.
   const eyeChecks = () => {
@@ -128,6 +134,10 @@
     check($('.hud [role="img"]').getAttribute('aria-label') === t('pal_count', { n: 0, m: 60 }), 'the Friends page names the catches that bring the next friend: ' + $('.hud [role="img"]').getAttribute('aria-label'));
     reset(3); Object.assign(S, { pals: { guard: 1, baker: 1 }, helper: 'guard' }); go('home'); const TH = treeArea();
     scene.down(TH.ox + 745 * TH.k, TH.oy + 895 * TH.k); check(V.t - (palT.guard || -9) < .1, 'the helper answers a tap');
+    // (seen in a screenshot: the name stood over the visitor, far from its friend). The place is read from the style: with
+    // reduced motion every change is a transition of .01 ms, and a rectangle read at once still shows the old place.
+    const tn = [...ui.querySelectorAll('.toast')].pop(), tx = parseFloat(tn.style.left), tb = parseFloat(tn.style.top) + tn.offsetHeight, tw = tn.offsetWidth / 2, fa = palAt('guard', TH);
+    check(tx - tw >= 0 && tx + tw <= V.w + 1 && Math.abs(tx - fa[0]) < Math.max(60, tw) && tb <= fa[1] + 4 && tb > fa[1] - 90, `a tapped friend's name stands over that friend, inside the screen: middle ${Math.round(tx)}, half width ${Math.round(tw)}, bottom ${Math.round(tb)}, friend at ${fa.map(Math.round)}`);
     for (const g of GIFTS) S.gifts[g] = 1; palT.guard = -9; scene.down(...giftAt('heron', TH)); check(V.t - (giftT.heron || -9) < .1 && palT.guard === -9, 'the heron beside the helper still answers its own tap');
     const TS = { k: .32, ox: 0, oy: 17 }; check(!palTap(690, 917, TS) && palTap(760, 905, TS), 'on a phone held sideways the heron keeps its taps and the helper its own');   // there the two tap circles overlap
   };
@@ -249,6 +259,64 @@
     const dot = (i, x, y) => { const cnv = document.createElement('canvas'); cnv.width = cnv.height = 40; const g = cnv.getContext('2d'); drawIcon(g, 'bird:' + i, 20, 20, 40); return g.getImageData(x, y, 1, 1).data; };
     check(dot(1, 26, 8).join() !== dot(0, 26, 8).join() && dot(2, 24, 3)[3] > 0 && dot(0, 24, 3)[3] === 0, 'language birds have their own cap and crest');
     await note('logic checks done, problems so far: ' + out.errors.length);
+
+    // --- raid fuzz: 400 random Nights (1 to 60) with random designs, any station results, every helper, any month. Each
+    // raid ends, at most three jars go, no number goes bad, and the same Night and design always give the same raid. ---
+    where = 'raid fuzz';
+    const rnd32 = (s => () => { s = s + 0x6D2B79F5 | 0; let x = Math.imul(s ^ s >>> 15, 1 | s); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; })(20261115);
+    const KINDS = Object.keys(ITEMS).filter(k => k !== 'shield'), perk0 = palPerk;
+    let fuzz = '', longest = 0;
+    for (let i = 0; i < 400 && !fuzz; i++) {
+      const n = 1 + (rnd32() * 60 | 0), st = { cam: rnd32() * 4 | 0, gate: rnd32() * 4 | 0, forge: 1 + (rnd32() * 3 | 0) }, fill = rnd32();
+      reset(n); S.mute = true;
+      S.items = MOUNTS.map((_, m) => m === VAULT ? (rnd32() < .5 ? { t: 'shield', m } : null) : rnd32() < fill ? { t: KINDS[rnd32() * KINDS.length | 0], m } : null).filter(Boolean);
+      const perk = ['', ...PALS][rnd32() * 7 | 0]; palPerk = () => perk;
+      seaForce = { m: rnd32() * 12 | 0 };   // any month, with the Night's own weather
+      const run = () => { const q = makeRaid(raidPlan(n, st), st.forge - 1, n); let steps = 0; while (!q.done && steps < 60 * 400) { stepRaid(q, STEP); steps++; } return q; };
+      const a = run(), b = run(), sig = q => [q.stolen, q.t.toFixed(3), q.laughed, q.mags.map(m => m.state + (m.carry ? 1 : 0)).join()].join(' ');
+      longest = Math.max(longest, a.t);
+      if (!a.done) fuzz = 'a raid never ends';
+      else if (!(a.stolen >= 0 && a.stolen <= 3)) fuzz = 'stolen ' + a.stolen;
+      else if (a.mags.some(m => m.carry)) fuzz = 'a magpie still carries a jar at the end';
+      else if (a.mags.some(m => Object.values(m).some(v => typeof v === 'number' && Number.isNaN(v)))) fuzz = 'a magpie holds a number that is not one';
+      else if (sig(a) !== sig(b)) fuzz = `the same raid went two ways: ${sig(a)} | ${sig(b)}`;
+      if (fuzz) fuzz += ` (Night ${n}, stations ${JSON.stringify(st)}, helper ${perk || 'none'}, month ${seaForce.m}, items ${JSON.stringify(S.items)})`;
+    }
+    palPerk = perk0; seaForce = { m: 6, w: 'clear' };
+    check(!fuzz, 'raid fuzz: ' + fuzz);
+    check(longest > 10 && longest < 240, `raid fuzz: the longest of 400 raids took ${longest.toFixed(0)} seconds`);
+
+    // --- a long career: Nights 9 to 40 through the real screens, one after the other, the stations counted as won.
+    // Every Night opens at the menu, the Baron comes on his Nights and his three chapters are told, every Night is
+    // counted, and neither the save nor the page grows. ---
+    reset(9); S.mute = false; scenes.dawn.leave = () => {};   // with sound: the owl's lines of these Nights are looked up for their clips
+    const settle = async () => { for (let i = 0; i < 24; i++) { if (scene.rp) scene.skip(); if (scene.id === 'dawn') clickDlg(0); else if (scene.id === 'story' || scene.id === 'saga') { if (!clickDlg()) scene.next(); } else if (!clickDlg()) break; sim(.4); await sleep(40); } };
+    let soak = '', peak = 0, bosses = 0;
+    for (let n = 9; n <= 40 && !soak; n++) {
+      where = 'a long career, Night ' + n;
+      go('hub'); await settle(); if (scene.id !== 'hub') { go('hub'); await settle(); }
+      if (scene.id !== 'hub' || S.night !== n) { soak = `Night ${n} did not open at the menu: at ${scene.id}, Night ${S.night}`; break; }
+      S.st = { cam: 3, gate: 3, forge: 3, extra: 0 };
+      if (isBoss(n) && S.boss !== n) { bosses++; go('boss', { then: () => go('raid') }); await playBoss(n); await settle(); }
+      if (scene.id !== 'raid') go('raid');
+      sim(300, () => !scene.endT); await sleep(1200); await settle();
+      peak = Math.max(peak, document.querySelectorAll('*').length);
+      if (S.night !== n + 1) soak = `Night ${n} was not counted: Night ${S.night}, at ${scene.id}`;
+    }
+    check(!soak, 'a long career: ' + soak);
+    check(S.saga === 3 && bosses === 5 && !isBoss(45), `a long career: the Baron came on Nights 10, 15, 20, 25 and 30, told his three chapters and raids no more (${bosses} raids, chapter ${S.saga})`);
+    check(JSON.stringify(S).length < 3000 && peak < 500 && document.body.children.length < 12, `a long career: the save stays small (${JSON.stringify(S).length} characters) and the page does not grow (${peak} elements at most, ${document.body.children.length} on the body)`);
+    await note(`raid fuzz and a long career checked (Night ${S.night}, save of ${JSON.stringify(S).length} characters, ${peak} elements at most), problems so far: ${out.errors.length}`);
+    // a browser that refuses to save (private mode, storage full, storage switched off): the game goes on, nothing throws
+    where = 'a browser that refuses to save'; reset(2);
+    const setItem0 = Storage.prototype.setItem, getItem0 = Storage.prototype.getItem, errs0 = out.errors.length; let counted = false;
+    Storage.prototype.setItem = Storage.prototype.getItem = () => { throw new DOMException('refused', 'QuotaExceededError'); };
+    try {
+      go('hub'); clickDlg(); sim(.3); go('tinker'); clickDlg(); sim(.3); S.st = { cam: 3, gate: 3, forge: 3, extra: 0 }; go('raid'); sim(120, () => !scene.endT); await sleep(1300); if (scene.rp) scene.skip();
+      counted = S.night === 3; for (let i = 0; i < 6 && clickDlg(); i++) sim(.3); go('home'); sim(.3); showPlayers(); if (closeDlg) closeDlg();
+    } catch (e) { bad('a browser that refuses to save breaks the game: ' + (e.stack || e)); } finally { Storage.prototype.setItem = setItem0; Storage.prototype.getItem = getItem0; }
+    check(counted && out.errors.length === errs0, `a browser that refuses to save does not stop the game: Night ${S.night}, ${out.errors.length - errs0} errors`);
+    reset(1);
 
     // --- every menu screen in every language ---
     for (let l = 0; l < 3; l++) { setLang(l); for (const s of ['home', 'hub', 'badge']) { where = s; reset(1); S.briefed = 0; go(s); sim(1); clickDlg(); sim(.5); } }
@@ -429,6 +497,14 @@
     check(S.bday === '', 'the birthday can be taken away again');
     $('#wBday').click(); answer(true); check(document.activeElement === $('#bdOk'), 'the birthday setting opens with the focus on its button');
     $('#bdD').value = '31'; $('#bdM').value = '2'; $('#bdOk').click(); check(S.bday === '2-29', 'a day the month does not have becomes its last day: ' + S.bday);
+    // the calendar: a birthday on 29 February comes every year; the watch's day turns at four in the morning, also across a new year
+    const now0 = Date.now, clock = (...a) => { Date.now = () => +new Date(...a); todayAt = -1; return today(); };
+    S.bday = '2-29';
+    const feb = [[2027, 1, 27, 12], [2027, 1, 28, 12], [2027, 2, 1, 12], [2028, 1, 28, 12], [2028, 1, 29, 12]].map(a => { clock(...a); return +isBirthday(); }).join('');
+    const turn = [clock(2027, 0, 1, 3, 59), clock(2027, 0, 1, 4, 0), clock(2027, 5, 10, 3, 59, 59), clock(2027, 5, 10, 4, 0, 1)].join(' ');
+    Date.now = now0; todayAt = -1;
+    check(feb === '01001', 'a birthday on 29 February is kept on the 28th in a year without one, and on the 29th in a leap year: ' + feb);
+    check(turn === '2026-12-31 2027-1-1 2027-6-9 2027-6-10', 'the watch\'s day turns at four in the morning, also across a new year: ' + turn);
     S.bday = ''; $('#wOk').click();
     where = 'seasons and weather';
     seaForce = { m: 6 }; check(seasonLeaf().join() === '#1a4c33,#1f5a3c,#246a45,#2b7a50' && seasonGround().join() === '#0c1740,#13235a', 'summer keeps the tree as it always was');
@@ -573,13 +649,13 @@
   // The Baron's Night as a perfect run: shoo the cake, open the three magpie parcels, pick the longest lock.
   async function playBoss(n) {
     where = 'boss night ' + n;
-    const s0 = S.stars;
+    const s0 = S.stars, had = S.stk.m6;
     clickDlg(); sim(2.5); check(scene.ph === 'ask1', 'the cake act waits for the player, got ' + scene.ph);
     scene.cake(false); sim(8.7); check(scene.ph === 'ask2', 'the parcel act waits for the player, got ' + scene.ph);
     scene.parcels.forEach((p, i) => { if (p.pie) scene.open(i); }); sim(5.2); check(scene.ph === 'ask3', 'the lock act waits for the player, got ' + scene.ph);
     scene.lock(scene.locks.findIndex(l => l.length === 4));
     check(S.boss === n && S.stars === s0 + 3 && S.stk.m6 === 1, `beating the Baron is saved at once: ${S.boss}, ${S.stars - s0} stars`);
-    sim(13.9); check(scene.ph === 'end', 'the finale ends, got ' + scene.ph); await waitDlg('boss result ' + n); check(!!$('.veil .got'), 'the Baron\'s sticker is shown'); clickDlg();
+    sim(13.9); check(scene.ph === 'end', 'the finale ends, got ' + scene.ph); await waitDlg('boss result ' + n); check(!!$('.veil .got') === !had, 'the Baron\'s sticker is shown when it is new, and only then'); clickDlg();
   }
 
   async function audit() {
@@ -600,14 +676,20 @@
       if (document.documentElement.scrollWidth > W + 1) flag(screen, document.documentElement, 'page scrolls sideways');
       // every button that is not under a dialog takes a tap at its middle (the overlay lets taps through to the canvas, so
       // a button outside the containers that take them back would be dead to a finger and alive to a test's click()).
-      // A tile that a scrolling row has scrolled out of view is not judged.
+      // A tile that a scrolling row has scrolled out of view is not judged: its middle must lie inside the row's inner box
+      // (in Chrome the middle of a half-hidden tile fell on the row's 3 px border, and the border took the tap).
       const veil = $('#ui .veil');
-      const scrolledOut = (el, x, y) => { for (let p = el.parentElement; p && p !== ui; p = p.parentElement) { const o = getComputedStyle(p), q = p.getBoundingClientRect(); if ((o.overflowX !== 'visible' || o.overflowY !== 'visible') && (x < q.left || x > q.right || y < q.top || y > q.bottom)) return true; } return false; };
+      const scrolledOut = (el, x, y) => { for (let p = el.parentElement; p && p !== ui; p = p.parentElement) { const o = getComputedStyle(p), q = p.getBoundingClientRect(), l = q.left + p.clientLeft, u = q.top + p.clientTop; if ((o.overflowX !== 'visible' || o.overflowY !== 'visible') && (x < l + 1 || x > l + p.clientWidth - 1 || y < u + 1 || y > u + p.clientHeight - 1)) return true; } return false; };
       for (const el of document.querySelectorAll('#ui button, #ui a.btn')) {
         const r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
         if (!r.width || el.disabled || veil && !veil.contains(el) || r.left < 0 || r.right > W || r.top < 0 || r.bottom > H || scrolledOut(el, x, y)) continue;
         const hit = document.elementFromPoint(x, y);
         if (hit !== el && !el.contains(hit)) flag(screen, el, 'cannot be tapped: ' + (hit ? name(hit) : 'nothing') + ' takes the tap');
+      }
+      // every control and every picture with a meaning has a name for a screen reader: its text, a label, or the dialog's text
+      for (const el of document.querySelectorAll('#ui button, #ui a.btn, #ui input, #ui select, #ui textarea, #ui [role="img"], #ui [role="dialog"], #ui [role="group"]')) {
+        const by = el.getAttribute('aria-labelledby');
+        if (el.getBoundingClientRect().width && !((el.getAttribute('aria-label') || '').trim() || el.textContent.trim() && !el.matches('select') || el.closest('label') || by && document.getElementById(by))) flag(screen, el, 'has no name for a screen reader');
       }
       for (const el of document.querySelectorAll('#ui .btn, #ui .card, #ui .tile, #ui .pal, #ui .pill, #ui .dlg, #ui .ref, #ui .slots, #ui .meter, #ui input, #ui .title, #ui .foot, #ui .bubble, #ui .toast, #ui .goals, #ui .stk, #ui img.cert, #ui .who')) {
         const r = el.getBoundingClientRect();
@@ -690,7 +772,12 @@
       Object.assign(scene.fake, { dis: 5, pass: [...scene.pass] }); scene.marks(); look('magpie workshop, ready'); $('#pieReady').click(); look('magpie, who checks');
       clickDlg(1); look('magpie, grown-up dialog'); clickDlg(); sim(1.5); look('magpie, grown-up checks'); scene.decide(false); sim(3.5); await sleep(300); look('magpie result');
       // the Baron's Night
-      reset(5); go('boss', { then: () => {} }); look('boss intro'); clickDlg(); sim(2.5); look('boss, the cake'); scene.cake(false); sim(8.7); look('boss, the parcels');
+      reset(5); go('boss', { then: () => {} }); look('boss intro'); clickDlg(); sim(2.5); look('boss, the cake');
+      {   // the Baron's bubble keeps off the upper cake and its candle (seen in a screenshot: on a phone it lay across them)
+        scene.draw(); const G = scene.geo(), [bx, by, bw, bh] = scene.bubble || [0, 0, 0, 0], c0 = G.ox + 116 * G.u, c1 = G.ox + 228 * G.u, d0 = G.gy - 212 * G.u, d1 = G.gy - 92 * G.u;
+        check(!!scene.bubble && !(Math.min(bx + bw, c1) - Math.max(bx, c0) > 2 && Math.min(by + bh, d1) - Math.max(by, d0) > 2), `the Baron's bubble keeps off the cake (${LANGS[l]}, ${W}x${H}): bubble ${[bx, by, bw, bh].map(Math.round)}, cake ${[c0, d0, c1, d1].map(Math.round)}`);
+      }
+      scene.cake(false); sim(8.7); look('boss, the parcels');
       scene.parcels.forEach((p, i) => { if (p.pie) scene.open(i); }); sim(5.2); look('boss, the locks'); scene.lock(scene.locks.findIndex(q => q.length === 4)); sim(13.9); await sleep(300); look('boss result'); clickDlg();
       for (const n of [1, 4, 8]) {
         reset(n);
@@ -761,6 +848,8 @@
     check(S.flag === FLAG_OWN.slice(0, 38) + '222' + FLAG_OWN.slice(41) && JSON.parse(localStorage.getItem(SAVE)).flag === S.flag && $('[data-c="2"]').getAttribute('aria-pressed') === 'true', 'a drag across three cells paints those three red and saves 96 digits: ' + S.flag);
     ptr('pointerdown', ...FC(6, 6)); window.dispatchEvent(new PointerEvent('pointermove', { clientX: FC(9, 1)[0], clientY: FC(9, 1)[1], bubbles: true, pointerId: 2 })); ptr('pointerup', ...FC(6, 6), window);
     check(S.flag[6 * 12 + 6] === '2' && S.flag[1 * 12 + 9] === FLAG_OWN[1 * 12 + 9], 'a second finger on the screen paints nothing: ' + S.flag);
+    ptr('pointerdown', ...FC(1, 6)); window.dispatchEvent(new PointerEvent('pointerup', { clientX: FC(9, 1)[0], clientY: FC(9, 1)[1], bubbles: true, pointerId: 2 })); ptr('pointermove', ...FC(2, 6), window); ptr('pointerup', ...FC(2, 6), window);
+    check(S.flag[6 * 12 + 1] === '2' && S.flag[6 * 12 + 2] === '2' && !scene.drag, 'a second finger lifted in the middle of a stroke does not end it, and the painting finger\'s lift does: ' + S.flag);
     key('8'); key('ArrowDown'); key('Enter');
     check(S.flag[12] === '7' && JSON.parse(localStorage.getItem(SAVE)).flag === S.flag, 'flag keys: 8 picks white, an arrow moves the cursor, Enter paints and saves');
     $('#flagNew').click(); clickDlg(0);
@@ -769,10 +858,112 @@
     const flagPic = f => { S.flag = f; const cn = document.createElement('canvas'); cn.width = 110; cn.height = 80; const g = cn.getContext('2d'); g.translate(-605, -70); flagDraw(g, 0, 1); return g.getImageData(0, 0, 110, 80).data.join(); }, ownPic = flagPic('');
     check(['x'.repeat(96), '8'.repeat(96), '0'.repeat(95), '<b>', 7, null].every(f => flagPic(f) === ownPic) && flagPic('2'.repeat(96)) !== ownPic, 'damaged values in S.flag fly as the Night Watch\'s own flag');
     S.flag = '';
+    // the name field (seen on a real phone: the keyboard covered OK and its own "done" key did nothing)
+    where = 'the name field'; reset(1); S.name = ''; go('home'); let named = 0; askName(() => named++);
+    const ni = $('.veil input'); ni.focus(); ni.value = ' Mia '; ni.dispatchEvent(new Event('input', { bubbles: true })); key('Enter', ni);
+    check(named === 1 && !$('.veil') && S.name === 'Mia' && JSON.parse(localStorage.getItem(SAVE)).name === 'Mia' && ni.getAttribute('enterkeyhint') === 'done', `Enter in the name field presses OK (${named} times, name "${S.name}")`);
+    go('badge'); const bi = $('#ui input.name'); bi.focus(); bi.value = 'Leo'; bi.dispatchEvent(new Event('input', { bubbles: true })); key('Enter', bi);
+    check(scene.id === 'badge' && S.name === 'Leo' && document.activeElement !== bi, 'Enter in the badge\'s name field keeps the name and puts the keyboard away, without leaving the badge');
+    // the phone's keyboard: its height reaches the dialogs as --kb (style.css moves them up by it)
+    if (window.visualViewport) {
+      const vh = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(visualViewport), 'height');
+      Object.defineProperty(visualViewport, 'height', { configurable: true, get: () => innerHeight - 300 }); visualViewport.dispatchEvent(new Event('resize'));
+      askName(() => {}); const pad = getComputedStyle($('.veil')).paddingBottom, kb = ui.style.getPropertyValue('--kb'); closeDlg();
+      delete visualViewport.height; if (vh) visualViewport.dispatchEvent(new Event('resize'));
+      check(kb === '300px' && parseFloat(pad) > 300 && ui.style.getPropertyValue('--kb') === '0px', `an open keyboard of 300 px lifts the dialog by as much, and a closed one lets it down again (--kb ${kb}, padding ${pad}, then ${ui.style.getPropertyValue('--kb')})`);
+    }
   }
 
-  if (mode[0] !== 'smoke' && mode[0] !== 'audit') return;
-  try { await (mode[0] === 'smoke' ? smoke() : audit()); } catch (e) { bad(`driver crashed at [${where}]: ${e.stack || e}`); }
+  // #perf: the frame rate of the heaviest screens, measured with the browser's own animation frames. It asserts nothing:
+  // the numbers are printed and read. On a real phone: NW_OPEN='…' node test/smoke.js perf (see test/smoke.js).
+  async function perf() {
+    const raf = () => new Promise(r => requestAnimationFrame(r));
+    const measure = async label => {
+      where = 'perf ' + label; await sleep(500);
+      const ts = []; for (let i = 0; i <= 120; i++) ts.push(await raf());
+      const d = ts.slice(1).map((x, i) => x - ts[i]).sort((a, b) => a - b), t0 = performance.now();
+      for (let i = 0; i < 40; i++) { if (scene.update) scene.update(1 / 60); scene.draw(1 / 60); drawFx(1 / 60); drawPortrait(); }
+      await note(`${label}: a frame every ${d[60].toFixed(1)} ms (95th ${d[113].toFixed(1)}, worst ${d[119].toFixed(1)}); update and draw cost ${((performance.now() - t0) / 40).toFixed(2)} ms`);
+    };
+    const answerAll = async () => { for (let i = 0; i < 12; i++) { clickDlg(); sim(.3); await sleep(120); } };
+    await note(`viewport ${innerWidth}x${innerHeight}, pixel ratio ${devicePixelRatio}, reduced motion ${calm.matches ? 'on' : 'off'}`);
+    reset(8); go('home'); await measure('home in summer');
+    // the fullest tree there can be: winter, falling snow, every gift, six friends, every addition, a visitor, a birthday
+    seaForce = { m: 0, w: 'snow' }; reset(9); for (const id of GIFTS) S.gifts[id] = 1;
+    Object.assign(S, { pals: Object.fromEntries(PALS.map(id => [id, 1])), helper: 'guard', grow: 3, stars: 300, visit: { d: '', done: 0, n: 0 }, bday: today().split('-').slice(1).join('-') });
+    S.items.push({ t: 'lamp', m: 4 }, { t: 'bell', m: 15 }, { t: 'banner', m: 18 }, { t: 'flowers', m: 20 }, { t: 'lights', m: 19 }, { t: 'scope', m: 21 }, { t: 'disco', m: 2 }, { t: 'fan', m: 9 });
+    go('hub'); await answerAll(); await measure('Night menu with the fullest tree, in falling snow');
+    go('tinker'); await answerAll(); await measure('Tinker Treehouse with the same tree');
+    seaForce = { m: 6, w: 'rain' }; go('raid', { test: true });
+    scene.plan = [{ route: 'sky', at: 0, kind: 'balloon' }, { route: 'rb', at: 0, kind: 'stilts' }, { route: 'lb', at: 0, kind: 'twins' }, { route: 'lad', at: 0, kind: 'dig' }, { route: 'lt', at: 0 }]; scene.R = makeRaid(scene.plan, 1);
+    await measure('raid in the rain with every trick');
+    seaForce = { m: 6, w: 'clear' }; reset(8);
+    go('cam'); clickDlg(); await measure('Camera Watch on Night 8');
+    go('gate'); clickDlg(); await measure('Gate Check');
+    go('forge'); clickDlg(); await measure('Password Forge');
+    go('flag', { from: 'home' }); clickDlg(); await measure('flag painter');
+    for (const id in STK) S.stk[id] = 1; go('album'); await measure('album');
+    go('pals', { from: 'album' }); await measure('friends page');
+    go('boss', { then: () => {} }); clickDlg(); await measure('the Baron\'s Night');
+    go('story', { rank: 1, then: () => {} }); await measure('story strip');
+    go('saga', { ch: 1, then: () => {} }); await measure('the Baron\'s story');
+    go('home');
+  }
+
+  // #tour: the game has started on a prepared browser storage (test/saves.js: an old, damaged, hand-edited or randomly
+  // broken save). Whatever it was: the repaired save is sound, every screen opens, every dialog can be answered, a
+  // whole Night can be played to its end, nothing throws, and no text of the save reaches the page as markup.
+  async function tour() {
+    scenes.dawn.leave = () => {};                     // "go fishing" must not leave the test page
+    const int = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi, str = (v, n) => typeof v === 'string' && v.length <= n;
+    const sound = at => {
+      const wrong = [], want = (ok, what) => { if (!ok) wrong.push(what); };
+      want(int(S.night, 1, 1e6) && int(S.beams, 0, 1e9 + 1e6) && int(S.stars, 0, 1e9 + 1e6) && int(S.nest, 0, 3) && int(S.briefed, 0, S.night) && int(S.tinkered, 0, 2), 'night, beams, stars, nest, briefed, tinkered');
+      want(int(S.lang, 0, 2) && S.lang === lang && [S.testStar, S.gateStar, S.boss, S.fooled].every(Number.isInteger), 'lang, testStar, gateStar, boss, fooled');
+      want(str(S.name, 16) && typeof S.mute === 'boolean' && typeof S.promo === 'boolean' && typeof S.voice === 'boolean' && (S.day === 0 || S.day === 1), 'name, mute, promo, voice, day');
+      want(Object.keys(S.st).join() === 'cam,gate,forge,extra' && Object.values(S.st).every(v => int(v, 0, 3)), 'st');
+      want(Array.isArray(S.items) && S.items.every((it, i) => has(ITEMS, it.t) && MOUNTS[it.m] && (it.t === 'shield') === (it.m === VAULT) && S.items.findIndex(o => o.m === it.m) === i), 'items');
+      want(Object.keys(S.stk).every(k => has(STK, k)) && Object.keys(S.own).every(k => has(WEAR, k)) && Object.keys(S.gifts).every(k => GIFTS.includes(k)), 'stk, own, gifts');
+      want(['hat', 'scarf', 'zhat', 'zscarf'].every(k => S[k] === '' || has(S.own, S[k])), 'what is worn is owned');
+      want(int(S.caught, 0, 1e9 + 1e6) && int(S.lit, 0, 1e6 + 1e3) && int(S.grow, 0, 3) && int(S.eye, 0, 3) && int(S.saga, 0, 3) && int(S.bedN, 0, 5) && int(S.bdayY, 0, 9999), 'caught, lit, grow, eye, saga, bedN, bdayY');
+      want(str(S.helper, 12) && str(S.flag, 200) && str(S.bday, 5) && str(S.memD, 10) && str(S.sup, 24) && str(S.visit.d, 10) && str(S.mem.d, 10) && str(S.mem.k, 10) && str(S.bed.d, 10), 'helper, flag, bday, memD, sup, visit, mem, bed');
+      want(Object.keys(S.pals).every(k => /^[a-z0-9]{1,12}$/.test(k) && S.pals[k] === 1), 'pals');
+      want(JSON.stringify(S).length < 8000, 'the save is small (' + JSON.stringify(S).length + ' characters)');
+      want(Object.getPrototypeOf(S) === Object.prototype && !Object.keys(S).some(k => k === 'constructor' || k === '__proto__' || k === 'chief' || k.startsWith('extra') || k.includes('<') || /^\d+$/.test(k)), 'only the fields the game knows: ' + Object.keys(S).filter(k => !/^[a-zA-Z]+$/.test(k) || k.startsWith('extra')).join());
+      want(({}).polluted === undefined && !window.xss && !document.getElementById('xss'), 'nothing of the save ran or reached the page');
+      check(!wrong.length, `tour, ${at}: not sound: ${wrong.join('; ')} in ${JSON.stringify(S).slice(0, 400)}`);
+    };
+    const markup = at => check(!window.xss && !document.getElementById('xss'), 'text of the save reached the page as markup: ' + at);
+    const answerAll = async () => { for (let i = 0; i < 16 && $('.veil'); i++) { clickDlg(); sim(.4); await sleep(40); } };
+    const open = async (name, arg) => {
+      where = 'tour: ' + name;
+      try { go(name, arg); sim(.7); markup(name); await answerAll(); sim(1.5); markup(name + ', after its dialogs'); } catch (e) { bad(`tour: ${name} threw ${e.stack || e}`); }
+    };
+    sound('after the repair');
+    await open('home');
+    await open('hub');                                 // whatever is pending comes first: news, first light, bedtime, a promotion, a chapter
+    for (const s of ['cam', 'gate', 'forge', ...EXTRAS, 'tinker', 'wear', 'badge', 'pie', 'bed', 'dawn']) await open(s);
+    await open('pals', { from: 'album' }); await open('flag', { from: 'home' });
+    for (let p = 0; p < 3; p++) await open('album', { page: p });
+    where = 'tour: certificate and players'; go('badge'); showCert(); markup('certificate'); if (closeDlg) closeDlg(); showPlayers(); markup('players'); if (closeDlg) closeDlg();
+    for (let r = 1; r <= 3; r++) { await open('story', { rank: r, then: () => go('home') }); for (let i = 0; i < 4 && scene.id === 'story'; i++) { scene.next(); sim(.4); } }
+    for (let ch = 1; ch <= 3; ch++) { await open('saga', { ch, then: () => go('home') }); for (let i = 0; i < 4 && scene.id === 'saga'; i++) { scene.next(); sim(.4); } await answerAll(); }
+    await open('boss', { then: () => go('home') }); sim(40); await sleep(300); await answerAll();
+    await open('raid', { test: true }); sim(240, () => !scene.endT); await sleep(1100); if (scene.rp) scene.skip(); await answerAll();
+    // a whole Night to its end: the stations count as won, the real raid runs, the Night is counted and what follows is answered
+    where = 'tour: a whole Night'; Object.assign(S, { promo: false, day: 0, bedN: 0 }); const n0 = S.night;
+    go('hub'); await answerAll(); S.st = { cam: 3, gate: 3, forge: 3, extra: S.st.extra };
+    go('raid'); sim(300, () => !scene.endT); await sleep(1300);
+    for (let i = 0; i < 8; i++) { if (scene.rp) scene.skip(); if (scene.id === 'story' || scene.id === 'saga') scene.next(); await answerAll(); sim(.5); await sleep(150); }
+    check(S.night === n0 + 1, `tour: the Night is counted (${n0} -> ${S.night}), now at ${scene.id}`);
+    markup('the end of a Night'); sound('after a whole Night');
+    check(JSON.stringify(JSON.parse(localStorage.getItem(SAVE))) === JSON.stringify(S), 'tour: what is stored is the repaired save');
+  }
+
+  const modes = { smoke, audit, perf, tour };
+  if (!has(modes, mode[0])) return;
+  try { await modes[mode[0]](); } catch (e) { bad(`driver crashed at [${where}]: ${e.stack || e}`); }
+  check(!unvoiced.size, `the owl said ${unvoiced.size} sentences that have no recorded clip: ${[...unvoiced].join(' | ')}`);
   await post(out);
   if (parent !== window) parent.postMessage('nw-done', '*');
 })();

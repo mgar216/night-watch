@@ -93,10 +93,16 @@ function stationFail(id, text, retry) {
   sfx.oops();
   owlSay(text, { mood: 'idle', quiet: true, acts: [{ label: t('home'), icon: 'home', fn: () => go('hub') }, { label: t('retry'), cls: 'go', icon: 'retry', fn: retry || (() => go(id)) }] });
 }
+// A name field. The keyboard's own "done" key presses the field's button (on a phone the keyboard can cover it), or,
+// without a button, just puts the keyboard away.
+const NAME_FIELD = () => `<div class="pics"><input class="name" maxlength="16" autocomplete="off" enterkeyhint="done" placeholder="${esc(t('nameDef'))}" value="${esc(S.name)}" aria-label="${esc(t('nameAsk'))}"></div>`;
+function nameField(inp, onName, btn) {
+  inp.oninput = () => { S.name = inp.value.trim().slice(0, 16); onName(); };
+  inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); inp.blur(); if (btn) btn.click(); } };
+}
 function askName(then) {
-  const v = owlSay(t('nameAsk'), { html: `<div class="pics"><input class="name" maxlength="16" autocomplete="off" placeholder="${esc(t('nameDef'))}" value="${esc(S.name)}" aria-label="${esc(t('nameAsk'))}"></div>`,
-    acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => { save(); then(); } }] });
-  $('input', v).oninput = e => { S.name = e.target.value.trim().slice(0, 16); };
+  const v = owlSay(t('nameAsk'), { html: NAME_FIELD(), acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => { save(); then(); } }] });
+  nameField($('input', v), () => {}, $('.acts .btn', v));
 }
 
 // ----- Home -----
@@ -252,7 +258,7 @@ function giftNews(then) {
 // supper, and with it an owl's eye for tonight's Gate Check. -----
 function remember(k) { S.mem = { d: today(), k }; }
 const dayNo = s => { const [y, m, d] = String(s).split('-').map(Number); return Math.round(Date.UTC(y || 1970, (m || 1) - 1, d || 1) / 864e5); };
-const isBirthday = () => !!S.bday && (today(), S.bday === todayMD);
+const isBirthday = () => !!S.bday && (today(), S.bday === todayMD || S.bday === todayAlso);
 // What the day's fishing brought (the fishing game leaves a note in the shared storage): a memory, and from three fish on, supper.
 function supper() {
   try {
@@ -286,11 +292,15 @@ function greet(then) {
 // ----- Bedtime: after so many Nights in one real day the owl says good night until tomorrow. A grown-up sets how many
 // (in the players panel; 0 switches it off) and can allow one more Night. The watch's day turns at four in the morning. -----
 // The watch's day ('Y-M-D') and its month and day ('M-D'). Drawing asks for them in every frame (the birthday, today's
-// visitor), so they are worked out once a second.
-let todayAt = -1, todayS = '', todayMD = '';
+// visitor), so they are worked out once a second. On 28 February of a year without a 29th, the 29th counts as today
+// too: a child born on that day has a birthday every year.
+let todayAt = -1, todayS = '', todayMD = '', todayAlso = '';
 const today = () => {
   const s = Math.floor(Date.now() / 1e3);
-  if (s !== todayAt) { const d = new Date(Date.now() - 144e5); todayAt = s; todayMD = (d.getMonth() + 1) + '-' + d.getDate(); todayS = d.getFullYear() + '-' + todayMD; }
+  if (s !== todayAt) {
+    const d = new Date(Date.now() - 144e5); todayAt = s; todayMD = (d.getMonth() + 1) + '-' + d.getDate(); todayS = d.getFullYear() + '-' + todayMD;
+    todayAlso = todayMD === '2-28' && new Date(d.getFullYear(), 1, 29).getMonth() !== 1 ? '2-29' : '';
+  }
   return todayS;
 };
 const asleep = () => S.bedN > 0 && S.bed.d === today() && S.bed.n >= S.bedN + S.bed.more;
@@ -346,14 +356,14 @@ scenes.badge = {
       <h2>${esc(o.promo ? t('promo', { r: t('rank' + r) }) : t('badgeTitle'))}</h2>
       ${party ? `<div id="fin">${esc(t('finale', { n: playerName() }))}</div>` : ''}
       ${o.promo ? `<div class="pics"><span class="pill pop got">${ic('room:' + r, 30)}<span>${esc(t('roomNew'))}<br><b>${esc(t('room' + r))}</b></span></span></div>`
-        : `<div class="pics"><input class="name" maxlength="16" autocomplete="off" placeholder="${esc(t('nameDef'))}" value="${esc(S.name)}" aria-label="${esc(t('nameAsk'))}"></div>`}
+        : NAME_FIELD()}
       <div class="pics"><span class="pill">${ic('rank:' + r, 26)}${esc(t('rank' + r))}</span><span class="pill">${ic('star', 22)}<b>${S.stars}</b></span>
       <span class="pill">${ic('moon', 22)}${esc(t('nights'))}: <b>${S.night - 1}</b></span></div>
       <div class="acts"><button class="btn round" id="bCert" aria-label="${esc(t('cert'))}">${ic('cert', 30)}</button>
       ${o.promo ? '' : `<button class="btn round" id="bWho" aria-label="${esc(t('players'))}">${ic('faces', 30)}</button>`}
       <button class="btn go" id="bOk">${ic('yes', 26)}${esc(t('ok'))}</button></div></div></div>`);
     this.panel = $('.dlg', n);
-    if ($('input', n)) $('input', n).oninput = e => { S.name = e.target.value.trim().slice(0, 16); save(); const f = $('#fin', n); if (f) f.textContent = t('finale', { n: playerName() }); };
+    if ($('input', n)) nameField($('input', n), () => { save(); const f = $('#fin', n); if (f) f.textContent = t('finale', { n: playerName() }); });
     $('#bCert', n).onclick = () => { sfx.click(); showCert(); };
     if ($('#bWho', n)) $('#bWho', n).onclick = () => { sfx.click(); showPlayers(); };
     $('#bOk', n).onclick = () => {

@@ -450,11 +450,18 @@ scenes.boss = {
   // The Baron's speech bubble, in screen pixels, one sentence per row when it fits. The tail points at the anchor
   // (stage units); the bubble goes above it, or below it (`down`), or to its left (`left`). Its rectangle is kept for
   // a layout test: the overlay must not cover it.
-  speech(G, x, y, mode) {
+  // `clear` [x0, x1, y] (stage units) names something tall beside the speaker (the cake). A bubble that would lie
+  // across it moves to the far side of it when the screen is wide enough (a phone held sideways), or else above it (a
+  // phone held upright), and its tail still comes down to the speaker.
+  speech(G, x, y, mode, clear) {
     const fs = clamp(Math.min(V.w, V.h) * .042, 13, 18), ax = G.ox + x * G.u, ay = G.gy + y * G.u, lh = fs * 1.2, left = mode === 'left', down = mode === 'down';
     ctx.font = `800 ${fs}px ui-rounded, "Segoe UI", Roboto, sans-serif`;
     const rows = sentences(t(this.bubKey)).flatMap(s => bossWrap(s, Math.min(V.w - 40, fs * 13))), w = Math.max(...rows.map(s => ctx.measureText(s).width)) + 26, h = rows.length * lh + 14;
-    const bx = clamp(left ? ax - w - 18 : ax - w / 2, 6, V.w - w - 6), by = clamp(left ? ay - h / 2 : down ? ay + 14 : ay - h - 14, G.top + 2, V.h - h - 6);
+    let bx = clamp(left ? ax - w - 18 : ax - w / 2, 6, V.w - w - 6), by = clamp(left ? ay - h / 2 : down ? ay + 14 : ay - h - 14, G.top + 2, V.h - h - 6);
+    if (clear && bx < G.ox + clear[1] * G.u && bx + w > G.ox + clear[0] * G.u) {
+      const past = G.ox + clear[1] * G.u + 4, over = G.gy + clear[2] * G.u - h - 4;
+      if (past + w <= V.w - 6) bx = past; else if (over >= G.top + 2) by = Math.min(by, over);
+    }
     rr(ctx, bx, by, w, h, 14); ctx.fillStyle = '#fff6da'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#4a3470'; ctx.stroke();
     const tx = clamp(ax, bx + 18, bx + w - 18), ty = clamp(ay, by + 14, by + h - 14);
     poly(ctx, left ? [bx + w - 2, ty - 8, bx + w - 2, ty + 8, ax, ay] : down ? [tx - 9, by + 2, tx + 9, by + 2, ax, ay] : [tx - 9, by + h - 2, tx + 9, by + h - 2, ax, ay], '#fff6da');
@@ -474,7 +481,7 @@ scenes.boss = {
       const wob = still() ? 0 : Math.sin(t0 * 5) * (ph === 'win1' ? .07 : .025);
       bossCake(ctx, x, t0, { roll: (x - CX) / 14, wob, walk, lid, peek, giggle: ph === 'ask1' || ph === 'in1' });
       bossBaron(ctx, x + 104, 0, .95, t0, { dir: -1, pose: bpose, face: bface, chef: true });   // he pushes from behind (and is pushed back)
-      if (ph === 'ask1') this.anchor = [x + 85, -104];
+      if (ph === 'ask1') this.anchor = [x + 85, -104, '', [x - 62, x + 62, -222]];   // on a phone the bubble is wider than the gap beside the cake
       return;
     }
     // the crash: the tiers fly, three dizzy magpies sit in the cream, the Baron is flung off to the right

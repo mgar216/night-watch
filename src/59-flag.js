@@ -134,7 +134,8 @@ scenes.flag = {
     for (let i = 1; i <= n; i++) this.dab(this.cell(lerp(this.lx, x, i / n), lerp(this.ly, y, i / n)));
     this.lx = x; this.ly = y;
   },
-  up() { this.drag = false; if (this.dirty) { this.dirty = false; save(); } },
+  // (the lift of another finger does not end the stroke; the keys and the way out call up() without an event)
+  up(x, y, cancel, e) { if (e && this.drag && this.pid !== undefined && e.pointerId !== this.pid) return; this.drag = false; if (this.dirty) { this.dirty = false; save(); } },
   key(e) {
     const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
     if (d) { e.preventDefault(); this.kb = true; this.cx = clamp(this.cx + d[0], 0, 11); this.cy = clamp(this.cy + d[1], 0, 7); }

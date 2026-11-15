@@ -156,8 +156,8 @@ function palsTree(c, T, t) {
 }
 function palTap(lx, ly, T) {
   const k = T.k, u = Math.max(.42, k * .95) / k;
-  let id = '', best = Math.max(45, 26 / k);
-  for (const [f, x, y, dir] of palPlaces()) { const d = Math.hypot(lx - x + 7 * dir * u, ly - y + 34 * u); if (d < best) { best = d; id = f; } }
+  let id = '', best = Math.max(45, 26 / k), px = 0, py = 0;
+  for (const [f, x, y, dir] of palPlaces()) { const d = Math.hypot(lx - x + 7 * dir * u, ly - y + 34 * u); if (d < best) { best = d; id = f; px = x - 7 * dir * u; py = y; } }
   if (!id) return false;
   // the heron and the pond are right beside the helper: a gift nearer to the tap keeps it
   const g = giftOn() || {}, sx = T.ox + lx * k, sy = T.oy + ly * k;
@@ -165,7 +165,7 @@ function palTap(lx, ly, T) {
   palT[id] = V.t;
   speak(t('pal_n_' + id), 'pie');   // magpie chatter
   ui.querySelectorAll('.toast').forEach(n => n.remove());
-  toast(t('pal_n_' + id) + ' · ' + t('pal_j_' + id), 2200);
+  toast(t('pal_n_' + id) + ' · ' + t('pal_j_' + id), 2200, [T.ox + px * k, T.oy + (py - 84 * u) * k]);   // the name goes over the friend it belongs to
   return true;
 }
 

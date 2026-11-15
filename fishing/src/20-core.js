@@ -145,6 +145,9 @@ function resize() {
 }
 addEventListener('resize', resize);
 addEventListener('orientationchange', resize);
+// The phone's keyboard covers the lower part of the page without resizing it. Its height goes into --kb (style.css), so
+// that a dialog with a text field (the player's name) moves up and keeps its button in view.
+if (window.visualViewport) visualViewport.addEventListener('resize', () => ui.style.setProperty('--kb', (visualViewport.scale === 1 ? Math.max(0, Math.round(innerHeight - visualViewport.height)) : 0) + 'px'));
 
 // Input. Pointer events cover touch, mouse and pen; keys go to the scene.
 // `hold` is the one "hold to reel" control, the same for every input: a finger or a mouse button held on the scene,

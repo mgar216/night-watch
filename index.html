@@ -58,11 +58,13 @@ button { font: inherit; color: inherit; }
 .langs .btn[aria-pressed=true] { background: #f2b93b; color: #3a2400; border-color: #fff3c4; }
 .foot { font-size: max(11px, .72em); font-weight: 600; opacity: .85; max-width: 34em; margin: .2em 0 calc(.2em + env(safe-area-inset-bottom)); text-shadow: 0 1px 3px #000; }
 
-.veil { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: .7em; background: rgba(6, 10, 32, .55); pointer-events: auto; }
+/* the phone's keyboard covers the lower part of the page: --kb is its height (20-core.js), and a dialog keeps clear of it */
+.veil { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: .7em; padding-bottom: calc(.7em + var(--kb, 0px)); background: rgba(6, 10, 32, .55); pointer-events: auto; }
 .veil.day { background: rgba(255, 196, 140, .08); }   /* first light: the sunrise behind the dialog stays bright */
 .veil.clear { background: rgba(6, 10, 32, .16); }     /* news of a gift: the tree and the sky stay in view */
+/* (where a panel scrolls on a desktop browser, its scrollbar is thin and in the game's colours, not a white strip) */
 .dlg { width: min(34em, 100%); max-height: 100%; overflow: auto; padding: .8em; border-radius: 1.4em; background: var(--panel);
-  border: 3px solid var(--line); text-align: center; box-shadow: 0 0 40px rgba(255, 200, 80, .25); }
+  border: 3px solid var(--line); text-align: center; box-shadow: 0 0 40px rgba(255, 200, 80, .25); scrollbar-width: thin; scrollbar-color: rgba(255, 216, 107, .55) transparent; }
 .dlg h2 { margin: 0 0 .3em; font-size: 1.3em; color: var(--gold); }
 .owlrow { display: flex; align-items: center; gap: .5em; text-align: left; }
 .bubble { position: relative; flex: 1; padding: .6em .8em; border-radius: 1.1em; background: var(--cream); color: #2a1c05; font-size: 1.1em; font-weight: 800; }
@@ -771,7 +773,8 @@ const S = { lang: -1, mute: false, name: '', night: 1, st: { cam: 0, gate: 0, fo
   bday: '', bdayY: 0,                       // birthday as month-day, and the year it was last kept
   sup: '',                                  // the last day's fishing that was counted (its id), so that supper comes once
   saga: 0 };                                // chapters of the Baron's story seen; at 3 his museum is open and he raids no more
-try { Object.assign(S, JSON.parse(localStorage.getItem(SAVE) || '{}')); } catch (e) { /* private mode: play without saving */ }
+// Only the fields this game knows are taken from a save: anything else in it (a hand-edited or damaged save) is left behind.
+try { const o = JSON.parse(localStorage.getItem(SAVE) || '{}'); for (const k in S) if (has(o, k)) S[k] = o[k]; } catch (e) { /* private mode, or not a save: play from the start */ }
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 const rankAt = night => night > 7 ? 3 : night > 4 ? 2 : night > 2 ? 1 : 0;
 const rank = () => rankAt(S.night);
@@ -780,7 +783,8 @@ function setLang(i) {
   document.documentElement.lang = LANGS[i];
   document.title = t('title');
 }
-setLang(LANGS[S.lang] ? S.lang : Math.max(0, LANGS.indexOf((navigator.language || 'en').slice(0, 2))));
+// (a whole number only: in a damaged save, LANGS['length'] and LANGS['1'] would pass as languages too)
+setLang(Number.isInteger(S.lang) && LANGS[S.lang] ? S.lang : Math.max(0, LANGS.indexOf((navigator.language || 'en').slice(0, 2))));
 
 // DOM helpers: scenes build their overlay from small HTML snippets.
 function add(html, parent = ui) {
@@ -793,9 +797,11 @@ function add(html, parent = ui) {
 }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function say(text) { $('#live').textContent = text; }
-function toast(text, ms = 1600) {
+// `at`: a point on the screen that the line belongs to (a friend's name goes over that friend); it stays inside the screen.
+function toast(text, ms = 1600, at) {
   const n = add(`<div class="toast">${esc(text)}</div>`);
   n.style.animationDuration = ms + 'ms';   // a longer line stays longer
+  if (at) { const r = ui.getBoundingClientRect(), w = n.offsetWidth / 2 + 6; n.style.left = clamp(at[0] - r.left, w, Math.max(w, r.width - w)) + 'px'; n.style.top = Math.max(6, at[1] - r.top - n.offsetHeight) + 'px'; }
   say(text); speak(text, 'owl', true);
   setTimeout(() => n.remove(), ms);
 }
@@ -875,6 +881,9 @@ function resize() {
 }
 addEventListener('resize', resize);
 addEventListener('orientationchange', resize);
+// The phone's keyboard covers the lower part of the page without resizing it. Its height goes into --kb (style.css), so
+// that a dialog with a text field (the player's name) moves up and keeps its button in view.
+if (window.visualViewport) visualViewport.addEventListener('resize', () => ui.style.setProperty('--kb', (visualViewport.scale === 1 ? Math.max(0, Math.round(innerHeight - visualViewport.height)) : 0) + 'px'));
 
 // Input: pointer events cover touch, mouse and pen; keys go to the scene.
 const ptr = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
@@ -900,9 +909,9 @@ addEventListener('pointerup', e => {
   const p = ptr(e);
   if (swipe && V.t - swipe[2] < .4 && Math.hypot(p[0] - swipe[0], p[1] - swipe[1]) > Math.min(V.w, V.h) * .35) scatter();
   swipe = null;
-  if (scene && scene.up) scene.up(...p);
+  if (scene && scene.up) scene.up(...p, false, e);
 });
-addEventListener('pointercancel', e => { swipe = null; if (scene && scene.up) scene.up(...ptr(e), true); });
+addEventListener('pointercancel', e => { swipe = null; if (scene && scene.up) scene.up(...ptr(e), true, e); });
 // While a dialog is open the keys belong to its buttons, not to the scene underneath.
 addEventListener('keydown', e => { audioOn(); lastTouch = V.t; if (scene && scene.key && !$('.veil') && !/INPUT/.test(e.target.tagName)) scene.key(e); });
 addEventListener('contextmenu', e => e.preventDefault());
@@ -1790,9 +1799,9 @@ function seasonFx(c, t, n = S.night) {
     else ell(c, x, y, (s === 1 ? 3 : 4.2) * z, 2 * z, s === 1 ? 'rgba(244,184,212,.7)' : SEA_FALL[i % 3], sway * 1.2 + i);
   }
   c.beginPath();
-  if (k === 'rain') {
-    for (let i = 0; i < 26; i += step) { const x = seaWrap(hash(i + 101) * w - tt * 120, w) - 20, y = seaWrap(hash(i + 131) * h + tt * (520 + hash(i + 161) * 160), h) - 20; c.moveTo(x, y); c.lineTo(x - 3.2 * z, y + 16 * z); }
-    c.lineWidth = 1.2 * z; c.strokeStyle = 'rgba(190,214,255,.4)'; c.stroke();
+  if (k === 'rain') {   // enough drops to be seen on a phone at arm's length, thin enough to hide nothing
+    for (let i = 0; i < 56; i += step) { const x = seaWrap(hash(i + 101) * w - tt * 120, w) - 20, y = seaWrap(hash(i + 131) * h + tt * (520 + hash(i + 161) * 160), h) - 20; c.moveTo(x, y); c.lineTo(x - 4.4 * z, y + 22 * z); }
+    c.lineWidth = 1.6 * z; c.strokeStyle = 'rgba(190,214,255,.5)'; c.stroke();
   } else if (k === 'wind') {
     for (let i = 0; i < 12; i += step) { const L = (60 + hash(i + 191) * 70) * z, x = seaWrap(hash(i + 201) * (w + L) + tt * (420 + hash(i + 221) * 200), w + L) - L, y = V.h * (.08 + hash(i + 241) * .8) + Math.sin(tt * 2 + i) * 8; c.moveTo(x, y); c.quadraticCurveTo(x + L * .25, y - 8 * z, x + L * .5, y); c.quadraticCurveTo(x + L * .75, y + 8 * z, x + L, y); }
     c.lineWidth = 1.8 * z; c.strokeStyle = 'rgba(226,236,255,.45)'; c.stroke();
@@ -2387,10 +2396,16 @@ function stationFail(id, text, retry) {
   sfx.oops();
   owlSay(text, { mood: 'idle', quiet: true, acts: [{ label: t('home'), icon: 'home', fn: () => go('hub') }, { label: t('retry'), cls: 'go', icon: 'retry', fn: retry || (() => go(id)) }] });
 }
+// A name field. The keyboard's own "done" key presses the field's button (on a phone the keyboard can cover it), or,
+// without a button, just puts the keyboard away.
+const NAME_FIELD = () => `<div class="pics"><input class="name" maxlength="16" autocomplete="off" enterkeyhint="done" placeholder="${esc(t('nameDef'))}" value="${esc(S.name)}" aria-label="${esc(t('nameAsk'))}"></div>`;
+function nameField(inp, onName, btn) {
+  inp.oninput = () => { S.name = inp.value.trim().slice(0, 16); onName(); };
+  inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); inp.blur(); if (btn) btn.click(); } };
+}
 function askName(then) {
-  const v = owlSay(t('nameAsk'), { html: `<div class="pics"><input class="name" maxlength="16" autocomplete="off" placeholder="${esc(t('nameDef'))}" value="${esc(S.name)}" aria-label="${esc(t('nameAsk'))}"></div>`,
-    acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => { save(); then(); } }] });
-  $('input', v).oninput = e => { S.name = e.target.value.trim().slice(0, 16); };
+  const v = owlSay(t('nameAsk'), { html: NAME_FIELD(), acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => { save(); then(); } }] });
+  nameField($('input', v), () => {}, $('.acts .btn', v));
 }
 
 // ----- Home -----
@@ -2546,7 +2561,7 @@ function giftNews(then) {
 // supper, and with it an owl's eye for tonight's Gate Check. -----
 function remember(k) { S.mem = { d: today(), k }; }
 const dayNo = s => { const [y, m, d] = String(s).split('-').map(Number); return Math.round(Date.UTC(y || 1970, (m || 1) - 1, d || 1) / 864e5); };
-const isBirthday = () => !!S.bday && (today(), S.bday === todayMD);
+const isBirthday = () => !!S.bday && (today(), S.bday === todayMD || S.bday === todayAlso);
 // What the day's fishing brought (the fishing game leaves a note in the shared storage): a memory, and from three fish on, supper.
 function supper() {
   try {
@@ -2580,11 +2595,15 @@ function greet(then) {
 // ----- Bedtime: after so many Nights in one real day the owl says good night until tomorrow. A grown-up sets how many
 // (in the players panel; 0 switches it off) and can allow one more Night. The watch's day turns at four in the morning. -----
 // The watch's day ('Y-M-D') and its month and day ('M-D'). Drawing asks for them in every frame (the birthday, today's
-// visitor), so they are worked out once a second.
-let todayAt = -1, todayS = '', todayMD = '';
+// visitor), so they are worked out once a second. On 28 February of a year without a 29th, the 29th counts as today
+// too: a child born on that day has a birthday every year.
+let todayAt = -1, todayS = '', todayMD = '', todayAlso = '';
 const today = () => {
   const s = Math.floor(Date.now() / 1e3);
-  if (s !== todayAt) { const d = new Date(Date.now() - 144e5); todayAt = s; todayMD = (d.getMonth() + 1) + '-' + d.getDate(); todayS = d.getFullYear() + '-' + todayMD; }
+  if (s !== todayAt) {
+    const d = new Date(Date.now() - 144e5); todayAt = s; todayMD = (d.getMonth() + 1) + '-' + d.getDate(); todayS = d.getFullYear() + '-' + todayMD;
+    todayAlso = todayMD === '2-28' && new Date(d.getFullYear(), 1, 29).getMonth() !== 1 ? '2-29' : '';
+  }
   return todayS;
 };
 const asleep = () => S.bedN > 0 && S.bed.d === today() && S.bed.n >= S.bedN + S.bed.more;
@@ -2640,14 +2659,14 @@ scenes.badge = {
       <h2>${esc(o.promo ? t('promo', { r: t('rank' + r) }) : t('badgeTitle'))}</h2>
       ${party ? `<div id="fin">${esc(t('finale', { n: playerName() }))}</div>` : ''}
       ${o.promo ? `<div class="pics"><span class="pill pop got">${ic('room:' + r, 30)}<span>${esc(t('roomNew'))}<br><b>${esc(t('room' + r))}</b></span></span></div>`
-        : `<div class="pics"><input class="name" maxlength="16" autocomplete="off" placeholder="${esc(t('nameDef'))}" value="${esc(S.name)}" aria-label="${esc(t('nameAsk'))}"></div>`}
+        : NAME_FIELD()}
       <div class="pics"><span class="pill">${ic('rank:' + r, 26)}${esc(t('rank' + r))}</span><span class="pill">${ic('star', 22)}<b>${S.stars}</b></span>
       <span class="pill">${ic('moon', 22)}${esc(t('nights'))}: <b>${S.night - 1}</b></span></div>
       <div class="acts"><button class="btn round" id="bCert" aria-label="${esc(t('cert'))}">${ic('cert', 30)}</button>
       ${o.promo ? '' : `<button class="btn round" id="bWho" aria-label="${esc(t('players'))}">${ic('faces', 30)}</button>`}
       <button class="btn go" id="bOk">${ic('yes', 26)}${esc(t('ok'))}</button></div></div></div>`);
     this.panel = $('.dlg', n);
-    if ($('input', n)) $('input', n).oninput = e => { S.name = e.target.value.trim().slice(0, 16); save(); const f = $('#fin', n); if (f) f.textContent = t('finale', { n: playerName() }); };
+    if ($('input', n)) nameField($('input', n), () => { save(); const f = $('#fin', n); if (f) f.textContent = t('finale', { n: playerName() }); });
     $('#bCert', n).onclick = () => { sfx.click(); showCert(); };
     if ($('#bWho', n)) $('#bWho', n).onclick = () => { sfx.click(); showPlayers(); };
     $('#bOk', n).onclick = () => {
@@ -2763,7 +2782,7 @@ scenes.album = {
 // ---------- Dress-up: hats and scarves for the owl and for Zip, bought with moonbeams and worn in every scene ----------
 // The things themselves (WEAR, WEARS) are drawn in src/45-chars.js, beside the characters that wear them.
 ICON.wear = (c, id) => { c.translate(0, WEAR[id].hat ? .72 : -.35); c.scale(WEAR[id].hat ? .6 : .82, WEAR[id].hat ? .6 : .82); WEAR[id].draw(c); };
-ICON.owlI = c => owl(c, 0, .93, .0185, 0, 'idle', false);
+ICON.owlI = c => owl(c, 0, .93, .0185, 1, 'idle', false);   // (at time 0 the owl is in the middle of a blink)
 ICON.zipI = c => zip(c, -.2, .2, .052, 0, 1);
 ICON.hanger = c => { c.beginPath(); c.arc(0, -.6, .2, Math.PI * .9, Math.PI * 2.4); c.lineWidth = .12; c.strokeStyle = '#fff'; c.stroke(); line(c, [0, -.4, -.9, .3, .9, .3, 0, -.4], '#fff', .14); poly(c, [-.6, .3, .6, .3, .45, .8, -.45, .8], '#ff9ecb'); };
 
@@ -2777,7 +2796,7 @@ scenes.wear = {
       <span class="pill" id="pBeams">${ic('beam', 22)}<b>${S.beams}</b></span></div>`);
     $('#wBack', bar).onclick = () => { sfx.click(); go(this.from); };
     $('#wFlag', bar).onclick = () => { sfx.pop(); go('flag', { from: 'wear' }); };   // the treehouse wears something too: its flag
-    this.panel = add(`<div class="side wearbar"><div class="row"><div class="langs" role="group">
+    this.panel = add(`<div class="side wearbar"><div class="row"><div class="langs" role="group" aria-label="${esc(t('wardrobe'))}">
       <button class="btn" data-w="owl" aria-label="${esc(t('k_owl'))}">${ic('owlI', 40)}</button><button class="btn" data-w="zip" aria-label="${esc(t('k_zip'))}">${ic('zipI', 40)}</button></div>
       <button class="btn gold" id="wBuy" disabled>${ic('beam', 24)}<b></b><span>${esc(t('buy'))}</span></button></div>
       <div class="wears">${WEARS.map(k => `<button class="pal" data-k="${k}">${ic('wear:' + k, 36)}<span></span></button>`).join('')}</div></div>`);
@@ -3001,8 +3020,8 @@ function palsTree(c, T, t) {
 }
 function palTap(lx, ly, T) {
   const k = T.k, u = Math.max(.42, k * .95) / k;
-  let id = '', best = Math.max(45, 26 / k);
-  for (const [f, x, y, dir] of palPlaces()) { const d = Math.hypot(lx - x + 7 * dir * u, ly - y + 34 * u); if (d < best) { best = d; id = f; } }
+  let id = '', best = Math.max(45, 26 / k), px = 0, py = 0;
+  for (const [f, x, y, dir] of palPlaces()) { const d = Math.hypot(lx - x + 7 * dir * u, ly - y + 34 * u); if (d < best) { best = d; id = f; px = x - 7 * dir * u; py = y; } }
   if (!id) return false;
   // the heron and the pond are right beside the helper: a gift nearer to the tap keeps it
   const g = giftOn() || {}, sx = T.ox + lx * k, sy = T.oy + ly * k;
@@ -3010,7 +3029,7 @@ function palTap(lx, ly, T) {
   palT[id] = V.t;
   speak(t('pal_n_' + id), 'pie');   // magpie chatter
   ui.querySelectorAll('.toast').forEach(n => n.remove());
-  toast(t('pal_n_' + id) + ' · ' + t('pal_j_' + id), 2200);
+  toast(t('pal_n_' + id) + ' · ' + t('pal_j_' + id), 2200, [T.ox + px * k, T.oy + (py - 84 * u) * k]);   // the name goes over the friend it belongs to
   return true;
 }
 
@@ -3082,7 +3101,7 @@ function certCanvas() {
   line(c, [520, 850, 1010, 850], '#8a7a5a', 3);
   text(t('certSign'), 765, 894, font(600, 28), '#4a3a1a', 520);
   text(new Date().toLocaleDateString(LANGS[lang], { year: 'numeric', month: 'long', day: 'numeric' }), 300, 894, font(600, 28), '#4a3a1a', 300);
-  owl(c, 1215, 912, 2, 0, 'idle', false);
+  owl(c, 1215, 912, 2, 1, 'idle', false);   // (time 1: at time 0 the owl is in the middle of a blink, and a certificate is kept)
   zip(c, 1085, 770, 2.4, 0, -1);
   return el;
 }
@@ -3303,7 +3322,8 @@ scenes.flag = {
     for (let i = 1; i <= n; i++) this.dab(this.cell(lerp(this.lx, x, i / n), lerp(this.ly, y, i / n)));
     this.lx = x; this.ly = y;
   },
-  up() { this.drag = false; if (this.dirty) { this.dirty = false; save(); } },
+  // (the lift of another finger does not end the stroke; the keys and the way out call up() without an event)
+  up(x, y, cancel, e) { if (e && this.drag && this.pid !== undefined && e.pointerId !== this.pid) return; this.drag = false; if (this.dirty) { this.dirty = false; save(); } },
   key(e) {
     const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
     if (d) { e.preventDefault(); this.kb = true; this.cx = clamp(this.cx + d[0], 0, 11); this.cy = clamp(this.cy + d[1], 0, 7); }
@@ -5965,11 +5985,18 @@ scenes.boss = {
   // The Baron's speech bubble, in screen pixels, one sentence per row when it fits. The tail points at the anchor
   // (stage units); the bubble goes above it, or below it (`down`), or to its left (`left`). Its rectangle is kept for
   // a layout test: the overlay must not cover it.
-  speech(G, x, y, mode) {
+  // `clear` [x0, x1, y] (stage units) names something tall beside the speaker (the cake). A bubble that would lie
+  // across it moves to the far side of it when the screen is wide enough (a phone held sideways), or else above it (a
+  // phone held upright), and its tail still comes down to the speaker.
+  speech(G, x, y, mode, clear) {
     const fs = clamp(Math.min(V.w, V.h) * .042, 13, 18), ax = G.ox + x * G.u, ay = G.gy + y * G.u, lh = fs * 1.2, left = mode === 'left', down = mode === 'down';
     ctx.font = `800 ${fs}px ui-rounded, "Segoe UI", Roboto, sans-serif`;
     const rows = sentences(t(this.bubKey)).flatMap(s => bossWrap(s, Math.min(V.w - 40, fs * 13))), w = Math.max(...rows.map(s => ctx.measureText(s).width)) + 26, h = rows.length * lh + 14;
-    const bx = clamp(left ? ax - w - 18 : ax - w / 2, 6, V.w - w - 6), by = clamp(left ? ay - h / 2 : down ? ay + 14 : ay - h - 14, G.top + 2, V.h - h - 6);
+    let bx = clamp(left ? ax - w - 18 : ax - w / 2, 6, V.w - w - 6), by = clamp(left ? ay - h / 2 : down ? ay + 14 : ay - h - 14, G.top + 2, V.h - h - 6);
+    if (clear && bx < G.ox + clear[1] * G.u && bx + w > G.ox + clear[0] * G.u) {
+      const past = G.ox + clear[1] * G.u + 4, over = G.gy + clear[2] * G.u - h - 4;
+      if (past + w <= V.w - 6) bx = past; else if (over >= G.top + 2) by = Math.min(by, over);
+    }
     rr(ctx, bx, by, w, h, 14); ctx.fillStyle = '#fff6da'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#4a3470'; ctx.stroke();
     const tx = clamp(ax, bx + 18, bx + w - 18), ty = clamp(ay, by + 14, by + h - 14);
     poly(ctx, left ? [bx + w - 2, ty - 8, bx + w - 2, ty + 8, ax, ay] : down ? [tx - 9, by + 2, tx + 9, by + 2, ax, ay] : [tx - 9, by + h - 2, tx + 9, by + h - 2, ax, ay], '#fff6da');
@@ -5989,7 +6016,7 @@ scenes.boss = {
       const wob = still() ? 0 : Math.sin(t0 * 5) * (ph === 'win1' ? .07 : .025);
       bossCake(ctx, x, t0, { roll: (x - CX) / 14, wob, walk, lid, peek, giggle: ph === 'ask1' || ph === 'in1' });
       bossBaron(ctx, x + 104, 0, .95, t0, { dir: -1, pose: bpose, face: bface, chef: true });   // he pushes from behind (and is pushed back)
-      if (ph === 'ask1') this.anchor = [x + 85, -104];
+      if (ph === 'ask1') this.anchor = [x + 85, -104, '', [x - 62, x + 62, -222]];   // on a phone the bubble is wider than the gap beside the cake
       return;
     }
     // the crash: the tiers fly, three dizzy magpies sit in the cream, the Baron is flung off to the right
@@ -6889,7 +6916,7 @@ scenes.pie = {
 (() => {
   const int = (v, lo, hi) => clamp(v | 0, lo, hi);
   S.night = int(S.night, 1, 1e6); S.beams = int(S.beams, 0, 1e9); S.stars = int(S.stars, 0, 1e9); S.nest = int(S.nest, 0, 3);
-  S.briefed = int(S.briefed, 0, S.night); S.testStar |= 0; S.gateStar |= 0; S.boss |= 0; S.fooled |= 0;
+  S.briefed = int(S.briefed, 0, S.night); S.testStar |= 0; S.gateStar |= 0; S.boss |= 0; S.fooled |= 0; S.tinkered = int(S.tinkered, 0, 2);
   S.name = String(S.name || '').slice(0, 16); S.mute = !!S.mute; S.promo = !!S.promo; S.voice = S.voice !== false;
   S.day = S.day < 0 ? +(S.night > 1) : S.day ? 1 : 0;   // a career from before there were days meets its first morning at once
   const str = (v, re) => typeof v === 'string' && re.test(v) ? v : '';

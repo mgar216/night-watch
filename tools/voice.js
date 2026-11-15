@@ -34,6 +34,20 @@ const ALSO = new Set(['poor']);
 // Rows with a placeholder that only takes a few known values are recorded once for each value.
 const ROUTES = ['r_lt', 'r_rt', 'r_lb', 'r_rb', 'r_lad', 'r_sky'];
 const FILL = { o_route: ['r', ROUTES], o_busy: ['r', ROUTES], promo: ['r', ['rank1', 'rank2', 'rank3']], streak: ['n', [3, 5, 8]] };
+// What the voice is given can differ from what the screen shows (a clip is named after the shown sentence):
+// - a number is written out: "3 di fila!" was read in another language;
+// - the Russian word for magpie carries a stress mark: without it some lines sounded like the number forty;
+// - a sentence in SAY is given as written there (a stress mark where the voice put the stress on the wrong syllable);
+// - a sentence in AROUND stands alone in its row and came out wrong that way: the voice is told what is said before and
+//   after it (two of five takes of "Сороки летят!" were heard right by both recognisers, both with neighbours).
+// Found by transcribing every clip with whisper.cpp (small and large-v3-turbo) and comparing (2026-11-15).
+const NUM = { en: { 3: 'Three', 5: 'Five', 8: 'Eight' }, ru: { 3: 'Три', 5: 'Пять', 8: 'Восемь' }, it: { 3: 'Tre', 5: 'Cinque', 8: 'Otto' } };
+const SAY = { 'ru:У тени нет глаз.': 'У те\u0301ни нет глаз.' };
+const AROUND = { 'ru:Сороки летят!': ['Тревога!', 'Все по местам!'], 'en:Leaf hat': ['This disguise is called:', 'A magpie hides under it.'] };
+function spoken(lang, s) {
+  const out = SAY[lang + ':' + s] || String(s || '').replace(/\d+/g, d => NUM[lang][d] || d);
+  return lang === 'ru' ? out.replace(/(соро)(?=к[а-яё])/gi, '$1\u0301') : out;   // (no pattern trick for the other languages: /$^/ matched an empty neighbour and sent "$1" as context)
+}
 
 function plan() {
   const clips = new Map(), odd = [];
@@ -120,11 +134,13 @@ async function tts(text, before, after) {
     console.log(`to record: ${todo.length} sentences, ${chars(todo)} characters; the account has ${a.left} characters left (plan: ${a.tier})`);
     let used = 0, done = 0;
     for (const c of todo) {
-      if (used + c.text.length > Math.min(max, a.left)) { console.log('stopped at the character limit'); break; }
-      const mp3 = await tts(c.text, c.before, c.after);
+      const say = spoken(c.lang, c.text);   // what is sent, and what the account is charged for
+      if (used + say.length > Math.min(max, a.left)) { console.log('stopped at the character limit'); break; }
+      const [before, after] = AROUND[c.lang + ':' + c.text] || [c.before, c.after];
+      const mp3 = await tts(say, spoken(c.lang, before), spoken(c.lang, after));
       fs.mkdirSync(path.dirname(file(c)), { recursive: true });
       fs.writeFileSync(file(c), mp3);
-      used += c.text.length; done++;
+      used += say.length; done++;
       if (done % 25 === 0) console.log(`  ${done} of ${todo.length} recorded`);
     }
     console.log(`recorded ${done} clips, ${used} characters; ${writeList()} clips listed in src/31-voices.js`);
