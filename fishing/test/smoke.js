@@ -20,7 +20,9 @@ const runs = saves.length ? saves.map(([name]) => ['tour', '412,800', name]) : o
 execFileSync(path.join(root, 'build.sh'), [page, path.join(__dirname, 'driver.js')]);
 
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'flf-ff-'));
-if (calm) fs.writeFileSync(path.join(profile, 'user.js'), 'user_pref("ui.prefersReducedMotion", 1);\n');
+// the test browser fetches nothing of its own (see ../../test/smoke.js)
+fs.writeFileSync(path.join(profile, 'user.js'), 'user_pref("security.remote_settings.intermediates.enabled", false);\nuser_pref("security.remote_settings.crlite_filters.enabled", false);\n'
+  + (calm ? 'user_pref("ui.prefersReducedMotion", 1);\n' : ''));
 let ff, failed = 0, done = 0, watchdog;
 const finish = code => { if (ff) ff.kill('SIGKILL'); fs.rmSync(profile, { recursive: true, force: true }); fs.rmSync(page, { force: true }); process.exit(code); };
 const alive = () => { clearTimeout(watchdog); watchdog = setTimeout(() => { console.error('TIMEOUT: the browser went silent'); finish(1); }, 240000); };
@@ -57,6 +59,6 @@ const server = http.createServer((req, res) => {
   // NW_OPEN='command with {url}' opens the suite in another browser instead of headless Firefox (see ../../test/smoke.js)
   const url = `http://127.0.0.1:${server.address().port}/`;
   if (process.env.NW_OPEN) spawn('sh', ['-c', process.env.NW_OPEN.replace('{url}', url)], { stdio: 'inherit' });
-  else ff = spawn('firefox', ['--headless', '--no-remote', '--profile', profile, url], { stdio: 'ignore' });
+  else ff = spawn('firefox', ['--headless', '--no-remote', '--profile', profile, url], { stdio: 'ignore', env: { ...process.env, TMPDIR: profile } });   // its temporary files go with the profile (see ../../test/smoke.js)
   alive();
 });

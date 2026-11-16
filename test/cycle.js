@@ -82,6 +82,8 @@ const wrapper = async T => {
 };
 
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-ff-'));
+// the test browser fetches nothing of its own (see test/smoke.js)
+fs.writeFileSync(path.join(profile, 'user.js'), 'user_pref("security.remote_settings.intermediates.enabled", false);\nuser_pref("security.remote_settings.crlite_filters.enabled", false);\n');
 let ff;
 const finish = code => { if (ff) ff.kill('SIGKILL'); fs.rmSync(profile, { recursive: true, force: true }); fs.rmSync(tmp, { recursive: true, force: true }); process.exit(code); };
 const watchdog = setTimeout(() => { console.error('TIMEOUT: the browser went silent'); finish(1); }, 180000);
@@ -106,5 +108,5 @@ const server = http.createServer((req, res) => {
 }).listen(0, '127.0.0.1', () => {
   const url = `http://127.0.0.1:${server.address().port}/`;   // NW_OPEN: another browser, as in test/smoke.js
   if (process.env.NW_OPEN) spawn('sh', ['-c', process.env.NW_OPEN.replace('{url}', url)], { stdio: 'inherit' });
-  else ff = spawn('firefox', ['--headless', '--no-remote', '--profile', profile, url], { stdio: 'ignore' });
+  else ff = spawn('firefox', ['--headless', '--no-remote', '--profile', profile, url], { stdio: 'ignore', env: { ...process.env, TMPDIR: profile } });   // its temporary files go with the profile (see test/smoke.js)
 });

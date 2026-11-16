@@ -27,8 +27,14 @@ const missing = [...new Set([...src.matchAll(/\bt\('([A-Za-z0-9_]+)'\s*[,)]/g)].
 if (missing.length) { console.error('missing i18n keys:', missing); process.exit(1); }
 
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-ff-'));
-// the owl's recorded clips may play without a tap in the test browser
-fs.writeFileSync(path.join(profile, 'user.js'), 'user_pref("media.autoplay.default", 0);\n' + (calm ? 'user_pref("ui.prefersReducedMotion", 1);\n' : ''));
+// The test browser fetches nothing of its own. Between its first and second minute, headless Firefox fetched two bundles
+// of 4 MB each (certificates for its own use) into the system's temporary folder, and they stayed there when the browser
+// was stopped: 192 of them in four days of testing. NO_FETCH switches that off (tried: none in nine minutes, two without
+// it), and the browser's temporary folder is its profile, which is removed at the end, whatever else it may leave.
+const NO_FETCH = 'user_pref("security.remote_settings.intermediates.enabled", false);\nuser_pref("security.remote_settings.crlite_filters.enabled", false);\n';
+// (the owl's recorded clips may play without a tap in the test browser)
+fs.writeFileSync(path.join(profile, 'user.js'), NO_FETCH + 'user_pref("media.autoplay.default", 0);\n' + (calm ? 'user_pref("ui.prefersReducedMotion", 1);\n' : ''));
+const ffEnv = { ...process.env, TMPDIR: profile };
 let ff, failed = 0, done = 0, watchdog;
 const finish = code => { if (ff) ff.kill('SIGKILL'); fs.rmSync(profile, { recursive: true, force: true }); fs.rmSync(page, { force: true }); process.exit(code); };
 const alive = () => { clearTimeout(watchdog); watchdog = setTimeout(() => { console.error('TIMEOUT: the browser went silent'); finish(1); }, 240000); };
@@ -71,6 +77,6 @@ const server = http.createServer((req, res) => {
   // the phone through Shizuku: NW_OPEN='rish -c "am start -a android.intent.action.VIEW -d {url} com.android.chrome"'
   const url = `http://127.0.0.1:${server.address().port}/`;
   if (process.env.NW_OPEN) spawn('sh', ['-c', process.env.NW_OPEN.replace('{url}', url)], { stdio: 'inherit' });
-  else ff = spawn('firefox', ['--headless', '--no-remote', '--profile', profile, url], { stdio: 'ignore' });
+  else ff = spawn('firefox', ['--headless', '--no-remote', '--profile', profile, url], { stdio: 'ignore', env: ffEnv });
   alive();
 });
