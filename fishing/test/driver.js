@@ -367,6 +367,22 @@ const lanChecks = check => {
       worst = Math.max(worst, until(() => SP.st === 'bite', 12) ? SP.time - t0 : 99);
     }
     check(casts >= 16 && worst <= 8, `at the pond a bite comes within about eight seconds of every cast: the slowest of ${casts} took ${worst.toFixed(1)} s`);
+    // A cast right onto a fish (what a child aims at): the fish under the lure looks and bites as well. It used to change
+    // sides with every frame and never arrived. Both ways it may face, exactly under the lure and a little to either side.
+    let under = 0;
+    for (const [off, dir] of [[0, 1], [0, -1], [.004, 1], [-.004, -1], [.012, -1], [-.02, 1]]) {
+      SP.reset(); sim(.2); SP.castTo(.5); until(() => SP.st === 'wait', 4);
+      const mine = SP.pop.find(f => f.st === 'swim' && !f.decoy);   // this one stands under the lure; the others are not interested for now
+      for (const f of SP.pop) f.no = f === mine ? 0 : 30;
+      if (mine) Object.assign(mine, { p: .5 + off, dir, wait: 9, v: 0 });
+      if (until(() => SP.st === 'bite', 8)) under++;
+    }
+    check(under === 6, `a fish that stands right under the lure bites too: ${under} of 6 casts onto a fish`);
+    // nobody free (every fish has just been missed): a newcomer swims in, and the promise holds
+    SP.reset(); sim(.2); for (const f of SP.pop) f.no = 30;
+    const pondHad = SP.pop.length, castAt = SP.time; SP.castTo(.5);
+    check(until(() => SP.st === 'bite', 9) && SP.time - castAt <= 8 && SP.pop.length > pondHad, `with no fish free at the pond a newcomer comes and bites: ${(SP.time - castAt).toFixed(1)} s, ${pondHad} fish before, ${SP.pop.length} now`);
+    for (const f of SP.pop) f.no = 0;
     const sb = $('#spBite'), sr = sb ? sb.getBoundingClientRect() : { left: 0, width: 0, height: 0, top: 0, bottom: 0 };
     check(!!sb && sb.textContent === t('spot_bite') && Math.abs(sr.left + sr.width / 2 - innerWidth / 2) < innerWidth * .08 && sr.height >= 80 && sr.width >= 120 && sr.top > SP.top && sr.bottom < SP.meterY + 40,
       `the bite is a big sign in the middle of the water: ${sb ? sb.textContent : 'none'}, ${Math.round(sr.width)}x${Math.round(sr.height)} at ${Math.round(sr.left)},${Math.round(sr.top)} of ${innerWidth}x${innerHeight}`);

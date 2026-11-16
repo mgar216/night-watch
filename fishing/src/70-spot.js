@@ -593,6 +593,7 @@ Object.assign(scenes.spot, {
       let near = null, nd = 9;
       for (const f of this.pop) { const d = Math.abs(f.p - L.p); if (!f.decoy && f.st === 'swim' && f.no <= 0 && d < nd) { nd = d; near = f; } }
       if (near) { near.st = 'go'; near.look = 0; near.rush = Math.max(.12, nd / 2.2); this.bite = { f: near, stage: 'go', t: 0, touch: 0, fakes: 0, nib: 0 }; return; }
+      this.spawn(false);   // nobody is free (each one has just been missed, or has left with the time of day): a newcomer swims in and is called next
     }
     if (this.tw.still && L.still < 4) return;                                        // the Chapel: nothing comes until the lure has been still
     const R = .26 * (this.tw.dark && !it.glow ? .6 : 1) * (this.tw.murk ? .8 : 1);
@@ -612,11 +613,13 @@ Object.assign(scenes.spot, {
   approach(f, dt) {
     const L = this.lure;
     if (!L) { f.st = 'swim'; this.target(f); return; }
+    // It faces the lure and stops just short of it. Right at the lure it keeps the side it is on: taking the side from
+    // the way to the stopping place made a fish that stood under the lure change sides with every frame, and it never arrived.
+    if (Math.abs(L.p - f.p) > .03) f.dir = L.p > f.p ? 1 : -1;
     const tp = L.p - f.dir * .025, dp = tp - f.p, dd = L.d - f.d;
     if (f.st === 'go') {
       const sp = Math.max(f.rush || 0, this.swimSpeed(f) * (f.s.move === 'lurk' ? 3 : 1.3) * (this.tw.still ? .4 : 1));   // (rush: a fish called to the lure at the pond)
       f.v = Math.sign(dp) * sp; f.p += f.v * dt; f.d += clamp(dd, -1, 1) * dt * 1.4;
-      if (Math.abs(dp) > .02) f.dir = dp > 0 ? 1 : -1;
       if (Math.abs(dp) < .02 && Math.abs(dd) < .07) { f.st = 'look'; f.look = this.tw.still ? rnd(3, 6) : f.rush ? rnd(.4, .8) : rnd(.5, 1.4) * (1 + this.T.wary); f.v = 0; f.rush = 0; }
     } else {
       f.p = lerp(f.p, tp, Math.min(1, dt * 3)); f.d = lerp(f.d, L.d, Math.min(1, dt * 3)); f.dir = L.p >= f.p ? 1 : -1;
