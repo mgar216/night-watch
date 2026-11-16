@@ -38,7 +38,8 @@
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const post = o => fetch('/', { method: 'POST', body: JSON.stringify(Object.assign({ run }, o)) });
   const note = s => post({ progress: s });
-  const check = (ok, msg) => { if (!ok) bad('ASSERT ' + msg); };
+  let passed = null;   // in the mode `round2`: every check that held, to be printed with its numbers
+  const check = (ok, msg) => { if (!ok) bad('ASSERT ' + msg); else if (passed) passed.push(msg); };
   // Simulated time: logic every step, drawing every 12th step (drawing is the slow part in a headless browser).
   const sim = (sec, each) => { for (let i = 0; i < sec * 30; i++) { V.t += 1 / 30; if (scene.update) scene.update(1 / 30); if (i % 12 === 0 || mode[0] === 'shot') { scene.draw(1 / 30); drawFx(1 / 30); drawPortrait(); } if (each && each() === false) break; } };
   const clickDlg = (i = -1) => { const b = [...document.querySelectorAll('.veil .acts .btn')]; if (!b.length) return false; b[i < 0 ? b.length - 1 : i].click(); return true; };
@@ -1146,6 +1147,8 @@
     }
   }
 
+  // `round2`: only the checks of the second QA list (round2Checks), and each one is printed, held or not.
+  async function round2() { passed = []; audioOn(); await round2Checks(); const held = passed; passed = null; for (const p of held) await note('pass: ' + p); }
   // #perf: the frame rate of the heaviest screens, measured with the browser's own animation frames. It asserts nothing:
   // the numbers are printed and read. On a real phone: NW_OPEN='…' node test/smoke.js perf (see test/smoke.js).
   async function perf() {
@@ -1239,7 +1242,7 @@
     check(JSON.stringify(JSON.parse(localStorage.getItem(SAVE))) === JSON.stringify(S), 'tour: what is stored is the repaired save');
   }
 
-  const modes = { smoke, audit, perf, tour };
+  const modes = { smoke, audit, perf, tour, round2 };
   if (!has(modes, mode[0])) return;
   try { await modes[mode[0]](); } catch (e) { bad(`driver crashed at [${where}]: ${e.stack || e}`); }
   check(!unvoiced.size, `the owl said ${unvoiced.size} sentences that have no recorded clip: ${[...unvoiced].join(' | ')}`);

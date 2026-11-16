@@ -4,6 +4,7 @@
 //   node test/smoke.js audit 360,640   only the audit, only at that size (any number of W,H sizes)
 //   node test/smoke.js perf            frame rate of the heaviest screens (numbers to read, nothing is asserted)
 //   node test/smoke.js tour            the game started on each old, damaged and randomly broken save of test/saves.js
+//   node test/smoke.js round2          only the checks of the second QA list; every check is printed with its numbers
 // Headless Firefox keeps a 1366 x 682 window unless it is taking a screenshot, so every run happens
 // inside an <iframe> of the wanted size; the game sees the iframe as its window.
 const http = require('http'), fs = require('fs'), os = require('os'), path = require('path');
@@ -12,11 +13,11 @@ const { execFileSync, spawn } = require('child_process');
 const root = path.join(__dirname, '..'), page = path.join(os.tmpdir(), `nw-test-${process.pid}.html`);
 const args = process.argv.slice(2), calm = args.includes('calm'), sizes = args.filter(a => /^\d+,\d+$/.test(a));
 const AUDIT = ['360,640', '640,360', '768,1024', '1280,720'];
-const only = ['audit', 'perf'].find(m => args.includes(m));
+const only = ['audit', 'perf', 'round2'].find(m => args.includes(m));
 // `tour`: the game starts once on each prepared save of test/saves.js (`tour only=seed` runs the saves whose name holds "seed")
 const part = (args.find(a => a.startsWith('only=')) || '').slice(5);
 const saves = args.includes('tour') ? require('./saves.js').nw.filter(([name]) => name.includes(part)) : [];
-const runs = saves.length ? saves.map(([name]) => ['tour', '412,800', name]) : only ? (sizes.length ? sizes : only === 'perf' ? ['412,800'] : AUDIT).map(s => [only, s]) : [['smoke', '412,800'], ...AUDIT.map(s => ['audit', s])];
+const runs = saves.length ? saves.map(([name]) => ['tour', '412,800', name]) : only ? (sizes.length ? sizes : only === 'audit' ? AUDIT : ['412,800']).map(s => [only, s]) : [['smoke', '412,800'], ...AUDIT.map(s => ['audit', s])];
 execFileSync(path.join(root, 'build.sh'), [page, path.join(__dirname, 'driver.js')]);
 
 // Static check: every literal t('key') in the sources exists in the localization table.
