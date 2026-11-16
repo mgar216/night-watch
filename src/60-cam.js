@@ -4,8 +4,10 @@ let scanPat = null;
 scenes.cam = {
   enter() {
     const n = S.night, cams = Math.min(count('cam'), 4), lamps = Math.min(count('lamp'), 3);
-    // Difficulty creeps up gently with the Night; Tinker cameras slow magpies, lanterns brighten the feeds.
-    this.P = { feeds: n <= 2 ? 4 : n <= 5 ? 6 : 9, need: Math.min(4 + n, 12), speed: Math.min(.12 + .012 * n, .25) * (1 - .05 * cams),
+    // Difficulty creeps up gently with the Night; Tinker cameras slow magpies, lanterns brighten the feeds. On the very
+    // first Night the magpies walk at half speed: each one is in view about twice as long as on the second Night, long
+    // enough for a six-year-old to spot it and tap it (the round's time below grows with it).
+    this.P = { feeds: n <= 2 ? 4 : n <= 5 ? 6 : 9, need: Math.min(4 + n, 12), speed: Math.min(.12 + .012 * n, .25) * (n === 1 ? .5 : 1) * (1 - .05 * cams),
       gap: Math.max(2, 4.6 - .32 * n), live: n >= 8 ? 3 : n >= 5 ? 2 : 1, hide: (1.5 - Math.min(n, 8) * .07) * (1 - .12 * lamps),
       friendGap: n === 1 ? 6 : Math.max(2.2, 4.5 - .25 * n), decoy: n >= 4 ? .2 : 0, statics: n >= 6, dark: .18 - .05 * lamps };
     this.fav = n >= 3 ? shuffle([...Array(this.P.feeds).keys()]).slice(0, 2) : [];

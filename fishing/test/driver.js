@@ -355,6 +355,27 @@ const lanChecks = check => {
     until(() => SP.bite && SP.bite.touch > 0, 10); SP.strike();
     check(got('escape', d => d.why === 'spook') && got('strike', d => d.early) && faker.st === 'flee', 'a strike on a fake spooks the fish for good');
     go('map'); check(got('leave', d => d.area === 'pond' && d.catches === 1 && d.snaps === 1), 'leaving reports the visit: ' + JSON.stringify(ev.leave));
+    // Sunnybrook Pond keeps its promise (the second QA list, B11): a bite within about eight seconds of every cast, wherever
+    // the lure lands, and a big sign in the middle of the water that is a button
+    fresh(); go('spot', { area: 'pond' }); sim(.5);
+    let worst = 0, casts = 0;
+    for (let k = 0; k < 24; k++) {
+      const p = .05 + (k % 8) * .12;
+      if (SP.feat('snag', p)) continue;
+      if (SP.st !== 'read') { SP.reset(); sim(.2); }
+      const t0 = SP.time; SP.castTo(p); casts++;
+      worst = Math.max(worst, until(() => SP.st === 'bite', 12) ? SP.time - t0 : 99);
+    }
+    check(casts >= 16 && worst <= 8, `at the pond a bite comes within about eight seconds of every cast: the slowest of ${casts} took ${worst.toFixed(1)} s`);
+    const sb = $('#spBite'), sr = sb ? sb.getBoundingClientRect() : { left: 0, width: 0, height: 0, top: 0, bottom: 0 };
+    check(!!sb && sb.textContent === t('spot_bite') && Math.abs(sr.left + sr.width / 2 - innerWidth / 2) < innerWidth * .08 && sr.height >= 80 && sr.width >= 120 && sr.top > SP.top && sr.bottom < SP.meterY + 40,
+      `the bite is a big sign in the middle of the water: ${sb ? sb.textContent : 'none'}, ${Math.round(sr.width)}x${Math.round(sr.height)} at ${Math.round(sr.left)},${Math.round(sr.top)} of ${innerWidth}x${innerHeight}`);
+    if (sb) sb.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
+    check(SP.st === 'fight' && !$('#spBite'), 'a tap on the sign hooks the fish, and the sign goes: ' + SP.st);
+    SP.reset(); sim(.2); SP.castTo(.5); until(() => SP.st === 'bite', 12); const shown = !!$('#spBite'); until(() => SP.st !== 'bite', 4);
+    check(shown && SP.st === 'wait' && !$('#spBite'), 'a bite that is missed takes its sign away');
+    PRE.open(); S.gate = 1; go('spot', { area: 'chapel' }); sim(.3);
+    check(!toBite() || !$('#spBite'), 'the Chapel keeps its quiet bite: no sign there');
     // the conditions of a water take turns
     go('spot', { area: 'mill' }); ev.cond = []; sim(130); check((ev.cond || []).length >= 2, 'the conditions of a water take turns: ' + JSON.stringify(ev.cond));
     // --- found by the review: the logbook button, a trophy on the way out, the snag guard, the squall chip, a weak line ---
@@ -470,6 +491,13 @@ const lanChecks = check => {
       }
       const d = $('#ui .veil .dlg');
       if (d && d.scrollHeight > d.clientHeight + 2) flag(screen, d, `dialog needs scrolling (${d.scrollHeight} > ${d.clientHeight})`);
+      // the way back stays in reach under every dialog that lies over a bar: the veil's own button is there (the loop above
+      // taps it) and the dialog keeps clear of it
+      if (d && $('#ui #hBack')) {
+        const h = $('#ui .veil .vhome'), a = h && h.getBoundingClientRect(), b = d.getBoundingClientRect();
+        if (!h) flag(screen, d, 'dialog without a way back');
+        else if (Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2) flag(screen, h, 'the way back lies on the dialog');
+      }
       const bar = [...document.querySelectorAll('#ui .hud > *:not(.sp)')].filter(e => e.getBoundingClientRect().width);
       for (let i = 0; i < bar.length; i++) for (let j = i + 1; j < bar.length; j++) {
         const a = bar[i].getBoundingClientRect(), b = bar[j].getBoundingClientRect();

@@ -31,7 +31,19 @@ function talk(text, o = {}) {
   }
   say(text);
   ($('.btn.go', acts) || acts.firstChild).focus({ preventScroll: true });   // Enter continues; it never leaves by surprise
+  dlgBack(v);
   return v;
+}
+// The way out stays in reach while a dialog is open. The dialog makes the bar under it inert, so its veil carries the
+// bar's back button once more, exactly over it, and it does what that one does. A screen without a bar (the title) needs
+// none. The shared stylesheet keeps dialogs clear of it. (What a catch or a lesson brought is saved before its dialog opens.)
+function dlgBack(v) {
+  const h = [...ui.querySelectorAll('#hBack')].find(b => !v.contains(b));
+  if (!h) return;
+  const b = add(`<button class="btn round vhome" aria-label="${esc(h.getAttribute('aria-label'))}">${ic(h.dataset.home, 28)}</button>`, v), r = h.getBoundingClientRect(), u = v.getBoundingClientRect();
+  Object.assign(b.style, { left: r.left - u.left + 'px', top: r.top - u.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+  b.onclick = () => { closeDlg(); h.click(); };
+  v.classList.add('homed');
 }
 function drawPortrait() {
   if (!portrait) return;
@@ -44,7 +56,7 @@ function drawPortrait() {
 
 // Top bar: a way back, room for the scene's own pills, the logbook, and the purse.
 function hud(backFn, extra = '', o = {}) {
-  const n = add(`<div class="hud"><button class="btn round" id="hBack" aria-label="${esc(t(o.home ? 'home' : 'back'))}">${ic(o.home ? 'home' : 'backI', 28)}</button>
+  const n = add(`<div class="hud"><button class="btn round" id="hBack" data-home="${o.home ? 'home' : 'backI'}" aria-label="${esc(t(o.home ? 'home' : 'back'))}">${ic(o.home ? 'home' : 'backI', 28)}</button>
     ${extra}<span class="sp"></span>
     ${o.book === false ? '' : `<button class="btn round" id="hBook" aria-label="${esc(t('book'))}">${ic('bookI', 28)}</button>`}
     <span class="pill" id="pMoons">${ic('moon', 22)}<b>${S.moons}</b></span></div>`);
@@ -88,7 +100,7 @@ scenes.home = {
       <a class="btn" id="bSister" href="../index.html${day ? '#night' : ''}">${ic('jar', 26)}${esc(t('sister'))}</a></div></div>`);
     $('#bPlay', n).onclick = () => { sfx.pop(); S.name || allLogged() ? go('map') : askName(() => go('map')); };
     // the owl's lessons (the map, the shop, the five steps of a catch at the pond) are given once; this asks for them again
-    $('#bLessons', n).onclick = () => { S.tut = {}; save(); sfx.chirp(); ui.querySelectorAll('.toast').forEach(x => x.remove()); toast(t('lessonsSay'), 2800); };
+    $('#bLessons', n).onclick = () => { S.tut = {}; save(); sfx.chirp(); toast(t('lessonsSay'), 2800); };
     $('#bSnd', n).onclick = () => { setMute(!S.mute); sfx.click(); go('home'); };
     $('#bVol', n).oninput = e => { setVol(e.target.value / 100); };
     $('#bVol', n).onchange = () => sfx.pop();

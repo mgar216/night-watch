@@ -9,7 +9,7 @@ let portrait = null, closeDlg = null;
 function owlSay(text, o = {}) {
   if (closeDlg) closeDlg();   // never two dialogs at once
   const before = document.activeElement, others = [...ui.children];
-  const v = add(`<div class="veil"><div class="dlg pop" role="dialog" aria-modal="true" aria-labelledby="owlText">
+  const v = add(`<div class="veil"><div class="dlg pop${text.length > 240 ? ' long' : ''}" role="dialog" aria-modal="true" aria-labelledby="owlText">
     ${o.title ? `<h2>${esc(o.title)}</h2>` : ''}${o.stars !== undefined ? starsHtml(o.stars, 46) : ''}
     <div class="owlrow"><canvas class="owl" style="width:108px;height:100px;flex:none"></canvas><div class="bubble" id="owlText">${esc(text)}</div></div>
     ${o.html || ''}<div class="acts"></div></div></div>`);
@@ -28,8 +28,10 @@ function owlSay(text, o = {}) {
   el.width = 108 * d; el.height = 100 * d;   // the owl is drawn at a scale where raised wings fit; the flashlight beam is left out
   portrait = { el, c: el.getContext('2d'), d, mood: o.mood || 'talk', t0: V.t };
   say(text);
-  if (S.voice && !S.mute) speak(text); else if (!o.quiet) sfx.hoot();   // the owl says it, or at least hoots
+  // the owl says it, or at least hoots (o.voice: the owl's recorded words, where the line on the screen carries the player's name)
+  if (S.voice && !S.mute) speak(o.voice || text); else if (!o.quiet) sfx.hoot();
   ($('.btn.go', acts) || acts.firstChild).focus({ preventScroll: true });   // Enter continues; it never restarts or leaves by surprise
+  dlgHome(v);
   return v;
 }
 // A plain modal panel with the same manners as the owl's dialog: the rest is inert, and focus goes back when it closes.
@@ -42,7 +44,19 @@ function modal(inner, label, cls = '') {
     v.remove(); closeDlg = null; others.forEach(el => { el.inert = false; });
     if (before && before.isConnected && before !== document.body) before.focus({ preventScroll: true });
   };
+  dlgHome(v);
   return v;
+}
+// Home stays in reach while a dialog is open. The dialog makes the bar under it inert, so its veil carries a home button
+// of its own: exactly over the bar's one, and it does what that one does (in a station: back to the Night menu). A screen
+// without such a bar leads to the title; the title screen itself needs none. The stylesheet keeps dialogs clear of it.
+function dlgHome(v) {
+  if (scene === scenes.home) return;
+  const h = [...ui.querySelectorAll('[data-home]')].find(b => !v.contains(b));
+  const b = add(`<button class="btn round vhome" aria-label="${esc(h ? h.getAttribute('aria-label') : t('home'))}">${ic(h ? h.dataset.home : 'home', 28)}</button>`, v);
+  if (h) { const r = h.getBoundingClientRect(), u = v.getBoundingClientRect(); Object.assign(b.style, { left: r.left - u.left + 'px', top: r.top - u.top + 'px', width: r.width + 'px', height: r.height + 'px' }); }
+  b.onclick = () => { closeDlg(); if (h) h.click(); else { sfx.click(); go('home'); } };
+  v.classList.add('homed');
 }
 function drawPortrait() {
   if (!portrait) return;
@@ -52,10 +66,14 @@ function drawPortrait() {
   owl(c, 54, 97, .78, V.t, portrait.mood === 'talk' && V.t - portrait.t0 > 2.2 ? 'idle' : portrait.mood, false);
 }
 const picsHtml = names => `<div class="pics">${names.map(n => ic(n, 40)).join('')}</div>`;
+// The language switch (the title screen, the guide's bar): each language under its own name, with its own bird. A tap
+// draws the screen `back` again in the new language.
+const langsHtml = () => `<div class="langs" role="group" aria-label="${esc(t('lang'))}">${LANGS.map((l, i) => `<button class="btn" data-l="${i}" aria-label="${esc(L.langName[i])}" aria-pressed="${i === lang}">${ic('bird:' + i, 30)}${l.toUpperCase()}</button>`).join('')}</div>`;
+const langsOn = (root, back) => root.querySelectorAll('[data-l]').forEach(b => b.onclick = () => { setLang(+b.dataset.l); sfx.chirp(); go(back); });
 
 // Top bar used by most screens. `slim` bars drop the Night, star and moonbeam pills on low landscape screens.
 function hud(backFn, extra = '', slim = false) {
-  const n = add(`<div class="hud${slim ? ' slim' : ''}"><button class="btn round" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
+  const n = add(`<div class="hud${slim ? ' slim' : ''}"><button class="btn round" data-home="home" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
     <span class="pill extra">${esc(practice ? t('g_practice') : t('night', { n: S.night }))}</span><span class="sp"></span>${extra}
     <span class="pill" id="pStars">${ic('star', 22)}<b>${S.stars}</b></span><span class="pill" id="pBeams">${ic('beam', 22)}<b>${S.beams}</b></span></div>`);
   $('button', n).onclick = () => { sfx.click(); backFn(); };
@@ -126,7 +144,7 @@ scenes.home = {
       <button class="btn round" id="bPie" aria-label="${esc(t('s_pie'))}">${ic('pie', 32)}</button>
       <a class="btn round" id="bFish" href="fishing/index.html#day" aria-label="${esc(t('fishing'))}">${ic('fish', 30)}</a>
       <button class="btn round" id="bBadge" aria-label="${esc(t('badgeTitle'))}">${ic('rank:' + rank(), 34)}</button></div>
-      <div class="row"><div class="langs" role="group" aria-label="${esc(t('lang'))}">${LANGS.map((l, i) => `<button class="btn" data-l="${i}" aria-label="${esc(L.langName[i])}" aria-pressed="${i === lang}">${ic('bird:' + i, 30)}${l.toUpperCase()}</button>`).join('')}</div>
+      <div class="row">${langsHtml()}
       <button class="btn round" id="bSnd" aria-label="${esc(t('sound'))}" aria-pressed="${!S.mute}">${ic('snd:' + (S.mute ? 0 : 1), 28)}</button>
       <button class="btn round" id="bVoice" aria-label="${esc(t('voice'))}" aria-pressed="${S.voice}">${ic('talk:' + (S.voice ? 1 : 0), 28)}</button></div>
       <p class="foot">${esc(t('foot'))}</p></div>`);
@@ -140,7 +158,7 @@ scenes.home = {
     $('#bFish', n).onclick = e => { if (asleep()) { e.preventDefault(); go('bed'); } else { S.day = 0; save(); } };   // going fishing from here is the day as well: first light does not ask again that evening
     for (const [id, sc] of [['#bAlbum', 'album'], ['#bWear', 'wear'], ['#bPie', 'pie']]) $(id, n).onclick = () => { sfx.pop(); sc === 'pie' && asleep() ? go('bed') : go(sc, { from: 'home' }); };
     this.zz = asleep();
-    n.querySelectorAll('[data-l]').forEach(b => b.onclick = () => { setLang(+b.dataset.l); sfx.chirp(); go('home'); });
+    langsOn(n, 'home');
   },
   update() { snore(this); },
   down(x, y) {
@@ -173,18 +191,23 @@ scenes.hub = {
     if (asleep()) return go('bed');                      // enough Nights for one day: the owl says good night
     if (S.day) return go('dawn');                        // first light comes once between two Nights
     if (S.boss === S.night && S.saga < 3 && S.night >= 10 * (S.saga + 1)) return go('saga', { ch: S.saga + 1 });   // a chapter of the Baron's story that a reload or the home button cut short
-    hud(() => go('home'), `<button class="btn round" id="bBadge" aria-label="${esc(t('badgeTitle'))}">${ic('rank:' + rank(), 34)}</button>`);
+    // the Night menu greets the player by name (the owl's own word for the player when there is no name). On a phone held
+    // sideways there is no room for a line of its own, and the greeting stands in the top bar (the stylesheet shows one of the two).
+    const hello = `<span class="pill hello">${esc(S.name ? t('hello', { n: S.name }) : t('helloDef'))}</span>`;
+    hud(() => go('home'), `${hello}<button class="btn round" id="bBadge" aria-label="${esc(t('badgeTitle'))}">${ic('rank:' + rank(), 34)}</button>`);
     $('#bBadge').onclick = () => { sfx.click(); go('badge', { from: 'hub' }); };
     // Three stations open the raid; from Night 2 a fourth, extra one takes turns (dashed card: a bonus, never needed).
     const ready = S.st.cam && S.st.gate && S.st.forge, extra = extraOf(S.night), boss = isBoss(S.night) && S.boss !== S.night;
     const cards = [['cam', 'cam', S.st.cam], ['gate', 'gateI', S.st.gate], ['forge', 'lock', S.st.forge]].concat(extra ? [[extra, EXTRA_ICON[extra], S.st.extra]] : []);
-    const n = add(`<div class="hub"><div class="cards${extra ? ' four' : ''}">${cards.map(([id, i, st]) =>
+    const n = add(`<div class="hub">${hello}<div class="cards${extra ? ' four' : ''}">${cards.map(([id, i, st]) =>
       `<button class="card ${st ? 'done' : ''}${id === extra ? ' bonus' : ''}" data-s="${id}" aria-label="${esc(t('s_' + id))}, ${st}/3">${ic(i, 44)}<span>${esc(t('s_' + id))}</span>${starsHtml(st, 18)}</button>`).join('')}</div>
       <div class="row" style="display:flex;gap:.5em;flex-wrap:wrap;justify-content:center">
       <button class="btn" id="bTinker">${ic('hammer', 28)}${esc(t('s_tinker'))}</button>
+      <button class="btn round" id="bGuide" aria-label="${esc(t('guide'))}">${ic('help', 34)}</button>
       <button class="btn gold ${ready ? 'pulse' : ''}" id="bRaid" ${ready ? '' : 'disabled'}>${ic(boss ? 'stk:m6' : 'jar', 28)}${esc(t(boss ? 'bossGo' : 'raidGo'))}</button></div></div>`);
     n.querySelectorAll('.card').forEach(b => b.onclick = () => { sfx.pop(); go(b.dataset.s); });
     $('#bTinker', n).onclick = () => { sfx.pop(); go('tinker'); };
+    $('#bGuide', n).onclick = () => { sfx.pop(); go('guide', { from: 'hub' }); };   // the same guide as on the title screen; its home button leads back here
     hubHint(n, ready);   // with hints on: what comes next, and the way into the guide (src/53-guide.js)
     $('#bRaid', n).onclick = () => { sfx.alarm(); boss ? go('boss', { then: () => go('raid') }) : go('raid'); };
     // News first (a gift from a Legendary fish, a new friend, an addition to the treehouse), then the day's first words,
@@ -195,7 +218,9 @@ scenes.hub = {
     if (S.briefed >= S.night) return;
     const back = S.nest > 0, b = Math.min(S.night, 8), arc = arcBrief(S.night), wx = weatherLine(S.night);   // later Nights bring new tricks; some Nights have weather
     S.briefed = S.night; S.nest = 0; save();
-    owlSay((arc ? arc.text : t('b' + b)) + (isBoss(S.night) ? ' ' + t('bBoss') : '') + (wx ? ' ' + t(wx) : ''), { title: t('night', { n: S.night }),
+    // the first briefing welcomes the player by name on the screen; the owl's voice says its recorded welcome
+    const said = (arc ? arc.text : t('b' + b)) + (isBoss(S.night) ? ' ' + t('bBoss') : '') + (wx ? ' ' + t(wx) : '');
+    owlSay(b === 1 && S.name ? said.replace(t('b1'), () => t('b1n', { n: S.name })) : said, { title: t('night', { n: S.night }), voice: said,
       html: picsHtml((arc ? arc.pics : BRIEF_PICS[b - 1]).concat(isBoss(S.night) ? ['stk:m6'] : [])),
       acts: [{ label: t('go'), cls: 'go', icon: 'play', fn: () => { if (back) { toast(t('jarsBack')); sfx.chirp(); } } }] });
   },
@@ -343,7 +368,7 @@ function closeNight(stolen, laughed = 0) {
 function finishNight(stolen, stars = closeNight(stolen)) {
   stolen ? sfx.hoot() : sfx.win();
   // the first lantern comes with a word about what it is for
-  owlSay(stolen ? t('raid1') + ' ' + t('raid2') : t('raid0') + (S.lit === 1 ? ' ' + t('lit1') : ''), { title: t('night', { n: S.night - 1 }), stars, mood: stolen ? 'idle' : 'cheer', quiet: true,
+  owlSay(stolen ? t('raid1') + ' ' + t('raid2') : t('raid0') + (S.lit === 1 ? ' ' + t('lit1') : ''), { title: t('night', { n: nightsDone() }), stars, mood: stolen ? 'idle' : 'cheer', quiet: true,
     html: `<div class="pics"><span class="pill pop">${ic('beam', 22)}<b>+${15 + stars * 10}</b></span>${stolen ? '' : `<span class="pill pop">${ic('lamp', 22)}${esc(t('litNew'))}</span>`}</div>`,
     acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => S.promo ? go('badge', { promo: true }) : go('tinker') }] });
 }
@@ -363,7 +388,7 @@ scenes.badge = {
       ${o.promo ? `<div class="pics"><span class="pill pop got">${ic('room:' + r, 30)}<span>${esc(t('roomNew'))}<br><b>${esc(t('room' + r))}</b></span></span></div>`
         : NAME_FIELD()}
       <div class="pics"><span class="pill">${ic('rank:' + r, 26)}${esc(t('rank' + r))}</span><span class="pill">${ic('star', 22)}<b>${S.stars}</b></span>
-      <span class="pill">${ic('moon', 22)}${esc(t('nights'))}: <b>${S.night - 1}</b></span></div>
+      <span class="pill">${ic('moon', 22)}${esc(t('nights'))}: <b>${nightsDone()}</b></span></div>
       <div class="acts"><button class="btn round" id="bCert" aria-label="${esc(t('cert'))}">${ic('cert', 30)}</button>
       ${o.promo ? '' : `<button class="btn round" id="bWho" aria-label="${esc(t('players'))}">${ic('faces', 30)}</button>`}
       <button class="btn go" id="bOk">${ic('yes', 26)}${esc(t('ok'))}</button></div></div></div>`);

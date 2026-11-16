@@ -67,7 +67,7 @@ scenes.flag = {
   enter(o = {}) {
     Object.assign(this, { from: o.from || 'home', col: this.col >= 0 ? this.col : 2, drag: false, dirty: false, kb: false, cx: 0, cy: 0 });
     if (S.flag !== flagCode()) S.flag = '';   // a damaged value counts as no painting yet: the owl's first word comes as well
-    this.bar = add(`<div class="hud"><button class="btn round" id="flagBack" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
+    this.bar = add(`<div class="hud"><button class="btn round" id="flagBack" data-home="home" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
       <span class="pill">${ic('flagI', 24)}<span>${esc(t('flagT'))}</span></span><span class="sp"></span>
       <button class="btn" id="flagNew">${ic('retry', 24)}<span>${esc(t('flag_new'))}</span></button></div>`);
     $('#flagBack', this.bar).onclick = () => { sfx.click(); go(this.from); };

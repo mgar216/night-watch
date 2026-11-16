@@ -4,7 +4,7 @@
 const LANGS = ['en', 'ru', 'it'];
 const L = {
   title: ['First Light Fishing', 'Рыбалка на рассвете', 'Pesca alle prime luci'],
-  sub: ['A Night Watch Expedition', 'Экспедиция Ночного патруля', 'Una spedizione della Guardia Notturna'],
+  sub: ['A Night Watch Expedition', 'Экспедиция Ночного дозора', 'Una spedizione della Guardia Notturna'],
   lang: ['Language', 'Язык', 'Lingua'],
   langName: ['English', 'Русский', 'Italiano'],
   play: ['Set out', 'В путь', 'Si parte'],
@@ -15,12 +15,12 @@ const L = {
   home: ['Home', 'Домой', 'Casa'],
   sound: ['Sound', 'Звук', 'Suono'],
   volume: ['Volume', 'Громкость', 'Volume'],
-  sister: ['The Night Watch', 'Ночной патруль', 'La Guardia Notturna'],
+  sister: ['The Night Watch', 'Ночной дозор', 'La Guardia Notturna'],
   lessons: ['Lessons again', 'Объяснить заново', 'Lezioni da capo'],
   lessonsSay: ['The owl will explain everything once more.', 'Сова объяснит всё ещё раз.', 'Il gufo ti spiegherà tutto ancora una volta.'],
   day_start: ['First light. The day is yours, Chief!', 'Рассвет. Весь день твой, командир!', 'Prime luci. La giornata è tua, Capo!'],
   day_low: ['The sun is getting low. The treehouse is waiting.', 'Солнце клонится к закату. Домик на дереве ждёт.', 'Il sole sta calando. La casa sull\'albero ti aspetta.'],
-  day_back: ['Night Watch', 'Ночной патруль', 'Guardia Notturna'],   // short: four buttons share two rows of the treehouse panel on a phone held sideways
+  day_back: ['Night Watch', 'Ночной дозор', 'Guardia Notturna'],   // short: four buttons share two rows of the treehouse panel on a phone held sideways
   nameAsk: ['What is your name, Chief?', 'Как тебя зовут, командир?', 'Come ti chiami, Capo?'],
   nameDef: ['Chief', 'Командир', 'Capo'],
   moons: ['Moons', 'Луны', 'Lune'],

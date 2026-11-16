@@ -62,6 +62,10 @@ button { font: inherit; color: inherit; }
 .veil { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: .7em; padding-bottom: calc(.7em + var(--kb, 0px)); background: rgba(6, 10, 32, .55); pointer-events: auto; }
 .veil.day { background: rgba(255, 196, 140, .08); }   /* first light: the sunrise behind the dialog stays bright */
 .veil.clear { background: rgba(6, 10, 32, .16); }     /* news of a gift: the tree and the sky stay in view */
+/* Home stays in reach under a dialog (dlgHome() in 50-ui.js): the veil carries a home button over the bar's own one, and
+   the dialog keeps clear of it: below it on an upright screen, beside it on a wide one. */
+.veil > .btn.vhome { position: absolute; left: .5em; top: calc(.4em + env(safe-area-inset-top)); }
+.veil.homed { padding-top: calc(4.3em + env(safe-area-inset-top)); }
 /* (where a panel scrolls on a desktop browser, its scrollbar is thin and in the game's colours, not a white strip) */
 .dlg { width: min(34em, 100%); max-height: 100%; overflow: auto; padding: .8em; border-radius: 1.4em; background: var(--panel);
   border: 3px solid var(--line); text-align: center; box-shadow: 0 0 40px rgba(255, 200, 80, .25); scrollbar-width: thin; scrollbar-color: rgba(255, 216, 107, .55) transparent; }
@@ -69,6 +73,8 @@ button { font: inherit; color: inherit; }
 .owlrow { display: flex; align-items: center; gap: .5em; text-align: left; }
 .bubble { position: relative; flex: 1; padding: .6em .8em; border-radius: 1.1em; background: var(--cream); color: #2a1c05; font-size: 1.1em; font-weight: 800; }
 .bubble::before { content: ""; position: absolute; left: -12px; top: 50%; margin-top: -9px; border: 9px solid transparent; border-left: 0; border-right: 13px solid var(--cream); }
+/* a long line (a card of the guide): a smaller owl and smaller letters, so that it fits a phone without scrolling */
+.dlg.long canvas.owl { width: 70px !important; height: 65px !important; } .dlg.long .bubble { font-size: 1em; padding: .4em .6em; }
 .pics { display: flex; gap: .4em; align-items: center; justify-content: center; flex-wrap: wrap; margin: .5em 0 0; }
 .acts { display: flex; gap: .6em; justify-content: center; flex-wrap: wrap; margin-top: .7em; }
 .stars { display: flex; gap: .2em; justify-content: center; margin: .3em 0; }
@@ -96,7 +102,18 @@ input.name { font: inherit; font-weight: 800; text-align: center; width: min(14e
 a.btn { text-decoration: none; }
 .btn.round { position: relative; }
 .dot { position: absolute; top: 1px; right: 1px; width: 15px; height: 15px; border-radius: 50%; background: var(--gold); border: 2px solid #fff; box-shadow: 0 0 8px var(--gold); }
-/* How to play (53-guide.js): the list of topics under the top bar, and the hint line of the Night menu */
+/* the Night menu: its greeting stands in a line of its own above the cards, or (a phone held sideways has no room for that)
+   in the top bar; the guide's button beside the Tinker Treehouse is as high as its neighbours */
+.hello { font-size: max(11px, .9em); pointer-events: none; }
+.hud .hello { display: none; }
+.hub .btn.round { width: 48px; height: 48px; }
+/* the raid's progress, inside its pill in the top bar */
+.prog { display: inline-block; flex: none; width: 3.4em; height: 10px; border-radius: 999px; background: rgba(0, 0, 0, .5); border: 1px solid var(--line); overflow: hidden; }
+.prog i { display: block; width: 0; height: 100%; border-radius: 999px; background: var(--gold); }
+/* How to play (53-guide.js): its bar (on a narrow screen the language switch and the bulb stand in a second row), the list
+   of topics under the bar (the scene sets its top to the bar's height), and the hint line of the Night menu */
+.gbar { flex-wrap: wrap; row-gap: .3em; }
+.gbar .langs { margin-left: auto; }
 .guide { position: absolute; inset: 4.2em .5em .5em; display: flex; align-items: center; justify-content: center; pointer-events: none; }
 .guide > * { pointer-events: auto; }
 .gbox { width: min(44em, 100%); padding: .5em; }
@@ -190,6 +207,7 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
   .forge, .side { left: 45%; top: 3.6em; justify-content: center; background: none; }
   .ref { left: auto; right: .5em; transform: none; }
   .badgebar { left: 50%; top: 0; }
+  .veil.homed { padding: .7em 4.4em calc(.7em + var(--kb, 0px)); }
   .title { font-size: clamp(26px, 6.5vw, 72px); }
 }
 @media (min-width: 560px) { .pal { flex: 0 0 auto; } }   /* room for a whole page in one row */
@@ -199,7 +217,7 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
   .hud .pill { padding: .1em .45em; font-size: .82em; }
   .hud .btn.round { width: 48px; height: 48px; }
   .gatebtns .btn { font-size: 1.1em; gap: .3em; padding: .3em .6em; }
-  .tbar .helper > span { display: none; }   /* the Tinker Treehouse's bar: the helper's picture only, so that the test button keeps its words */
+  .tbar .helper > span { display: none; }   /* the bars of the Tinker Treehouse and of a raid: the helper's picture only, so that the test button and the raid's progress keep their room */
 }
 /* phones and anything lower: smaller tiles keep the Password Forge scene large */
 @media (max-height: 700px) {
@@ -218,6 +236,7 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
 /* A phone on its side: station bars drop the extra pills, and the Tinker palette becomes a two-column strip on the right. */
 @media (min-aspect-ratio: 23/20) and (max-height: 520px) {
   .hud.slim .extra, .hud.slim #pStars, .hud.slim #pBeams { display: none; }
+  .hud .hello { display: block; flex: 0 1 auto; min-width: 0; line-height: 36px; overflow: hidden; text-overflow: ellipsis; } .hub > .hello { display: none; }
   .whos { display: grid; grid-template-columns: 1fr 1fr; }   /* the players two by two, so that the settings under them stay on the screen */
   /* the Password Forge: the bar keeps to one row and scrolls sideways when it holds more tiles than fit (a second row lay
      under the tray, out of sight and out of reach); auto margins keep a short row in the middle */
@@ -272,7 +291,7 @@ input[type=range] { width: min(9em, 30vw); height: 48px; accent-color: #f2b93b; 
 const LANGS = ['en', 'ru', 'it'];
 const L = {
   title: ['First Light Fishing', 'Рыбалка на рассвете', 'Pesca alle prime luci'],
-  sub: ['A Night Watch Expedition', 'Экспедиция Ночного патруля', 'Una spedizione della Guardia Notturna'],
+  sub: ['A Night Watch Expedition', 'Экспедиция Ночного дозора', 'Una spedizione della Guardia Notturna'],
   lang: ['Language', 'Язык', 'Lingua'],
   langName: ['English', 'Русский', 'Italiano'],
   play: ['Set out', 'В путь', 'Si parte'],
@@ -283,12 +302,12 @@ const L = {
   home: ['Home', 'Домой', 'Casa'],
   sound: ['Sound', 'Звук', 'Suono'],
   volume: ['Volume', 'Громкость', 'Volume'],
-  sister: ['The Night Watch', 'Ночной патруль', 'La Guardia Notturna'],
+  sister: ['The Night Watch', 'Ночной дозор', 'La Guardia Notturna'],
   lessons: ['Lessons again', 'Объяснить заново', 'Lezioni da capo'],
   lessonsSay: ['The owl will explain everything once more.', 'Сова объяснит всё ещё раз.', 'Il gufo ti spiegherà tutto ancora una volta.'],
   day_start: ['First light. The day is yours, Chief!', 'Рассвет. Весь день твой, командир!', 'Prime luci. La giornata è tua, Capo!'],
   day_low: ['The sun is getting low. The treehouse is waiting.', 'Солнце клонится к закату. Домик на дереве ждёт.', 'Il sole sta calando. La casa sull\'albero ti aspetta.'],
-  day_back: ['Night Watch', 'Ночной патруль', 'Guardia Notturna'],   // short: four buttons share two rows of the treehouse panel on a phone held sideways
+  day_back: ['Night Watch', 'Ночной дозор', 'Guardia Notturna'],   // short: four buttons share two rows of the treehouse panel on a phone held sideways
   nameAsk: ['What is your name, Chief?', 'Как тебя зовут, командир?', 'Come ti chiami, Capo?'],
   nameDef: ['Chief', 'Командир', 'Capo'],
   moons: ['Moons', 'Луны', 'Lune'],
@@ -403,10 +422,13 @@ try { const o = JSON.parse(localStorage.getItem(SAVE) || '{}'); for (const k in 
 const nwLang = Number.isInteger(nwSave.lang) && LANGS[nwSave.lang] ? nwSave.lang : -1;
 if (day) { if (nwLang >= 0) S.lang = nwLang; if (typeof nwSave.mute === 'boolean') S.mute = nwSave.mute; if (!S.name && typeof nwSave.name === 'string') S.name = nwSave.name.slice(0, 16); }
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
+// Nothing in the old language stays behind: a line still on the screen (a trophy's banner too) is taken away and the line
+// kept for screen readers is emptied. The caller then draws its screen again.
 function setLang(i) {
   lang = S.lang = i; save();
   document.documentElement.lang = LANGS[i];
   document.title = t('title');
+  document.querySelectorAll('.toast').forEach(n => n.remove()); $('#live').textContent = '';
 }
 setLang(Number.isInteger(S.lang) && LANGS[S.lang] ? S.lang : nwLang >= 0 ? nwLang : Math.max(0, LANGS.indexOf((navigator.language || 'en').slice(0, 2))));
 
@@ -428,7 +450,9 @@ function add(html, parent = ui) {
 function css(text) { document.head.appendChild(Object.assign(document.createElement('style'), { textContent: text })); }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function say(text) { $('#live').textContent = text; }
+// One line at a time: a new one takes the place of the one before it.
 function toast(text, ms = 1800) {
+  ui.querySelectorAll('.toast').forEach(n => n.remove());
   const n = add(`<div class="toast">${esc(text)}</div>`);
   n.style.animationDuration = ms + 'ms';
   say(text);
@@ -1138,7 +1162,19 @@ function talk(text, o = {}) {
   }
   say(text);
   ($('.btn.go', acts) || acts.firstChild).focus({ preventScroll: true });   // Enter continues; it never leaves by surprise
+  dlgBack(v);
   return v;
+}
+// The way out stays in reach while a dialog is open. The dialog makes the bar under it inert, so its veil carries the
+// bar's back button once more, exactly over it, and it does what that one does. A screen without a bar (the title) needs
+// none. The shared stylesheet keeps dialogs clear of it. (What a catch or a lesson brought is saved before its dialog opens.)
+function dlgBack(v) {
+  const h = [...ui.querySelectorAll('#hBack')].find(b => !v.contains(b));
+  if (!h) return;
+  const b = add(`<button class="btn round vhome" aria-label="${esc(h.getAttribute('aria-label'))}">${ic(h.dataset.home, 28)}</button>`, v), r = h.getBoundingClientRect(), u = v.getBoundingClientRect();
+  Object.assign(b.style, { left: r.left - u.left + 'px', top: r.top - u.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+  b.onclick = () => { closeDlg(); h.click(); };
+  v.classList.add('homed');
 }
 function drawPortrait() {
   if (!portrait) return;
@@ -1151,7 +1187,7 @@ function drawPortrait() {
 
 // Top bar: a way back, room for the scene's own pills, the logbook, and the purse.
 function hud(backFn, extra = '', o = {}) {
-  const n = add(`<div class="hud"><button class="btn round" id="hBack" aria-label="${esc(t(o.home ? 'home' : 'back'))}">${ic(o.home ? 'home' : 'backI', 28)}</button>
+  const n = add(`<div class="hud"><button class="btn round" id="hBack" data-home="${o.home ? 'home' : 'backI'}" aria-label="${esc(t(o.home ? 'home' : 'back'))}">${ic(o.home ? 'home' : 'backI', 28)}</button>
     ${extra}<span class="sp"></span>
     ${o.book === false ? '' : `<button class="btn round" id="hBook" aria-label="${esc(t('book'))}">${ic('bookI', 28)}</button>`}
     <span class="pill" id="pMoons">${ic('moon', 22)}<b>${S.moons}</b></span></div>`);
@@ -1195,7 +1231,7 @@ scenes.home = {
       <a class="btn" id="bSister" href="../index.html${day ? '#night' : ''}">${ic('jar', 26)}${esc(t('sister'))}</a></div></div>`);
     $('#bPlay', n).onclick = () => { sfx.pop(); S.name || allLogged() ? go('map') : askName(() => go('map')); };
     // the owl's lessons (the map, the shop, the five steps of a catch at the pond) are given once; this asks for them again
-    $('#bLessons', n).onclick = () => { S.tut = {}; save(); sfx.chirp(); ui.querySelectorAll('.toast').forEach(x => x.remove()); toast(t('lessonsSay'), 2800); };
+    $('#bLessons', n).onclick = () => { S.tut = {}; save(); sfx.chirp(); toast(t('lessonsSay'), 2800); };
     $('#bSnd', n).onclick = () => { setMute(!S.mute); sfx.click(); go('home'); };
     $('#bVol', n).oninput = e => { setVol(e.target.value / 100); };
     $('#bVol', n).onchange = () => sfx.pop();
@@ -3325,6 +3361,7 @@ css(`
   .spot-bar .btn { min-height: 48px; padding-top: .2em; padding-bottom: .2em; }
 }
 @media (min-aspect-ratio: 23/20) { .spot-box { left: auto; width: min(26em, 60%); top: 0; max-height: none; border-radius: 1.2em 0 0 1.2em; border-top: 0; border-left: 3px solid var(--line); } }
+.spot-bite { position: absolute; left: 0; right: 0; margin: 0 auto; width: max-content; max-width: 94%; min-height: 88px; padding: .3em 1.3em; font-size: 1.8em; pointer-events: auto; }
 `);
 
 // Fixed numbers of the water: depth bands, an icon for each condition (shape and word, never colour alone), how often each rarity shows.
@@ -3421,6 +3458,18 @@ scenes.spot = {
       this.pips();
     }
     paintIcons(b);
+    this.sign();
+  },
+  // The bite: a big sign in the middle of the water says so, and it is a button (a tap anywhere on the water does the same;
+  // the gold "!" over the line stays). Not in the Chapel, where the real bite is one gentle touch and nothing more.
+  sign() {
+    const on = this.st === 'bite' && !this.tw.still, el = $('#spBite');
+    if (on === !!el) return;
+    if (el) return el.remove();
+    const b = add(`<button class="btn gold pulse spot-bite" id="spBite">${esc(t('spot_bite'))}</button>`);
+    b.style.top = Math.round((this.G.surf + this.G.bed) / 2 - 44) + 'px';
+    b.onpointerdown = e => { e.preventDefault(); this.strike(); };   // at once, not when the finger lifts
+    b.onclick = () => this.strike();                                  // (a key on the button; after a tap the bite is over and this does nothing)
   },
   pips() {
     const p = $('#spPips');
@@ -3766,6 +3815,7 @@ Object.assign(scenes.spot, {
     L.tw = Math.max(0, L.tw - dt);
     L.still += dt;
     L.at = (L.at || 0) + dt;
+    L.age = (L.age || 0) + dt;   // seconds in the water
     if (act === 1 && L.at > 1.4) { L.at = 0; L.d -= .03; L.tw = .25; }              // twitching: a small hop now and then
     if (act === 2 && L.at > .9) { L.at = 0; L.p += rnd(-.02, .02); L.tw = .3; }     // darting: a quick sideways dash
     if (this.tw.current) {                                                           // the creek carries the lure downstream (+p)
@@ -3776,6 +3826,13 @@ Object.assign(scenes.spot, {
     const sn = this.feat('snag', L.p);
     if (sn && !this.tw.ice && (sn.d0 === undefined || (L.d >= sn.d0 && L.d <= sn.d1)) && !L.snagOk) { if (!this.snag()) L.snagOk = 1; return; }
     if (this.bite) return this.biteUpdate(dt);
+    // Sunnybrook Pond is the first water: a bite comes within a few seconds of every cast there. When no fish has taken
+    // notice after a moment, the nearest one that is free comes over at a quick pace (see approach() and biteUpdate()).
+    if (this.id === 'pond' && L.age > 1.5) {
+      let near = null, nd = 9;
+      for (const f of this.pop) { const d = Math.abs(f.p - L.p); if (!f.decoy && f.st === 'swim' && f.no <= 0 && d < nd) { nd = d; near = f; } }
+      if (near) { near.st = 'go'; near.look = 0; near.rush = Math.max(.12, nd / 2.2); this.bite = { f: near, stage: 'go', t: 0, touch: 0, fakes: 0, nib: 0 }; return; }
+    }
     if (this.tw.still && L.still < 4) return;                                        // the Chapel: nothing comes until the lure has been still
     const R = .26 * (this.tw.dark && !it.glow ? .6 : 1) * (this.tw.murk ? .8 : 1);
     for (const f of this.pop) {
@@ -3796,10 +3853,10 @@ Object.assign(scenes.spot, {
     if (!L) { f.st = 'swim'; this.target(f); return; }
     const tp = L.p - f.dir * .025, dp = tp - f.p, dd = L.d - f.d;
     if (f.st === 'go') {
-      const sp = this.swimSpeed(f) * (f.s.move === 'lurk' ? 3 : 1.3) * (this.tw.still ? .4 : 1);
+      const sp = Math.max(f.rush || 0, this.swimSpeed(f) * (f.s.move === 'lurk' ? 3 : 1.3) * (this.tw.still ? .4 : 1));   // (rush: a fish called to the lure at the pond)
       f.v = Math.sign(dp) * sp; f.p += f.v * dt; f.d += clamp(dd, -1, 1) * dt * 1.4;
       if (Math.abs(dp) > .02) f.dir = dp > 0 ? 1 : -1;
-      if (Math.abs(dp) < .02 && Math.abs(dd) < .07) { f.st = 'look'; f.look = this.tw.still ? rnd(3, 6) : rnd(.5, 1.4) * (1 + this.T.wary); f.v = 0; }
+      if (Math.abs(dp) < .02 && Math.abs(dd) < .07) { f.st = 'look'; f.look = this.tw.still ? rnd(3, 6) : f.rush ? rnd(.4, .8) : rnd(.5, 1.4) * (1 + this.T.wary); f.v = 0; f.rush = 0; }
     } else {
       f.p = lerp(f.p, tp, Math.min(1, dt * 3)); f.d = lerp(f.d, L.d, Math.min(1, dt * 3)); f.dir = L.p >= f.p ? 1 : -1;
     }
@@ -3824,9 +3881,10 @@ Object.assign(scenes.spot, {
     }
     if (this.st === 'bite') {
       b.win -= dt;
-      if (b.win <= 0) { this.note(t('spot_late')); f.st = 'swim'; f.no = 8; this.target(f); this.bite = null; this.st = 'wait'; this.taut = 0; }
+      if (b.win <= 0) { this.note(t('spot_late')); f.st = 'swim'; f.no = 8; this.target(f); this.bite = null; this.st = 'wait'; this.taut = 0; this.sign(); }
       return;
     }
+    if (this.id === 'pond' && L.age > 6) { b.fakes = 0; b.nib = 0; b.t = 0; }   // the pond keeps its promise: no more nibbling now, the real bite
     b.t -= dt;
     if (b.t > 0) return;
     if (b.fakes > 0) {                         // a fake: a bump, then it lets go and comes back
@@ -3839,7 +3897,7 @@ Object.assign(scenes.spot, {
       b.nib--; b.touch = .3; b.t = rnd(.45, .8);
       this.cue('nibble');
     } else {                                   // the real bite: the strike window opens
-      this.st = 'bite';
+      this.st = 'bite'; this.sign();
       b.win = (this.T.win + rig().rod.fin * 12) / 1000; b.win0 = b.win;
       b.first = bump('bite_' + f.id) === 1;
       this.cue('bite');

@@ -1,7 +1,8 @@
 // ---------- How to play: the guide, practice from the guide, and hints ----------
-// The guide (the "?" beside Play, and the hint line of the Night menu) is a list of topics. Each topic is one card that
-// the owl reads aloud: the goal, one Night, every station, the Tinker Treehouse, the raid, what stars and moonbeams are
-// for, friends, the Baron, the day, the living forest, the big goal, and a word for grown-ups. "All in order" walks
+// The guide (the "?" beside Play and in the Night menu, and the hint line of the Night menu) is a list of topics. Each
+// topic is one card that the owl reads aloud: the goal, one Night, every station, the Tinker Treehouse, the raid, what
+// stars and moonbeams are for, the player's own things (dress-up, album, badge), friends, the Baron, the day, the fishing
+// game, the living forest, the big goal, and a word for grown-ups. Its bar also holds the language switch. "All in order" walks
 // through every card. The card of a mini-game has "Try it": the station opens as practice. While `practice` is set
 // nothing is saved (save() in src/20-core.js) and the first step out of the practised screens leads back to the card
 // with the save exactly as it was (go() in src/20-core.js).
@@ -18,13 +19,14 @@ ICON.bulb = (c, on) => {
 };
 
 // A topic: its id (text g_<id>, title g_<id>T or a station's own name), its pictures (the first one stands for the topic
-// in the list, so no two topics share it), and for a mini-game what to try:
-// [scene, what the save looks like meanwhile, the screens that belong to the practice, the scene's argument].
+// in the list, so no two topics share it), for a mini-game what to try:
+// [scene, what the save looks like meanwhile, the screens that belong to the practice, the scene's argument],
+// and the id of a topic that this card points on to (it gets a button of its own).
 const GUIDE = [
   ['goal', ['jar', 'pie', 'rank:3']],
   ['night', ['moon', 'cam', 'gateI', 'lock', 'hammer']],
   ['cam', ['cam', 'pie', 'torch'], ['cam', { night: 1 }]],
-  ['gate', ['gateI', 'badge:leaf:0', 'yes', 'no'], ['gate', { night: 1 }]],
+  ['gate', ['gateI', 'badge:leaf:0', 'yes', 'no', 'eyeI'], ['gate', { night: 1 }]],
   ['forge', ['lock', 'cat', 'rocket', 'star'], ['forge', { night: 1 }]],
   ['flies', ['fliesFly', 'fliesGold', 'jar'], ['flies', { night: 2 }]],
   ['mail', ['mailBox', 'mailSeal:leaf:0:1', 'mailKey', 'mailClock', 'mailGift'], ['mail', { night: 3 }]],
@@ -33,10 +35,12 @@ const GUIDE = [
   ['gadgets', ['peel', 'tramp', 'tickle', 'fan', 'honey', 'seesaw', 'drum']],
   ['raid', ['pie', 'jar', 'zipI', 'lamp']],
   ['stars', ['star', 'beam', 'rank:3', 'album', 'hanger', 'flagI']],
+  ['things', ['hanger', 'album', 'pals', 'rank:0', 'cert']],
   ['friends', ['pal:guard', 'pal:baker', 'pal:lamp', 'pals']],
   ['boss', ['stk:m6', 'cake', 'eyeI'], ['boss', { night: 5 }, ['boss'], { then: () => go('hub') }]],
   ['pie', ['pieSuit:0', 'pie', 'pieGrown'], ['pie', {}, ['pie'], { from: 'home' }]],
-  ['day', ['fish', 'fish', 'fish', 'eyeI']],
+  ['day', ['sun', 'fish', 'fish', 'fish', 'eyeI'], null, 'fish'],   // the card points on to the fishing game's own card
+  ['fish', ['fish', 'boat', 'moon']],
   ['world', ['lifeRain', 'lifeSnow', 'moon', 'leaf']],
   ['end', ['rank:3', 'stk:m6', 'star']],
   ['grown', ['faces', 'lifeZz', 'wear:party']],
@@ -51,25 +55,31 @@ scenes.guide = {
   enter(o = {}) {
     if (o.from) { guideFrom = o.from; guideTour = false; guideThen = ''; }
     if (o.tour) { guideTour = true; guideThen = o.then || ''; }
-    const bar = add(`<div class="hud"><button class="btn round" id="gBack" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
-      <button class="btn" id="gTour">${ic('play', 24)}${esc(t('g_tour'))}</button><span class="sp"></span>
+    // the bar: home, the walk through every card, the language switch and the bulb for the hints. On a narrow screen the
+    // last two stand in a second row, and the list starts under whatever height the bar has.
+    const bar = add(`<div class="hud gbar"><button class="btn round" id="gBack" data-home="home" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
+      <button class="btn" id="gTour">${ic('play', 24)}${esc(t('g_tour'))}</button>${langsHtml()}
       <button class="btn round" id="gHints" aria-label="${esc(t('g_hints'))}" aria-pressed="${!!S.hints}">${ic('bulb:' + (S.hints ? 1 : 0), 34)}</button></div>`);
     $('#gBack', bar).onclick = () => { sfx.click(); go(guideFrom); };
     $('#gTour', bar).onclick = () => { sfx.pop(); guideTour = true; this.page(0); };
     $('#gHints', bar).onclick = () => { S.hints = S.hints ? 0 : 1; save(); sfx.click(); go('guide'); toast(t(S.hints ? 'g_on' : 'g_off'), 2200); };
+    langsOn(bar, 'guide');   // the guide is drawn again in the new language; where its home button leads stays as it was
     const n = add(`<div class="guide"><div class="dlg gbox" role="group" aria-label="${esc(t('guide'))}"><h2>${esc(t('g_all'))}</h2>
       <div class="gtopics">${GUIDE.map(([id, pics], i) => `<button class="btn" data-g="${i}">${ic(pics[0], 30)}<span>${esc(guideTitle(id))}</span></button>`).join('')}</div></div></div>`);
     n.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { sfx.pop(); guideTour = false; this.page(+b.dataset.g); });
+    this.resize();
     if (!S.toured) { S.toured = 1; save(); }   // the new mark on the home screen's "?" goes out
     const at = typeof o.page === 'number' ? o.page : GUIDE.findIndex(g => g[0] === o.page);
     if (at >= 0) this.page(at, o.tried); else if (o.tour) this.page(0);
   },
+  resize() { const b = $('.gbar'), g = $('.guide'); if (b && g) g.style.top = b.offsetHeight + 'px'; },
   // One card. In a tour: all topics, try it, next. Alone: try it, OK. After its practice the owl says so instead of
   // reading the card again.
   page(i, tried) {
-    const [id, pics, play] = GUIDE[i], last = i === GUIDE.length - 1, acts = [];
+    const [id, pics, play, see] = GUIDE[i], last = i === GUIDE.length - 1, acts = [], seeAt = GUIDE.findIndex(g => g[0] === see);
     if (guideTour) acts.push({ label: t('g_list'), fn: () => { guideTour = false; } });
     if (play) acts.push({ label: t('g_try'), icon: pics[0], fn: () => tryOut(i) });
+    if (seeAt >= 0 && !guideTour) acts.push({ label: guideTitle(see), icon: GUIDE[seeAt][1][0], fn: () => this.page(seeAt) });   // (in a tour that card comes next anyway)
     if (guideTour && !last) acts.push({ label: t('g_next'), cls: 'go', icon: 'play', fn: () => this.page(i + 1) });
     else acts.push({ label: t('ok'), cls: 'go', icon: 'yes', fn: () => { const to = guideTour && guideThen; guideTour = false; if (to) go(to); } });
     owlSay(t(tried ? 'g_tried' : 'g_' + id), { title: `${i + 1}/${GUIDE.length} · ${guideTitle(id)}`, html: picsHtml(pics), mood: tried ? 'cheer' : 'talk', acts });

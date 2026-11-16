@@ -53,6 +53,10 @@ button { font: inherit; color: inherit; }
 .veil { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: .7em; padding-bottom: calc(.7em + var(--kb, 0px)); background: rgba(6, 10, 32, .55); pointer-events: auto; }
 .veil.day { background: rgba(255, 196, 140, .08); }   /* first light: the sunrise behind the dialog stays bright */
 .veil.clear { background: rgba(6, 10, 32, .16); }     /* news of a gift: the tree and the sky stay in view */
+/* Home stays in reach under a dialog (dlgHome() in 50-ui.js): the veil carries a home button over the bar's own one, and
+   the dialog keeps clear of it: below it on an upright screen, beside it on a wide one. */
+.veil > .btn.vhome { position: absolute; left: .5em; top: calc(.4em + env(safe-area-inset-top)); }
+.veil.homed { padding-top: calc(4.3em + env(safe-area-inset-top)); }
 /* (where a panel scrolls on a desktop browser, its scrollbar is thin and in the game's colours, not a white strip) */
 .dlg { width: min(34em, 100%); max-height: 100%; overflow: auto; padding: .8em; border-radius: 1.4em; background: var(--panel);
   border: 3px solid var(--line); text-align: center; box-shadow: 0 0 40px rgba(255, 200, 80, .25); scrollbar-width: thin; scrollbar-color: rgba(255, 216, 107, .55) transparent; }
@@ -60,6 +64,8 @@ button { font: inherit; color: inherit; }
 .owlrow { display: flex; align-items: center; gap: .5em; text-align: left; }
 .bubble { position: relative; flex: 1; padding: .6em .8em; border-radius: 1.1em; background: var(--cream); color: #2a1c05; font-size: 1.1em; font-weight: 800; }
 .bubble::before { content: ""; position: absolute; left: -12px; top: 50%; margin-top: -9px; border: 9px solid transparent; border-left: 0; border-right: 13px solid var(--cream); }
+/* a long line (a card of the guide): a smaller owl and smaller letters, so that it fits a phone without scrolling */
+.dlg.long canvas.owl { width: 70px !important; height: 65px !important; } .dlg.long .bubble { font-size: 1em; padding: .4em .6em; }
 .pics { display: flex; gap: .4em; align-items: center; justify-content: center; flex-wrap: wrap; margin: .5em 0 0; }
 .acts { display: flex; gap: .6em; justify-content: center; flex-wrap: wrap; margin-top: .7em; }
 .stars { display: flex; gap: .2em; justify-content: center; margin: .3em 0; }
@@ -87,7 +93,18 @@ input.name { font: inherit; font-weight: 800; text-align: center; width: min(14e
 a.btn { text-decoration: none; }
 .btn.round { position: relative; }
 .dot { position: absolute; top: 1px; right: 1px; width: 15px; height: 15px; border-radius: 50%; background: var(--gold); border: 2px solid #fff; box-shadow: 0 0 8px var(--gold); }
-/* How to play (53-guide.js): the list of topics under the top bar, and the hint line of the Night menu */
+/* the Night menu: its greeting stands in a line of its own above the cards, or (a phone held sideways has no room for that)
+   in the top bar; the guide's button beside the Tinker Treehouse is as high as its neighbours */
+.hello { font-size: max(11px, .9em); pointer-events: none; }
+.hud .hello { display: none; }
+.hub .btn.round { width: 48px; height: 48px; }
+/* the raid's progress, inside its pill in the top bar */
+.prog { display: inline-block; flex: none; width: 3.4em; height: 10px; border-radius: 999px; background: rgba(0, 0, 0, .5); border: 1px solid var(--line); overflow: hidden; }
+.prog i { display: block; width: 0; height: 100%; border-radius: 999px; background: var(--gold); }
+/* How to play (53-guide.js): its bar (on a narrow screen the language switch and the bulb stand in a second row), the list
+   of topics under the bar (the scene sets its top to the bar's height), and the hint line of the Night menu */
+.gbar { flex-wrap: wrap; row-gap: .3em; }
+.gbar .langs { margin-left: auto; }
 .guide { position: absolute; inset: 4.2em .5em .5em; display: flex; align-items: center; justify-content: center; pointer-events: none; }
 .guide > * { pointer-events: auto; }
 .gbox { width: min(44em, 100%); padding: .5em; }
@@ -181,6 +198,7 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
   .forge, .side { left: 45%; top: 3.6em; justify-content: center; background: none; }
   .ref { left: auto; right: .5em; transform: none; }
   .badgebar { left: 50%; top: 0; }
+  .veil.homed { padding: .7em 4.4em calc(.7em + var(--kb, 0px)); }
   .title { font-size: clamp(26px, 6.5vw, 72px); }
 }
 @media (min-width: 560px) { .pal { flex: 0 0 auto; } }   /* room for a whole page in one row */
@@ -190,7 +208,7 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
   .hud .pill { padding: .1em .45em; font-size: .82em; }
   .hud .btn.round { width: 48px; height: 48px; }
   .gatebtns .btn { font-size: 1.1em; gap: .3em; padding: .3em .6em; }
-  .tbar .helper > span { display: none; }   /* the Tinker Treehouse's bar: the helper's picture only, so that the test button keeps its words */
+  .tbar .helper > span { display: none; }   /* the bars of the Tinker Treehouse and of a raid: the helper's picture only, so that the test button and the raid's progress keep their room */
 }
 /* phones and anything lower: smaller tiles keep the Password Forge scene large */
 @media (max-height: 700px) {
@@ -209,6 +227,7 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
 /* A phone on its side: station bars drop the extra pills, and the Tinker palette becomes a two-column strip on the right. */
 @media (min-aspect-ratio: 23/20) and (max-height: 520px) {
   .hud.slim .extra, .hud.slim #pStars, .hud.slim #pBeams { display: none; }
+  .hud .hello { display: block; flex: 0 1 auto; min-width: 0; line-height: 36px; overflow: hidden; text-overflow: ellipsis; } .hub > .hello { display: none; }
   .whos { display: grid; grid-template-columns: 1fr 1fr; }   /* the players two by two, so that the settings under them stay on the screen */
   /* the Password Forge: the bar keeps to one row and scrolls sideways when it holds more tiles than fit (a second row lay
      under the tray, out of sight and out of reach); auto margins keep a short row in the middle */

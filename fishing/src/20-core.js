@@ -39,10 +39,13 @@ try { const o = JSON.parse(localStorage.getItem(SAVE) || '{}'); for (const k in 
 const nwLang = Number.isInteger(nwSave.lang) && LANGS[nwSave.lang] ? nwSave.lang : -1;
 if (day) { if (nwLang >= 0) S.lang = nwLang; if (typeof nwSave.mute === 'boolean') S.mute = nwSave.mute; if (!S.name && typeof nwSave.name === 'string') S.name = nwSave.name.slice(0, 16); }
 function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
+// Nothing in the old language stays behind: a line still on the screen (a trophy's banner too) is taken away and the line
+// kept for screen readers is emptied. The caller then draws its screen again.
 function setLang(i) {
   lang = S.lang = i; save();
   document.documentElement.lang = LANGS[i];
   document.title = t('title');
+  document.querySelectorAll('.toast').forEach(n => n.remove()); $('#live').textContent = '';
 }
 setLang(Number.isInteger(S.lang) && LANGS[S.lang] ? S.lang : nwLang >= 0 ? nwLang : Math.max(0, LANGS.indexOf((navigator.language || 'en').slice(0, 2))));
 
@@ -64,7 +67,9 @@ function add(html, parent = ui) {
 function css(text) { document.head.appendChild(Object.assign(document.createElement('style'), { textContent: text })); }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function say(text) { $('#live').textContent = text; }
+// One line at a time: a new one takes the place of the one before it.
 function toast(text, ms = 1800) {
+  ui.querySelectorAll('.toast').forEach(n => n.remove());
   const n = add(`<div class="toast">${esc(text)}</div>`);
   n.style.animationDuration = ms + 'ms';
   say(text);

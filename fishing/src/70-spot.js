@@ -122,6 +122,7 @@ css(`
   .spot-bar .btn { min-height: 48px; padding-top: .2em; padding-bottom: .2em; }
 }
 @media (min-aspect-ratio: 23/20) { .spot-box { left: auto; width: min(26em, 60%); top: 0; max-height: none; border-radius: 1.2em 0 0 1.2em; border-top: 0; border-left: 3px solid var(--line); } }
+.spot-bite { position: absolute; left: 0; right: 0; margin: 0 auto; width: max-content; max-width: 94%; min-height: 88px; padding: .3em 1.3em; font-size: 1.8em; pointer-events: auto; }
 `);
 
 // Fixed numbers of the water: depth bands, an icon for each condition (shape and word, never colour alone), how often each rarity shows.
@@ -218,6 +219,18 @@ scenes.spot = {
       this.pips();
     }
     paintIcons(b);
+    this.sign();
+  },
+  // The bite: a big sign in the middle of the water says so, and it is a button (a tap anywhere on the water does the same;
+  // the gold "!" over the line stays). Not in the Chapel, where the real bite is one gentle touch and nothing more.
+  sign() {
+    const on = this.st === 'bite' && !this.tw.still, el = $('#spBite');
+    if (on === !!el) return;
+    if (el) return el.remove();
+    const b = add(`<button class="btn gold pulse spot-bite" id="spBite">${esc(t('spot_bite'))}</button>`);
+    b.style.top = Math.round((this.G.surf + this.G.bed) / 2 - 44) + 'px';
+    b.onpointerdown = e => { e.preventDefault(); this.strike(); };   // at once, not when the finger lifts
+    b.onclick = () => this.strike();                                  // (a key on the button; after a tap the bite is over and this does nothing)
   },
   pips() {
     const p = $('#spPips');
@@ -563,6 +576,7 @@ Object.assign(scenes.spot, {
     L.tw = Math.max(0, L.tw - dt);
     L.still += dt;
     L.at = (L.at || 0) + dt;
+    L.age = (L.age || 0) + dt;   // seconds in the water
     if (act === 1 && L.at > 1.4) { L.at = 0; L.d -= .03; L.tw = .25; }              // twitching: a small hop now and then
     if (act === 2 && L.at > .9) { L.at = 0; L.p += rnd(-.02, .02); L.tw = .3; }     // darting: a quick sideways dash
     if (this.tw.current) {                                                           // the creek carries the lure downstream (+p)
@@ -573,6 +587,13 @@ Object.assign(scenes.spot, {
     const sn = this.feat('snag', L.p);
     if (sn && !this.tw.ice && (sn.d0 === undefined || (L.d >= sn.d0 && L.d <= sn.d1)) && !L.snagOk) { if (!this.snag()) L.snagOk = 1; return; }
     if (this.bite) return this.biteUpdate(dt);
+    // Sunnybrook Pond is the first water: a bite comes within a few seconds of every cast there. When no fish has taken
+    // notice after a moment, the nearest one that is free comes over at a quick pace (see approach() and biteUpdate()).
+    if (this.id === 'pond' && L.age > 1.5) {
+      let near = null, nd = 9;
+      for (const f of this.pop) { const d = Math.abs(f.p - L.p); if (!f.decoy && f.st === 'swim' && f.no <= 0 && d < nd) { nd = d; near = f; } }
+      if (near) { near.st = 'go'; near.look = 0; near.rush = Math.max(.12, nd / 2.2); this.bite = { f: near, stage: 'go', t: 0, touch: 0, fakes: 0, nib: 0 }; return; }
+    }
     if (this.tw.still && L.still < 4) return;                                        // the Chapel: nothing comes until the lure has been still
     const R = .26 * (this.tw.dark && !it.glow ? .6 : 1) * (this.tw.murk ? .8 : 1);
     for (const f of this.pop) {
@@ -593,10 +614,10 @@ Object.assign(scenes.spot, {
     if (!L) { f.st = 'swim'; this.target(f); return; }
     const tp = L.p - f.dir * .025, dp = tp - f.p, dd = L.d - f.d;
     if (f.st === 'go') {
-      const sp = this.swimSpeed(f) * (f.s.move === 'lurk' ? 3 : 1.3) * (this.tw.still ? .4 : 1);
+      const sp = Math.max(f.rush || 0, this.swimSpeed(f) * (f.s.move === 'lurk' ? 3 : 1.3) * (this.tw.still ? .4 : 1));   // (rush: a fish called to the lure at the pond)
       f.v = Math.sign(dp) * sp; f.p += f.v * dt; f.d += clamp(dd, -1, 1) * dt * 1.4;
       if (Math.abs(dp) > .02) f.dir = dp > 0 ? 1 : -1;
-      if (Math.abs(dp) < .02 && Math.abs(dd) < .07) { f.st = 'look'; f.look = this.tw.still ? rnd(3, 6) : rnd(.5, 1.4) * (1 + this.T.wary); f.v = 0; }
+      if (Math.abs(dp) < .02 && Math.abs(dd) < .07) { f.st = 'look'; f.look = this.tw.still ? rnd(3, 6) : f.rush ? rnd(.4, .8) : rnd(.5, 1.4) * (1 + this.T.wary); f.v = 0; f.rush = 0; }
     } else {
       f.p = lerp(f.p, tp, Math.min(1, dt * 3)); f.d = lerp(f.d, L.d, Math.min(1, dt * 3)); f.dir = L.p >= f.p ? 1 : -1;
     }
@@ -621,9 +642,10 @@ Object.assign(scenes.spot, {
     }
     if (this.st === 'bite') {
       b.win -= dt;
-      if (b.win <= 0) { this.note(t('spot_late')); f.st = 'swim'; f.no = 8; this.target(f); this.bite = null; this.st = 'wait'; this.taut = 0; }
+      if (b.win <= 0) { this.note(t('spot_late')); f.st = 'swim'; f.no = 8; this.target(f); this.bite = null; this.st = 'wait'; this.taut = 0; this.sign(); }
       return;
     }
+    if (this.id === 'pond' && L.age > 6) { b.fakes = 0; b.nib = 0; b.t = 0; }   // the pond keeps its promise: no more nibbling now, the real bite
     b.t -= dt;
     if (b.t > 0) return;
     if (b.fakes > 0) {                         // a fake: a bump, then it lets go and comes back
@@ -636,7 +658,7 @@ Object.assign(scenes.spot, {
       b.nib--; b.touch = .3; b.t = rnd(.45, .8);
       this.cue('nibble');
     } else {                                   // the real bite: the strike window opens
-      this.st = 'bite';
+      this.st = 'bite'; this.sign();
       b.win = (this.T.win + rig().rod.fin * 12) / 1000; b.win0 = b.win;
       b.first = bump('bite_' + f.id) === 1;
       this.cue('bite');

@@ -17,7 +17,7 @@ function certCanvas() {
   text(t('certText'), 860, 496, font(600, 34), '#4a3a1a', 700);
   text(t('rank' + r), 860, 584, font(900, 62), '#b07a00', 700);
   drawIcon(c, 'star', 700, 668, 60); c.textAlign = 'left'; text(String(S.stars), 742, 686, font(800, 50), '#2a1c05');
-  drawIcon(c, 'moon', 900, 668, 56); text(`${t('nights')}: ${S.night - 1}`, 940, 686, font(800, 44), '#2a1c05', 230);
+  drawIcon(c, 'moon', 900, 668, 56); text(`${t('nights')}: ${nightsDone()}`, 940, 686, font(800, 44), '#2a1c05', 230);
   c.textAlign = 'center';
   line(c, [520, 850, 1010, 850], '#8a7a5a', 3);
   text(t('certSign'), 765, 894, font(600, 28), '#4a3a1a', 520);
@@ -28,7 +28,7 @@ function certCanvas() {
 }
 function showCert() {
   const url = certCanvas().toDataURL('image/png');
-  const v = modal(`<img class="cert" alt="${esc(t('certTitle'))}: ${esc(playerName())}, ${esc(t('rank' + rank()))}" src="${url}">
+  const v = modal(`<img class="cert" alt="${esc(t('certTitle'))}: ${esc(playerName())}, ${esc(t('rank' + rank()))}, ${esc(t('nights'))}: ${nightsDone()}" src="${url}">
     <div class="acts"><a class="btn" id="cSave" download="night-watch-certificate.png" href="${url}">${ic('saveI', 26)}${esc(t('saveImg'))}</a>
     <button class="btn" id="cPrint">${ic('printI', 26)}${esc(t('print'))}</button>
     <button class="btn go" id="cOk">${ic('yes', 26)}${esc(t('ok'))}</button></div>`, t('cert'), 'certdlg');

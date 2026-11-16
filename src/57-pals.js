@@ -164,7 +164,6 @@ function palTap(lx, ly, T) {
   if (GIFTS.some(gid => g[gid] === 1 && (p => Math.hypot(p[0] - sx, p[1] - sy) < best * k)(giftAt(gid, T)))) return false;
   palT[id] = V.t;
   speak(t('pal_n_' + id), 'pie');   // magpie chatter
-  ui.querySelectorAll('.toast').forEach(n => n.remove());
   toast(t('pal_n_' + id) + ' · ' + t('pal_j_' + id), 2200, [T.ox + px * k, T.oy + (py - 84 * u) * k]);   // the name goes over the friend it belongs to
   return true;
 }
@@ -176,7 +175,7 @@ scenes.pals = {
     // the number shown is the one that brings the next friend not met yet (at the top rank the guard came without any)
     const n = S.caught | 0, next = PAL_AT.find((v, i) => !palMet(PALS[i])), back = this.from === 'album' ? 'album' : 'home';
     // the top bar: back where the page came from, the title, and the kind catches so far with the number for the next friend
-    const bar = add(`<div class="hud"><button class="btn round" id="palBack" aria-label="${esc(t(back))}">${ic(back, 28)}</button>
+    const bar = add(`<div class="hud"><button class="btn round" id="palBack" data-home="${back}" aria-label="${esc(t(back))}">${ic(back, 28)}</button>
       <span class="pill">${ic('pals', 24)}<span class="extra">${esc(t('palsT'))}</span></span><span class="sp"></span>
       <span class="pill" role="img" aria-label="${esc(next ? t('pal_count', { n, m: next }) : t('pal_countAll', { n }))}">${ic('pie', 26)}<b>${n}</b>${next ? `<span>/ ${next}</span>` : ''}</span></div>`);
     $('#palBack', bar).onclick = () => { sfx.click(); go(this.from); };
@@ -200,7 +199,7 @@ scenes.pals = {
     b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
     speak(t(id === 'baron' ? 'k_m6' : 'pal_n_' + id), 'pie');
     if (id !== 'baron') { S.helper = id; save(); this.mark(); }
-    later(() => { ui.querySelectorAll('.toast').forEach(n => n.remove()); toast(t(id === 'baron' ? 'pal_baronSay' : 'pal_do_' + id), 3800); }, 350);   // one line at a time, however fast the taps
+    later(() => toast(t(id === 'baron' ? 'pal_baronSay' : 'pal_do_' + id), 3800), 350);   // (one line at a time, however fast the taps: a new line takes the old one's place)
   },
   // The helper's card: pressed, a white rim with a gold ring, and a tick in its corner.
   mark() {

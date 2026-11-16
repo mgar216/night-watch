@@ -57,7 +57,7 @@ const moonWord = (p = moonPhase()) => t('moon' + (p < .04 || p > .96 ? 0 : p < .
 function menuTap(x, y, T) {
   const [lx, ly] = toTree(T, x, y), room = roomAt(lx, ly), [mx, my, mr] = moonAt();
   if (room) { roomT[room] = V.t; [null, sfx.whee, sfx.sizzle, sfx.wish][room](); return true; }
-  if (Math.hypot(x - mx, y - my) < Math.max(34, mr * 1.5)) { winkT = V.t; sfx.chirp(); ui.querySelectorAll('.toast').forEach(n => n.remove()); toast(moonWord(), 3400); return true; }
+  if (Math.hypot(x - mx, y - my) < Math.max(34, mr * 1.5)) { winkT = V.t; sfx.chirp(); toast(moonWord(), 3400); return true; }
   // then the things that live at the tree: today's visitor, the friends, the gifts, the additions, the flag
   return visitTap(lx, ly, T) || palTap(lx, ly, T) || giftTap(lx, ly, T) || growTap(lx, ly, T) || flagTap(lx, ly, T);
 }

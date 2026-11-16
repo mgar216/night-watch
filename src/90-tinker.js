@@ -240,15 +240,28 @@ scenes.raid = {
     const st = this.test ? { cam: S.st.cam || 2, gate: S.st.gate || 2, forge: S.st.forge || 2 } : S.st;
     this.n = S.night; this.plan = raidPlan(this.n, st); this.holds = st.forge - 1;
     this.R = makeRaid(this.plan, this.holds, this.n);
-    add(`<div class="hud">${this.test ? `<button class="btn round" id="rBack" aria-label="${esc(t('done'))}">${ic('no', 24)}</button>` : ''}
-      <span class="pill">${ic('pie', 24)}${esc(t(this.test ? 'testRaid' : 'raidGo'))}</span><span class="sp"></span>${palPill()}</div>`);
+    // How long this raid will take: the same raid is run once without sound (a raid is the same every time), for the bar in
+    // the top bar that shows how far it is. A raid only wants watching, and nothing on the screen should look frozen.
+    const pre = makeRaid(this.plan, this.holds, this.n);
+    quiet = true; while (!pre.done && pre.t < 600) stepRaid(pre, STEP); quiet = false;
+    this.len = pre.t; this.pct = -1;
+    const label = esc(t(this.test ? 'testRaid' : 'raidGo'));
+    add(`<div class="hud tbar">${this.test ? `<button class="btn round" id="rBack" aria-label="${esc(t('done'))}">${ic('no', 24)}</button>` : ''}
+      <span class="pill">${ic('pie', 24)}<span>${label}</span><span class="prog" role="progressbar" aria-label="${label}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></span></span><span class="sp"></span>${palPill()}</div>`);
     if (this.test) $('#rBack').onclick = () => { sfx.click(); go('tinker'); };   // a practice raid can be left at any time
-    if (!this.test) later(() => toast(t('raidGo')), 100);
+    // what the player does in a raid: watch (the defences work on their own; a tap does nothing)
+    later(() => toast((this.test ? '' : t('raidGo') + ' ') + t('raidHow'), 3600), 100);
+  },
+  // The bar follows the raid's own clock; the page is touched only when the whole number changes.
+  bar() {
+    const p = this.R.done ? 100 : Math.min(99, Math.floor(this.R.t / this.len * 100)), b = $('.prog');
+    if (p === this.pct || !b) return;
+    this.pct = p; b.firstChild.style.width = p + '%'; b.setAttribute('aria-valuenow', p);
   },
   update(dt) {
     if (this.rp) return this.replay(dt);
     const R = this.R;
-    if (!R.done) { for (this.acc += dt; this.acc >= STEP && !R.done; this.acc -= STEP) stepRaid(R, STEP); return; }
+    if (!R.done) { for (this.acc += dt; this.acc >= STEP && !R.done; this.acc -= STEP) stepRaid(R, STEP); this.bar(); return; }
     if (this.endT) return;
     this.endT = V.t;
     // What the raid earned is counted and saved now; the replay and the owl's word come after.

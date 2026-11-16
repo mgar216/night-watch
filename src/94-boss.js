@@ -22,8 +22,8 @@ function bossWrap(text, w) {
   for (const word of text.split(' ')) { const s = out.length ? out[out.length - 1] + ' ' + word : word; if (out.length && ctx.measureText(s).width <= w) out[out.length - 1] = s; else out.push(word); }
   return out;
 }
-// The owl's short lines: a new one replaces one still showing, so two never sit on top of each other.
-function bossToast(key) { ui.querySelectorAll('.toast').forEach(n => n.remove()); toast(t(key)); }
+// The owl's short lines.
+function bossToast(key) { toast(t(key)); }
 
 // ----- Pieces of the stage. All are drawn in stage units: the ground is y = 0 and the gate stands at x = 12..80 -----
 

@@ -62,6 +62,10 @@ button { font: inherit; color: inherit; }
 .veil { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: .7em; padding-bottom: calc(.7em + var(--kb, 0px)); background: rgba(6, 10, 32, .55); pointer-events: auto; }
 .veil.day { background: rgba(255, 196, 140, .08); }   /* first light: the sunrise behind the dialog stays bright */
 .veil.clear { background: rgba(6, 10, 32, .16); }     /* news of a gift: the tree and the sky stay in view */
+/* Home stays in reach under a dialog (dlgHome() in 50-ui.js): the veil carries a home button over the bar's own one, and
+   the dialog keeps clear of it: below it on an upright screen, beside it on a wide one. */
+.veil > .btn.vhome { position: absolute; left: .5em; top: calc(.4em + env(safe-area-inset-top)); }
+.veil.homed { padding-top: calc(4.3em + env(safe-area-inset-top)); }
 /* (where a panel scrolls on a desktop browser, its scrollbar is thin and in the game's colours, not a white strip) */
 .dlg { width: min(34em, 100%); max-height: 100%; overflow: auto; padding: .8em; border-radius: 1.4em; background: var(--panel);
   border: 3px solid var(--line); text-align: center; box-shadow: 0 0 40px rgba(255, 200, 80, .25); scrollbar-width: thin; scrollbar-color: rgba(255, 216, 107, .55) transparent; }
@@ -69,6 +73,8 @@ button { font: inherit; color: inherit; }
 .owlrow { display: flex; align-items: center; gap: .5em; text-align: left; }
 .bubble { position: relative; flex: 1; padding: .6em .8em; border-radius: 1.1em; background: var(--cream); color: #2a1c05; font-size: 1.1em; font-weight: 800; }
 .bubble::before { content: ""; position: absolute; left: -12px; top: 50%; margin-top: -9px; border: 9px solid transparent; border-left: 0; border-right: 13px solid var(--cream); }
+/* a long line (a card of the guide): a smaller owl and smaller letters, so that it fits a phone without scrolling */
+.dlg.long canvas.owl { width: 70px !important; height: 65px !important; } .dlg.long .bubble { font-size: 1em; padding: .4em .6em; }
 .pics { display: flex; gap: .4em; align-items: center; justify-content: center; flex-wrap: wrap; margin: .5em 0 0; }
 .acts { display: flex; gap: .6em; justify-content: center; flex-wrap: wrap; margin-top: .7em; }
 .stars { display: flex; gap: .2em; justify-content: center; margin: .3em 0; }
@@ -96,7 +102,18 @@ input.name { font: inherit; font-weight: 800; text-align: center; width: min(14e
 a.btn { text-decoration: none; }
 .btn.round { position: relative; }
 .dot { position: absolute; top: 1px; right: 1px; width: 15px; height: 15px; border-radius: 50%; background: var(--gold); border: 2px solid #fff; box-shadow: 0 0 8px var(--gold); }
-/* How to play (53-guide.js): the list of topics under the top bar, and the hint line of the Night menu */
+/* the Night menu: its greeting stands in a line of its own above the cards, or (a phone held sideways has no room for that)
+   in the top bar; the guide's button beside the Tinker Treehouse is as high as its neighbours */
+.hello { font-size: max(11px, .9em); pointer-events: none; }
+.hud .hello { display: none; }
+.hub .btn.round { width: 48px; height: 48px; }
+/* the raid's progress, inside its pill in the top bar */
+.prog { display: inline-block; flex: none; width: 3.4em; height: 10px; border-radius: 999px; background: rgba(0, 0, 0, .5); border: 1px solid var(--line); overflow: hidden; }
+.prog i { display: block; width: 0; height: 100%; border-radius: 999px; background: var(--gold); }
+/* How to play (53-guide.js): its bar (on a narrow screen the language switch and the bulb stand in a second row), the list
+   of topics under the bar (the scene sets its top to the bar's height), and the hint line of the Night menu */
+.gbar { flex-wrap: wrap; row-gap: .3em; }
+.gbar .langs { margin-left: auto; }
 .guide { position: absolute; inset: 4.2em .5em .5em; display: flex; align-items: center; justify-content: center; pointer-events: none; }
 .guide > * { pointer-events: auto; }
 .gbox { width: min(44em, 100%); padding: .5em; }
@@ -190,6 +207,7 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
   .forge, .side { left: 45%; top: 3.6em; justify-content: center; background: none; }
   .ref { left: auto; right: .5em; transform: none; }
   .badgebar { left: 50%; top: 0; }
+  .veil.homed { padding: .7em 4.4em calc(.7em + var(--kb, 0px)); }
   .title { font-size: clamp(26px, 6.5vw, 72px); }
 }
 @media (min-width: 560px) { .pal { flex: 0 0 auto; } }   /* room for a whole page in one row */
@@ -199,7 +217,7 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
   .hud .pill { padding: .1em .45em; font-size: .82em; }
   .hud .btn.round { width: 48px; height: 48px; }
   .gatebtns .btn { font-size: 1.1em; gap: .3em; padding: .3em .6em; }
-  .tbar .helper > span { display: none; }   /* the Tinker Treehouse's bar: the helper's picture only, so that the test button keeps its words */
+  .tbar .helper > span { display: none; }   /* the bars of the Tinker Treehouse and of a raid: the helper's picture only, so that the test button and the raid's progress keep their room */
 }
 /* phones and anything lower: smaller tiles keep the Password Forge scene large */
 @media (max-height: 700px) {
@@ -218,6 +236,7 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
 /* A phone on its side: station bars drop the extra pills, and the Tinker palette becomes a two-column strip on the right. */
 @media (min-aspect-ratio: 23/20) and (max-height: 520px) {
   .hud.slim .extra, .hud.slim #pStars, .hud.slim #pBeams { display: none; }
+  .hud .hello { display: block; flex: 0 1 auto; min-width: 0; line-height: 36px; overflow: hidden; text-overflow: ellipsis; } .hub > .hello { display: none; }
   .whos { display: grid; grid-template-columns: 1fr 1fr; }   /* the players two by two, so that the settings under them stay on the screen */
   /* the Password Forge: the bar keeps to one row and scrolls sideways when it holds more tiles than fit (a second row lay
      under the tray, out of sight and out of reach); auto margins keep a short row in the middle */
@@ -251,7 +270,7 @@ img.cert { display: block; width: 100%; max-height: calc(100vh - 9em); object-fi
 // ---------- Localization: every UI string, [English, Russian, Italian] side by side ----------
 const LANGS = ['en', 'ru', 'it'];
 const L = {
-  title: ['The Night Watch', 'Ночной патруль', 'La Guardia Notturna'],
+  title: ['The Night Watch', 'Ночной дозор', 'La Guardia Notturna'],
   lang: ['Language', 'Язык', 'Lingua'],
   langName: ['English', 'Русский', 'Italiano'],   // each language under its own name, whatever the current language is
   foot: ['A game about watching carefully, checking kindly, and building cleverly.',
@@ -274,13 +293,18 @@ const L = {
   rank0: ['Cadet', 'Кадет', 'Recluta'],
   rank1: ['Guard', 'Страж', 'Guardia'],
   rank2: ['Senior Guard', 'Старший страж', 'Guardia Scelta'],
-  rank3: ['Night Watch Chief', 'Командир Ночного патруля', 'Capo della Guardia Notturna'],
+  rank3: ['Night Watch Chief', 'Командир Ночного дозора', 'Capo della Guardia Notturna'],
   promo: ['You are now: {r}!', 'Теперь ты — {r}!', 'Ora sei {r}!'],
   finale: ['The whole forest cheers for you, {n}!', 'Весь лес радуется за тебя, {n}!', 'Tutto il bosco fa festa per te, {n}!'],
-  badgeTitle: ['Night Watch Badge', 'Значок Ночного патруля', 'Distintivo della Guardia Notturna'],
+  badgeTitle: ['Night Watch Badge', 'Значок Ночного дозора', 'Distintivo della Guardia Notturna'],
   nights: ['Nights', 'Ночи', 'Notti'],
 
   b1: ['Welcome, Chief! Keep our firefly jars safe.', 'Привет, командир! Береги наши банки со светлячками.', 'Ciao, Capo! Proteggi i nostri barattoli di lucciole.'],
+  // the Night menu greets the player by name; without a name the owl's own word for the player stands in. With a name the
+  // first briefing is shown with it too (the owl's voice keeps saying b1: a recorded voice cannot say every name).
+  hello: ['Good evening, {n}!', 'Добрый вечер, {n}!', 'Buonasera, {n}!'],
+  helloDef: ['Good evening, Chief!', 'Добрый вечер, командир!', 'Buonasera, Capo!'],
+  b1n: ['Welcome, {n}! Keep our firefly jars safe.', 'Привет, {n}! Береги наши банки со светлячками.', 'Ciao, {n}! Proteggi i nostri barattoli di lucciole.'],
   b2: ['Friends are not thieves. Look twice.', 'Друзья — не воришки. Смотри внимательно.', 'Gli amici non sono ladri. Guarda bene.'],
   b3: ['More cameras tonight. Watch them all.', 'Этой ночью камер больше. Следи за всеми.', 'Stanotte ci sono più telecamere. Guardale tutte.'],
   b4: ['Tricksters wear disguises. Check both things!', 'Хитрецы переодеваются. Проверяй и то, и другое!', 'I furbetti si travestono. Controlla tutte e due le cose!'],
@@ -295,6 +319,7 @@ const L = {
   s_forge: ['Password Forge', 'Кузница паролей', 'Fucina delle password'],
   s_tinker: ['Tinker Treehouse', 'Мастерская', 'Officina'],
   raidGo: ['The magpies are coming!', 'Сороки летят!', 'Arrivano le gazze!'],
+  raidHow: ['Watch: your defences work on their own.', 'Смотри: твоя защита работает сама.', 'Guarda: le tue difese fanno tutto da sole.'],
   raid0: ['All jars are safe. Wonderful, Chief!', 'Все банки на месте. Чудесно, командир!', 'Tutti i barattoli sono al sicuro. Che meraviglia, Capo!'],
   raid1: ['The magpies took a jar or two. Zip will bring them back.', 'Сороки утащили банку-другую. Зип их вернёт.', 'Le gazze hanno preso qualche barattolo. Zip li riporterà.'],
   raid2: ['Let\'s build better defenses!', 'Давай укрепим наш домик!', 'Rinforziamo la casa sull\'albero!'],
@@ -315,6 +340,14 @@ const L = {
   gateTip: ['Check the badge AND the password, Chief.', 'Проверяй и значок, и пароль, командир.', 'Controlla il distintivo e anche la parola segreta, Capo.'],
   gateTipFriend: ['Friends have both. Let them in, Chief.', 'У друзей есть и то, и другое. Впускай их, командир.', 'Gli amici hanno tutte e due le cose. Falli entrare, Capo.'],
   gateOops: ['That was a friend. Look again next time.', 'Это был друг. В следующий раз смотри внимательнее.', 'Era un amico. La prossima volta guarda meglio.'],
+  // what was wrong with a trickster who was let in ({w}: one of the password's picture words)
+  gateWhyShape: ['The badge had the wrong shape.', 'У значка была не та форма.', 'Il distintivo aveva la forma sbagliata.'],
+  gateWhyStyle: ['The badge had the wrong pattern.', 'У значка был не тот узор.', 'Il distintivo aveva il disegno sbagliato.'],
+  gateWhyNone: ['This visitor had no badge.', 'У этого гостя не было значка.', 'Questo visitatore non aveva il distintivo.'],
+  gateWhyWord: ['The password word was “{w}”.', 'В пароле было слово «{w}».', 'La parola giusta era «{w}».'],
+  gateWhySaid: ['This visitor said “{w}”.', 'А этот гость сказал «{w}».', 'Questo visitatore ha detto «{w}».'],
+  gateWhyOrder: ['The words were in the wrong order.', 'Слова были не по порядку.', 'Le parole erano in ordine sbagliato.'],
+  gateWhyShort: ['One password word was missing.', 'В пароле не хватало одного слова.', 'Mancava una delle parole segrete.'],
   please: ['Pleeease?', 'Ну пожааалуйста!', 'Per favoreee!'],
   lost: ['I lost my badge!', 'Мой значок потерялся!', 'Ho perso il distintivo!'],
   streak: ['{n} in a row!', '{n} подряд!', '{n} di fila!'],
@@ -466,7 +499,7 @@ const L = {
 
   // ----- certificate and players -----
   cert: ['Certificate', 'Грамота', 'Diploma'],
-  certTitle: ['Night Watch Certificate', 'Грамота Ночного патруля', 'Diploma della Guardia Notturna'],
+  certTitle: ['Night Watch Certificate', 'Грамота Ночного дозора', 'Diploma della Guardia Notturna'],
   certText: ['keeps the firefly jars safe and holds the rank', 'бережёт банки со светлячками и носит звание', 'protegge i barattoli di lucciole e ha il grado di'],
   certSign: ['The Owl, keeper of the treehouse', 'Сова, хранительница домика на дереве', 'Il Gufo, custode della casa sull\'albero'],
   saveImg: ['Save', 'Сохранить', 'Salva'],
@@ -732,7 +765,7 @@ const L = {
   pal_baronSay: ['Baron von Shiny runs a museum now. Everyone may look, but nobody may take!', 'Барон фон Блеск теперь директор музея. Смотреть можно всем, а брать нельзя никому!', 'Il Barone von Luccichio ora dirige un museo. Guardare sì, prendere no!'],
   // ----- How to play: the guide, practice and hints (src/53-guide.js). Labels end without a full stop; the owl reads the rest. -----
   guide: ['How to play', 'Как играть', 'Come si gioca'],
-  g_all: ['All about the Night Watch', 'Всё о Ночном патруле', 'Tutto sulla Guardia Notturna'],
+  g_all: ['All about the Night Watch', 'Всё о Ночном дозоре', 'Tutto sulla Guardia Notturna'],
   g_tour: ['All in order', 'Всё по порядку', 'Tutto di fila'],
   g_list: ['All topics', 'Все темы', 'Tutti gli argomenti'],
   g_next: ['Next', 'Дальше', 'Avanti'],
@@ -744,38 +777,39 @@ const L = {
   g_on: ['Hints are on.', 'Подсказки включены.', 'I suggerimenti sono accesi.'],
   g_off: ['Hints are off.', 'Подсказки выключены.', 'I suggerimenti sono spenti.'],
   g_tried: ['That is how it works. Well done!', 'Вот так это и работает. Молодец!', 'Ecco come funziona. Ben fatto!'],
-  g_ask: ['Shall I show you how the Night Watch works?', 'Показать тебе, как устроен Ночной патруль?', 'Vuoi che ti mostri come funziona la Guardia Notturna?'],
+  g_ask: ['Shall I show you how the Night Watch works?', 'Показать тебе, как устроен Ночной дозор?', 'Vuoi che ti mostri come funziona la Guardia Notturna?'],
   h_stations: ['Play the three stations first.', 'Сначала пройди три задания.', 'Prima fai le tre prove.'],
   h_ready: ['Ready! Build in the Tinker Treehouse, then let the magpies come.', 'Готово! Построй защиту в Мастерской, и пусть сороки прилетают.', 'Tutto pronto! Costruisci le difese in Officina, poi fai arrivare le gazze.'],
   g_goalT: ['Our job', 'Наша работа', 'Il nostro compito'],
   g_goal: ['Magpies love shiny things, and they want our firefly jars! Guard the jars every Night. Do it well and you become the Night Watch Chief.',
-    'Сороки любят всё блестящее, и им нужны наши банки со светлячками! Береги банки каждую ночь. Справишься — станешь командиром Ночного патруля.',
+    'Сороки любят всё блестящее, и им нужны наши банки со светлячками! Береги банки каждую ночь. Справишься — станешь командиром Ночного дозора.',
     'Le gazze adorano tutto ciò che luccica e vogliono i nostri barattoli di lucciole! Proteggi i barattoli ogni Notte. Se ci riesci, diventi Capo della Guardia Notturna.'],
   g_nightT: ['One Night', 'Одна ночь', 'Una Notte'],
-  g_night: ['Every Night has three stations. The more stars you win there, the fewer magpies come. Then you build your defences and stop the raid.',
-    'Каждую ночь тебя ждут три задания. Чем больше звёзд ты там получишь, тем меньше воришек прилетит. Потом ты строишь защиту и отбиваешь налёт.',
-    'Ogni Notte ti aspettano tre prove. Più stelle vinci lì, meno gazze arrivano. Poi costruisci le difese e fermi l\'assalto.'],
+  g_night: ['Every Night has three stations. The more stars you win there, the fewer magpies come. Win all three and the raid can begin. From the second Night a fourth station waits in a dashed frame: a bonus that you may skip. Then you build your defences and stop the raid.',
+    'Каждую ночь тебя ждут три задания. Чем больше звёзд ты там получишь, тем меньше воришек прилетит. Пройди все три, и налёт можно начинать. Со второй ночи появляется четвёртое задание в пунктирной рамке: это бонус, его можно пропустить. Потом ты строишь защиту и отбиваешь налёт.',
+    'Ogni Notte ti aspettano tre prove. Più stelle vinci lì, meno gazze arrivano. Superale tutte e tre e l\'assalto può cominciare. Dalla seconda Notte c\'è una quarta prova con la cornice tratteggiata: è un bonus e puoi saltarla. Poi costruisci le difese e fermi l\'assalto.'],
   g_cam: ['Watch the camera pictures. When a magpie steps out, tap it to shine your light. Zip and the fireflies are friends: do not tap them.',
     'Смотри на картинки с камер. Когда сорока выйдет из укрытия, нажми на неё и посвети фонариком. Зип и светлячки — друзья: на них не нажимай.',
     'Guarda le immagini delle telecamere. Quando una gazza esce allo scoperto, toccala per illuminarla. Zip e le lucciole sono amici: non toccarli.'],
-  g_gate: ['Visitors come to the gate. A friend has the right badge AND the right password. If one of them is wrong, shoo the trickster away.',
-    'К воротам приходят гости. У друга правильный значок и правильный пароль. Если что-то одно не сходится, прогони хитреца.',
-    'Al cancello arrivano dei visitatori. Un amico ha il distintivo giusto e anche la parola segreta giusta. Se una delle due cose è sbagliata, manda via il furbetto.'],
+  g_gate: ['Visitors come to the gate. A friend has the right badge AND the right password. If one of them is wrong, shoo the trickster away. After a fish supper an eye button appears: tap it and the owl takes a close look for you.',
+    'К воротам приходят гости. У друга правильный значок и правильный пароль. Если что-то одно не сходится, прогони хитреца. После рыбного ужина у ворот появляется кнопка с глазом: нажми на неё, и сова хорошенько рассмотрит гостя.',
+    'Al cancello arrivano dei visitatori. Un amico ha il distintivo giusto e anche la parola segreta giusta. Se una delle due cose è sbagliata, manda via il furbetto. Dopo una cena di pesce compare un bottone con l\'occhio: toccalo e sarà il gufo a guardare bene per te.'],
   g_forge: ['Lock the vault with a strong password. Tap words to build it: long is strong. A number and a symbol make it even stronger.',
     'Запри хранилище крепким паролем. Нажимай на слова и собирай пароль: чем длиннее, тем крепче. С числом и знаком он ещё крепче.',
     'Chiudi la cassaforte con una password forte. Tocca le parole per costruire la password: più è lunga, più è forte. Con un numero e un simbolo diventa ancora più forte.'],
-  g_flies: ['Sometimes the fireflies slip out. Move the jar to gather them. Golden ones count twice.',
-    'Иногда светлячки разлетаются. Двигай банку и собирай их. Золотой светлячок — сразу за двоих!',
-    'A volte le lucciole scappano. Muovi il barattolo per raccoglierle. Quelle dorate valgono doppio.'],
-  g_mail: ['Letters come to the treehouse. Keep the ones with tonight\'s seal. A letter that asks for the password, rushes you or promises a giant prize is a trick.',
-    'В домик приходят письма. Оставляй те, на которых сегодняшняя печать. Если письмо просит пароль, торопит или обещает огромный приз, это хитрость.',
-    'Alla casa sull\'albero arrivano delle lettere. Tieni quelle col sigillo di stanotte. Una lettera che chiede la parola segreta, mette fretta o promette un premio gigante è un trucco.'],
-  g_code: ['Zip brings a secret note. Each shape means a picture. Find the shapes on the key and read the message.',
-    'Зип приносит тайную записку. Каждый знак — это картинка. Найди знаки в ключе и прочитай послание.',
-    'Zip porta un messaggio segreto. Ogni simbolo è una figura. Trova i simboli nella chiave e leggi il messaggio.'],
-  g_tinker: ['Here you build your defences. A camera catches a magpie on its branch, and a lantern slows magpies down. The bell guards the ladder, and the shield guards the jars. Test your idea, then make it better.',
-    'Здесь ты строишь защиту. Камера ловит сороку на своей ветке, а фонарь задерживает воришек. Колокольчик сторожит лестницу, а щит бережёт банки. Проверь свою идею, а потом сделай её ещё лучше.',
-    'Qui costruisci le difese. Una telecamera cattura la gazza sul suo ramo e una lanterna rallenta le gazze. La campanella sorveglia la scala e lo scudo protegge i barattoli. Prova la tua idea, poi migliorala.'],
+  // (the three bonus stations take turns from the second Night on: extraOf() in src/50-ui.js)
+  g_flies: ['Sometimes the fireflies slip out. Move the jar to gather them. Golden ones count twice. This bonus station opens on the second Night and comes back every three Nights.',
+    'Иногда светлячки разлетаются. Двигай банку и собирай их. Золотой светлячок — сразу за двоих! Это бонусное задание появляется на вторую ночь и потом возвращается раз в три ночи.',
+    'A volte le lucciole scappano. Muovi il barattolo per raccoglierle. Quelle dorate valgono doppio. Questa prova bonus arriva la seconda Notte e poi torna ogni tre Notti.'],
+  g_mail: ['Letters come to the treehouse. Keep the ones with tonight\'s seal. A letter that asks for the password, rushes you or promises a giant prize is a trick. This bonus station opens on the third Night and comes back every three Nights.',
+    'В домик приходят письма. Оставляй те, на которых сегодняшняя печать. Если письмо просит пароль, торопит или обещает огромный приз, это хитрость. Это бонусное задание появляется на третью ночь и потом возвращается раз в три ночи.',
+    'Alla casa sull\'albero arrivano delle lettere. Tieni quelle col sigillo di stanotte. Una lettera che chiede la parola segreta, mette fretta o promette un premio gigante è un trucco. Questa prova bonus arriva la terza Notte e poi torna ogni tre Notti.'],
+  g_code: ['Zip brings a secret note. Each shape means a picture. Find the shapes on the key and read the message. This bonus station opens on the fourth Night and comes back every three Nights.',
+    'Зип приносит тайную записку. Каждый знак — это картинка. Найди знаки в ключе и прочитай послание. Это бонусное задание появляется на четвёртую ночь и потом возвращается раз в три ночи.',
+    'Zip porta un messaggio segreto. Ogni simbolo è una figura. Trova i simboli nella chiave e leggi il messaggio. Questa prova bonus arriva la quarta Notte e poi torna ogni tre Notti.'],
+  g_tinker: ['Here you build your defences. A camera catches a magpie on its branch, and a lantern slows magpies down. The bell guards the ladder, and the shield guards the jars. Tap “Test Raid” to try your defences before the real raid. Then make them better.',
+    'Здесь ты строишь защиту. Камера ловит сороку на своей ветке, а фонарь задерживает воришек. Колокольчик сторожит лестницу, а щит бережёт банки. Нажми «Пробный налёт» и проверь защиту до настоящего налёта. А потом сделай её ещё лучше.',
+    'Qui costruisci le difese. Una telecamera cattura la gazza sul suo ramo e una lanterna rallenta le gazze. La campanella sorveglia la scala e lo scudo protegge i barattoli. Tocca «Finto assalto» per provare le difese prima dell\'assalto vero. Poi migliorale.'],
   g_gadgetsT: ['Silly gadgets', 'Смешные штуки', 'Aggeggi buffi'],
   g_gadgets: ['Silly gadgets make magpies laugh. A magpie that laughs three times goes home! New tricks need new gadgets: a fan for the balloon, honey for the stilts, a seesaw for the long coat and a drum for the digger.',
     'От смешных штук сороки хохочут. Три раза рассмеялась — и улетела домой! Для новых хитростей есть новые штуки: вентилятор против шарика, мёд против ходуль, качели против длинного пальто и барабан против подкопа.',
@@ -788,6 +822,10 @@ const L = {
   g_stars: ['Stars make you rise from Cadet to Chief. Your stars make our treehouse grow! Moonbeams pay for the things you build. Stickers, hats and your own flag are waiting too.',
     'Звёзды ведут тебя от кадета к командиру. Твои звёзды помогают нашему домику расти! Лунными лучиками ты платишь за всё, что строишь. А ещё тебя ждут наклейки, шляпы и твой собственный флаг.',
     'Le stelle ti fanno salire da Recluta a Capo. Le tue stelle fanno crescere la nostra casa sull\'albero! Con i raggi di luna paghi quello che costruisci. Ti aspettano anche figurine, cappelli e una bandiera tutta tua.'],
+  g_thingsT: ['Your things', 'Твои вещи', 'Le tue cose'],
+  g_things: ['Your things are on the title screen. Dress-up: buy hats and scarves for the owl and Zip with moonbeams. Sticker album: the first win at a station each Night brings a sticker, and its pages are Magpies, Disguises, Treasures and Friends. Night Watch Badge: write your name, see your rank from Cadet to Chief, and print your certificate.',
+    'Твои вещи — на главном экране. Гардероб: покупай за лунные лучики шляпы и шарфы для совы и Зипа. Альбом наклеек: за первую победу в каждом задании ночи дают наклейку, а страницы в нём — «Сороки», «Маскировка», «Сокровища» и «Друзья». Значок Ночного дозора: впиши имя, посмотри своё звание от кадета до командира и распечатай грамоту.',
+    'Le tue cose sono nella schermata iniziale. Guardaroba: con i raggi di luna compri cappelli e sciarpe per il gufo e per Zip. Album delle figurine: la prima vittoria in ogni prova della Notte porta una figurina, e le pagine sono Gazze, Travestimenti, Tesori e Amici. Distintivo della Guardia Notturna: scrivi il tuo nome, guarda il tuo grado da Recluta a Capo e stampa il diploma.'],
   g_friendsT: ['Friends and visitors', 'Друзья и гости', 'Amici e visitatori'],
   g_friends: ['Catch magpies kindly and some of them become friends. One friend helps you in every raid. Each day a little visitor comes with a wish.',
     'Если ловить сороку по-доброму, она может стать другом. Один друг помогает тебе в каждом налёте. Каждый день приходит маленький гость со своим желанием.',
@@ -799,9 +837,14 @@ const L = {
     'Здесь сорока — это ты! Подсмотри значок и пароль и смастери себе наряд. Потом тебя проверит у ворот сова или кто-то из взрослых.',
     'Qui la gazza sei tu! Spia il distintivo e la parola segreta e prepara il tuo travestimento. Poi il gufo o un grande ti controlla al cancello.'],
   g_dayT: ['By day', 'Днём', 'Di giorno'],
-  g_day: ['After a Night the sun comes up. You can go fishing until evening. Three fish are a supper for the owl, and rare fish send gifts to the treehouse. After such a supper the owl\'s eyes are sharp: at the gate, tap the eye for a close look.',
-    'После ночи встаёт солнце. До вечера можно сходить на рыбалку. Три рыбки — это ужин для совы, а редкие рыбы присылают домику подарки. После такого ужина у совы зоркие глаза. У ворот нажми на глаз, и она хорошенько рассмотрит гостя.',
-    'Dopo la Notte spunta il sole. Puoi andare a pescare fino a sera. Tre pesci sono la cena del gufo, e i pesci rari mandano regali alla casa sull\'albero. Dopo una cena così il gufo ha la vista acuta: al cancello tocca l\'occhio e sarà lui a guardare bene per te.'],
+  g_day: ['After a Night the sun comes up. You can go fishing until evening. Three fish are a supper for the owl, and rare fish send gifts to the treehouse. After such a supper the owl\'s eyes are sharp: at the gate, tap the eye for a close look. The page “First Light Fishing” shows you how to fish.',
+    'После ночи встаёт солнце. До вечера можно сходить на рыбалку. Три рыбки — это ужин для совы, а редкие рыбы присылают домику подарки. После такого ужина у совы зоркие глаза. У ворот нажми на глаз, и она хорошенько рассмотрит гостя. Как рыбачить, расскажет страница «Рыбалка на рассвете».',
+    'Dopo la Notte spunta il sole. Puoi andare a pescare fino a sera. Tre pesci sono la cena del gufo, e i pesci rari mandano regali alla casa sull\'albero. Dopo una cena così il gufo ha la vista acuta: al cancello tocca l\'occhio e sarà lui a guardare bene per te. Come si pesca te lo spiega la pagina «Pesca alle prime luci».'],
+  // (the fishing game's own words: its buttons "Cast" and "Bite! Tap!", its first two waters, its logbook and its moons)
+  g_fishT: ['First Light Fishing', 'Рыбалка на рассвете', 'Pesca alle prime luci'],
+  g_fish: ['By day you play First Light Fishing. Tap the water where you want to fish. Then hold Cast and let go on the gold line. Wait: little bumps are not the bite. When the big Bite sign shows, tap it! Catch five kinds of fish in Sunnybrook Pond and Willow Creek opens. Fish fill your logbook and pay moons, and moons buy better rods and lures.',
+    'Днём ты играешь в «Рыбалку на рассвете». Нажми на воду там, где хочешь рыбачить. Потом держи «Заброс» и отпусти на золотой черте. Жди: лёгкие толчки — ещё не поклёвка. Когда появится большая надпись «Клюёт», жми на неё! Поймай пять разных рыб в Солнечном пруду, и откроется Ивовый ручей. Рыбы попадают в журнал и приносят луны, а за луны можно купить удочки и приманки получше.',
+    'Di giorno giochi a «Pesca alle prime luci». Tocca l\'acqua dove vuoi pescare. Poi tieni premuto «Lancia» e rilascia sulla linea d\'oro. Aspetta: le piccole toccate non sono ancora l\'abboccata. Quando compare la grande scritta «Abbocca», toccala! Pesca cinque pesci diversi nello Stagno Soleggiato e si apre il Ruscello dei Salici. I pesci riempiono il diario di pesca e portano lune, e con le lune compri canne ed esche migliori.'],
   g_worldT: ['The living forest', 'Живой лес', 'Il bosco vivo'],
   g_world: ['The forest follows the real year: spring, summer, autumn and winter. Rain, wind and snow slow the magpies down. The moon in the sky is tonight\'s real moon.',
     'Лес живёт по настоящему календарю: весна, лето, осень и зима. Дождь, ветер и снег мешают сорокам. Луна на небе такая же, как сегодня за окном.',
@@ -875,10 +918,14 @@ let practice = null;
 function save() { if (practice) return; try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 const rankAt = night => night > 7 ? 3 : night > 4 ? 2 : night > 2 ? 1 : 0;
 const rank = () => rankAt(S.night);
+const nightsDone = () => S.night - 1;   // Nights finished (the Night is counted when its raid ends): the badge and the certificate show this number
+// Nothing in the old language stays behind: a line still on the screen is taken away and the line kept for screen readers
+// is emptied. The caller then draws its screen again, which takes an open dialog with it.
 function setLang(i) {
   lang = S.lang = i; save();
   document.documentElement.lang = LANGS[i];
   document.title = t('title');
+  document.querySelectorAll('.toast').forEach(n => n.remove()); $('#live').textContent = '';
 }
 // (a whole number only: in a damaged save, LANGS['length'] and LANGS['1'] would pass as languages too)
 setLang(Number.isInteger(S.lang) && LANGS[S.lang] ? S.lang : Math.max(0, LANGS.indexOf((navigator.language || 'en').slice(0, 2))));
@@ -895,7 +942,9 @@ function add(html, parent = ui) {
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function say(text) { $('#live').textContent = text; }
 // `at`: a point on the screen that the line belongs to (a friend's name goes over that friend); it stays inside the screen.
+// One line at a time: a new one takes the place of the one before it.
 function toast(text, ms = 1600, at) {
+  ui.querySelectorAll('.toast').forEach(n => n.remove());
   const n = add(`<div class="toast">${esc(text)}</div>`);
   n.style.animationDuration = ms + 'ms';   // a longer line stays longer
   if (at) { const r = ui.getBoundingClientRect(), w = n.offsetWidth / 2 + 6; n.style.left = clamp(at[0] - r.left, w, Math.max(w, r.width - w)) + 'px'; n.style.top = Math.max(6, at[1] - r.top - n.offsetHeight) + 'px'; }
@@ -1181,7 +1230,7 @@ function sayOther(s, strict, done) {
 function buzz(ms) { try { if (!S.mute && !quiet && navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* not allowed */ } }
 // Generated by tools/voice.js. Do not edit by hand.
 // Hashes of the sentences that have a recorded clip in voice/<lang>/<hash>.mp3.
-const VOICE = new Set(["100ftxb","10160g4","1026338","108b400","10bq8az","10daaap","10f2c8a","10f9yqo","10h16ln","10kvsgj","10l1ozr","10n3l7","10r70vk","10rkfl1","10ru54r","10uyi08","10zg369","1108kx6","113jig9","1142gtp","115fly1","11a6x9z","11b4xvh","11d7imz","11dym93","11f0k15","11g06ab","11gcesx","11iyrnk","11pdf13","11pm90d","11r3n9l","11rkp8h","11xxbpe","125tx6e","126rq71","1283bz3","1283e3t","1289wdh","128e46b","12ank17","12awzyd","12c64n3","12d46v0","12h8hpd","12haq7k","12hmc91","12hn3wk","12ly30l","12ngc1u","12qfqp6","12sx00c","12tmv24","12vg211","12w63km","12xnxfv","1346ijl","139lqo","13cxw0w","13ftla4","13g4lfk","13gwofr","13hku9k","13i8sht","13iryo7","13o4ati","13o6bi7","13o99lf","13odfc9","13oxt2b","13q3gww","13xcrnt","13xfc13","13y549v","13z29x4","13zebhk","140qezh","141ih14","141wqb3","1421loi","142vocj","1442dlf","1489zof","14bsdkr","14dqdk8","14hixsr","14icjne","14ji2ga","14jmn13","14li4xg","14m4m07","14wsh99","14zgg16","14zy4y3","153hrvm","155oocv","15cdy27","15elogn","15f8oa","15h2wzn","15iwhy0","15j0hlv","15jl6b","15kqccr","15m1iga","15nw5hu","15qeo4i","15req7i","15xnc4g","162afq5","163zpxx","167ogau","168mp02","168qkee","169isor","16a77c2","16b4s1d","16bfy98","16hl367","16i4i5a","16ksxfz","16lkluc","16llt17","16n3biz","16nbugn","16rjvb7","16telns","16x7cce","16xxvxz","16z7c62","171pw19","1726pvq","174vd3a","1750j12","1784s08","178vkuc","179attb","17fxewy","17g9z3c","17hbaym","17i5ya","17jumwc","17nhwq","17psvqv","17sjnlq","17vtkun","17y4st1","17yfegk","1836gh2","1844h6r","187nsm1","188dq1v","18b4sce","18exoa1","18f4oru","18gsy14","18inq8f","18jh38g","18kkg8z","18l3fuv","18mdu4o","18o03ln","18oki4p","18opcvi","18pzsai","18r2f9l","18tdh7u","18te3xh","18tgq0q","18undm7","18v1pkt","193k4hc","193vyoy","194v4m5","195fy7o","19a3ndk","19athyc","19dsxuk","19fk0on","19gzq9o","19hjrt2","19hli8w","19hu2bs","19ix769","19je89y","19jll1d","19jynme","19o1doz","19qc868","19rrb4w","19rxsm2","19sunzu","19vwgzz","19yda2","1a27k3g","1a39msy","1a55ine","1acgta8","1ad0883","1ad9oip","1aecbk0","1afv70r","1agtpb4","1agymbs","1aj7ii","1ajrgu3","1al3k1i","1amkme9","1apl6rg","1arg9eh","1as43k6","1aso781","1at3451","1av85vi","1avof8l","1aw225l","1azme7","1b3w364","1b6g9ic","1b8wc89","1bbdjca","1bci3gl","1bjp96a","1bn3heo","1bnjde5","1brhgns","1bu0lvx","1bu1gyg","1bx46ze","1bzhnzf","1c0wv9v","1c2hlpy","1c5ctcp","1cfsscx","1ckntow","1clcko1","1cmrcp5","1cnn1zj","1ctdg7j","1d0i3wr","1d1uhcf","1d46tm7","1d9reau","1db58l6","1dbq4tq","1dc7gfw","1dc9eho","1dce4ib","1dh6zvj","1di9ifl","1dkmevz","1dq2td0","1ds6a8c","1dvyu16","1dxkw0q","1e2c7j6","1e31lyt","1e404ct","1e8sxlu","1eamhk3","1eein6","1eek7of","1ej81bx","1ejexea","1el70pk","1emf2jd","1emlzop","1emovfx","1enwsku","1er4ueo","1er5hhv","1etlnny","1evt62t","1ew6uxw","1eysog1","1eysw6j","1ezagyg","1f7fxpw","1fa6mch","1fb4lqy","1fb5ker","1fd4s3h","1feb1yh","1ffebqp","1fj2amq","1fjbwhj","1fk4e09","1fk6yo2","1fmhe1y","1fmkmhm","1ft7z2h","1ftc1ys","1fu96ep","1fuaml1","1fullqt","1fuysz","1fv1sh2","1fw73t8","1fyinco","1g06mva","1g1isr9","1g5fbdq","1g6vr9y","1g6ziwb","1g7w9tc","1g93koj","1g954t0","1gd13pn","1gdbfx1","1ghk866","1glf3l6","1goi7l7","1gp3jjv","1gpp0do","1gq6g3j","1gsdor9","1gsw6rd","1gtuuwm","1gtvj93","1gyvaq6","1h02nj2","1h04swc","1h1z9vd","1h3125w","1h4h6eq","1h4h6ia","1ha8qfz","1hbnn5m","1hchxjq","1hdjbta","1hf1774","1hheegx","1hj7lr5","1hm4mqk","1hmqli8","1hnc52d","1hoe4ju","1hpduwx","1hr88qc","1hv75tv","1hwftjj","1hwku2l","1hy79n","1i07qoy","1i0w3o8","1i1nkv9","1i3jj4f","1i4094","1i5x8k5","1i6eslv","1i7pj4x","1i9hhql","1i9plk9","1id4xom","1idoqpa","1idpw8o","1imomcd","1iou1ha","1isaibz","1itnsne","1ixvwc","1j0pfdo","1j3ibtk","1j4gdpf","1j7fppj","1j7otqn","1jcu7a3","1je4rs6","1jequek","1jh2arm","1jisnk1","1jnw8sf","1joms4y","1jrcetj","1jsxofn","1jw2xcd","1jx0k90","1k0dlis","1k0rco","1k8l0ap","1kc6jg6","1kgxl4w","1kh6xui","1kib9o0","1kispa","1kjcuib","1kjyxz7","1kk1a7x","1kkiece","1kl6fwo","1klfp82","1ksmgy7","1kx58i8","1kxuwnq","1kydkr0","1l18p7c","1l4fs80","1l5r765","1l68tez","1l7jeyl","1l8bush","1l8cdun","1lce13x","1lcy6oa","1leshph","1lglhpf","1li0yfg","1lkwmt","1lnq6f3","1lqlz8j","1ltudoo","1luu0xr","1lx29hw","1lxok6e","1lz3a8y","1m1lxka","1m62ouh","1m81d1p","1mbxcsm","1mc9bk0","1megsuz","1mezv75","1mh4ghx","1mhnqwc","1mjtmmy","1mjvy2g","1mno6qj","1mqn89u","1mqnzc9","1mqtddz","1mu62lg","1mulf4o","1mwdca4","1mxpj84","1mzrti","1n156gz","1n22bhv","1n8j9tj","1n8rqyk","1naj40r","1ners3h","1nfg6pz","1nhajyb","1nhbq9f","1nj6d18","1njoxg0","1nmilzn","1nn03k2","1nux5dj","1o0005f","1o1v76i","1o3kcow","1o59qcu","1o5flnb","1odvax5","1oizjjc","1okdpyb","1oks1hy","1ol16gh","1ol8ebc","1olijfg","1olv4wt","1ooy226","1orw0af","1osc7h3","1oth770","1otl1dm","1otxme0","1ouf88r","1oyyyb0","1p0qjgq","1p0z9sr","1p1fci","1p3t2ig","1p8uoet","1p9306b","1pfg6by","1phcygt","1phtnt7","1phut4c","1pjpwf4","1pjtlf7","1pszpit","1pv95nf","1pwu262","1q18zue","1q4jgaq","1qdjs1e","1qdm172","1qdpqgw","1qhlafy","1qhy1k7","1qjiim6","1qjr70i","1qkjw02","1qomkiu","1qq4ns6","1qqpmk3","1qqrjqa","1qr6w1l","1qrltde","1qrymck","1qshi75","1qtq5nm","1qtzkr","1qym5gs","1r0aebr","1r0ktcq","1r4gzui","1r5hdt","1r5nix8","1r6xaqn","1r8npaq","1rcfocd","1re07pi","1ri9acu","1ri9wzn","1rm483x","1rmjfes","1rmjnz3","1ro4pfn","1roew1f","1rqjq0b","1rr97df","1rs1fbq","1s05hgi","1s659o1","1s77ak2","1sbbz28","1sggvoo","1sh5qti","1shepyw","1smtibx","1snwn2","1spipum","1spl79d","1sr46dv","1ss8m8k","1sssmyz","1syhpdr","1t39s61","1t3ojgi","1t69wjq","1t94khk","1t9d035","1tfyrap","1tj4sth","1tjrjva","1tk75vs","1tsdrys","1tuyub9","1tv285z","1txrfqp","1u25sqi","1u29x2z","1u5j7k0","1u5o2mu","1u5ool1","1u8glda","1u9yp6q","1uabzrq","1ucy626","1ugakq","1uihe5a","1ujglh7","1umxna0","1uqg84y","1usy3mv","1ut0nbo","1ut71ds","1ute2a","1utwgfv","1utysta","1uuihou","1uuvh42","1uzeb5t","1uzwgyt","1v2zm2h","1v3r6f7","1v4ai9a","1v637dh","1v6vx15","1v82k47","1v8zubq","1vcm1p","1vgin9i","1vgobem","1viehla","1vkb2fz","1vvgapp","1vwgxg9","1vxjsqx","1vxtzec","1vynqeu","1vzk5qg","1w00vjo","1w20mt6","1w3whiu","1w54td1","1w5tsbj","1w7er79","1w81h6m","1w8arq5","1w9295d","1wajmp4","1wdv3ed","1wdzjgj","1whbalz","1wlk3tq","1wm92df","1wn44se","1wo4lv6","1wp9kq","1wpusl9","1wsetti","1wspry7","1wt5r0o","1wwxp9t","1x5mgg9","1x61q8u","1x9q0ea","1xa40ff","1xbc9yr","1xbpi3q","1xbvqp5","1xgo402","1xiv7i2","1xl53wk","1xlca0m","1xnqn7i","1xo4cde","1xpzmpj","1xqbgmk","1xs4e5j","1xu8t5l","1xy5lle","1xyq58g","1y0ch7f","1y2lvi3","1y2t1vv","1y7ddxy","1y9k7bf","1ybbagx","1ycgqfi","1ygilbo","1yiqnho","1yl26r6","1yn45r2","1yrgfdl","1yueflc","1ywfra","1yzjuuk","201fge","22x2td","2594nd","26jy8h","27w3u0","28rbr7","29wq4","2ccz3s","2e3beo","2ev4ae","2ungtz","2vud1h","2xxh3t","2zh26","2zzdvk","31zies","34rha7","3b9675","3bns7h","3ck40n","3cu9qs","3dic67","3gy8dw","3lbugn","3m3oue","3m86p2","3n4rnx","3vcxpn","3z72wn","3z9dg0","40mdg7","46v4xw","48ush8","49x23g","4crsrs","4idsu8","4iycrd","4jz99u","4l0qhg","4n0rq","4q97g6","4w8dnr","4zp832","5455qf","54v0oc","5740vk","57da2b","58ck7k","58zvlv","5929ah","599lrb","59qh45","59r5m7","5eq9de","5fu1lu","5itn8h","5kl6m0","5o5mgf","5u9320","5uavqd","5w40g6","5xl7c","5z7d0w","5zvdty","613hw3","62x5vt","647r4f","66npo2","679f6b","68ew4j","6bas9i","6bthzj","6cr2h7","6dypnx","6gygwx","6iju9k","6jtsfv","6k2z3t","6kmbfj","6l0w9i","6o3z0i","6pjuwz","6pug1x","6qxstx","6xwdd8","6yeq5k","70sqn6","7128y2","77vj7p","78eqxu","7f9joo","7ml6pf","7qt60w","7snmpb","7tmgzy","7wbilr","7wlee5","7wsza2","7xh1b1","7ytkh","84o7cj","850rpe","85m4zw","879xey","89hgv8","8ar7jn","8eca0a","8fbsv4","8j9j8r","8jiz0j","8johrk","8jxfsv","8lbsw3","8pp2vc","8q1dnv","8qdgd7","8wayfi","8wirmi","8ycs2f","8z1kow","8zshrh","90jnte","91gl8","94j2hr","98279p","9dtix9","9f8wuc","9hpj88","9srqd1","9t7093","9teu8o","9tgv10","9yb9eu","9ynl17","9yzd7m","9zse5c","a5r2pg","a6ngdb","a6s6nd","a8f5e5","akkp8r","altr97","aois3i","apujwg","aqcbxe","aqudzs","atjsae","auchn0","aueuyq","awj61x","ax9zfc","b1lwox","b1wyl3","b2jl57","b32tpe","b4a8ap","b61dsq","b8a9zq","b9ndsi","bl8y1p","bt1992","buztyb","bxdji4","bzn6r6","c249wm","c4mmqp","c84v8c","c8y9xr","cdn98n","cfa595","ch7n8m","cm27h0","cng80a","cpstza","cquq4a","cqxdfr","crt59f","csfcrm","ctbney","cy5tgz","d1zq4k","d4o57a","dauahl","dgzkp2","dhauv6","dhfoln","dhlpb4","dikvz6","dk9hvn","do86my","dr6pu0","dwj4xa","e16srv","e45i20","ea84fe","eas85e","ed9w8q","edufot","edypm1","ej300a","ekdk1a","ekfn24","ekxn98","elgv8l","emaz5w","epx1b1","erinq","ev8s56","ewb31b","exbgk2","ez56by","ezlr3s","f05x0i","f5g6yd","f9jkzr","fj74mp","fk4dcw","fl6fc1","fm51ae","fo24aq","fo939p","fomz6j","frb64x","fst7oo","fumuym","fuqi9x","fxc6tm","g0ee8","g31ljc","g6ev9d","g6qvss","g9b2dl","gc1iff","gh2m3b","gjrnda","gjzhbx","glb0l0","glewek","gn5999","go164n","goz4bv","gpg8iy","gqge1g","gqzyed","grav71","guhdiz","gwxzpk","gx0oxz","gznnc9","gzz7w3","h36upw","h3p8j0","h9c9zs","hbyxrw","hbzt7j","hcubg","hdkm07","hdtcgv","he86r9","hfb29x","hh62vh","hhhvgy","hhwgqn","hm4zxt","hu3tkf","huvqc8","hxvwzs","hykuk0","i3jfgr","i7j1rf","i8vcg2","i9uc6p","icrxpp","idjfx7","io8k9h","ipz980","iqinxh","ir9z3d","ity4gc","j2w04q","j49hel","j4oxfs","j4rmbg","j5rcol","j7q9uo","jbh4zj","jglek9","jic6s1","jk9aim","jkiquy","jl4vme","jo4l0e","jqvskh","jrjyr1","js3fa3","jvkp1","jxi74t","jy7uo8","jyvwtg","k08w6y","k3ujbz","k7bzxz","kfcbps","kg6r5p","kiivax","kj0x3","kjsv4y","knlb9z","ko5a9a","ko64vk","kqxtpu","kr5cdo","krg9g9","kttij7","kycx5d","kyhhgj","kys1oc","kyvqvz","kywj7v","kz3n41","kzjdy7","kzkckd","l44djo","l6ruau","l6t9kv","lazsdu","lbdhuk","ldlsiy","lece24","lhccqd","lhxs0i","lkvmbo","lmlxm9","ltd5ok","lttxxv","lxgi34","m6ubhj","m9f3n1","mbfd47","mejxyq","mij665","mivwh3","mjb2d5","mjiveu","mk2m5b","mk36xt","mktbrp","ml7x5u","mlbek1","mm243q","mno79y","mvoygg","n130f2","n6pz6x","n8o042","nc7ew1","ndb26","nfsk0e","ng2mu","nhbnwh","njnz38","nmug6h","nmupwv","nnsldm","no0m1k","nodzme","npau64","nqslmm","nw0cvr","nx84me","ny2wkq","ny2xhf","o14lyz","o37i7u","o4rvq8","o94rql","oaks3e","obyln3","oc29ce","oelrzt","ofiroo","ofocju","ogh4tz","ohlzsp","ohpvpa","ojadvh","ollils","os7c8g","otnpra","oxbj0e","oxgmca","oxyqqy","oz63wh","p0rz8j","p25rm9","p4sznz","p55z4w","p63uor","p9snzr","pabeqo","paexxn","pahz4f","pbbvgz","pdn4tz","pdrgfv","pdyz9f","pew7od","pgg14i","phgilq","pi9mba","pmllti","pmzrft","poehph","pwuoh4","pzqnor","q0q7h3","q2a2jl","q5til","qa42i6","qabme6","qbseas","qfo12","qgdnhn","qglsaq","qhby2y","qhsd80","qihbpu","qkk4o6","ql0b6y","qmxqko","qqwknm","qrxbyu","qt0ruy","qu6m30","r0fpnc","r2byku","r2t00g","r3wm80","r6btmc","r9kucz","rab4au","rcms08","rgzfua","rm5rs7","rtqosb","rxsu5i","ryzw5j","rzmslt","s1l0hh","s5e4gu","s5ppqx","s7iz6c","s8iejm","sa90xk","scqwp0","scvma4","sg4gxp","sg7xmi","sgd5s8","siaohf","sk4ksh","sly3y8","sqdgqo","srjimy","ss1if8","syjvh6","t1o8hd","t4tddb","t5qzsg","t725i8","t7rdg0","t92sql","tamusg","tcjsij","tf7al1","tg0glx","thw4kr","tjs8dm","tkw7zt","trk2gc","u03yfs","u1asov","u29gs7","u2bkhc","u5vzju","u6w6an","u7xa93","u91n96","uaz070","uglljp","uhogg3","umfkbs","un7qxt","up63nb","upj3fn","upx4wm","us8vjd","usomn0","utu3lp","v0ds2v","v17to7","v2wvrd","v7ek5g","v7kdwe","vhs7sa","vi2jo","vjisfu","vljdg","vm0t8d","vn59mi","vrhakw","w1trr4","w3zjh0","w55lt7","w5aem6","w5nhoa","we8ovs","whflp2","whie2c","wkfwoy","wl0n8c","wl1qyi","wm1bz1","wm8vhg","wnnr63","wnzknu","wo86h3","wp4g60","wtk601","wuka18","wwqdpq","wy9kip","wyaz","x30fr2","x42u99","x66na4","x6xzug","xaomh5","xbkwkd","xctisx","xdj1xz","xedqwj","xfxjlv","xhaac5","xi5tkg","xiaawj","xjogk0","xmhw00","xnay7r","xpjy1b","xq8a9m","xqfl7f","xu0qvz","xu9fuw","y0tsw6","y6i7uu","y9k26","yazru3","ybdjr","ybx6lm","ydjmqe","yeu8wg","yfxa0q","yjtqoj","yny96t","you7iu","yqj24t","ywe4ip","yx74b3","z1nom5","z5ylef","z9qd5m","zajene","zaw4fx","zc6od4","zfnn9f","zghyk9","zglak7","zgs6tj","zhd2ae","zk97hp","zm6e6a","zp3q6t","zpci9f","zu0hua","zujnr0","zw8tk7","zxdocv","zy104","zynia7"]);
+const VOICE = new Set(["100ftxb","10160g4","1026338","108b400","10bq8az","10bs5x9","10daaap","10f2c8a","10f3tr4","10f9yqo","10kvsgj","10l1ozr","10n3l7","10r70vk","10rkfl1","10ru54r","10uyi08","10v2ayd","10zg369","1108kx6","113jig9","1142gtp","115fly1","11a6x9z","11b4xvh","11d7imz","11dym93","11f0k15","11g06ab","11gcesx","11iyrnk","11pdf13","11pm90d","11r3n9l","11rkp8h","11xxbpe","1206ewo","12276xr","125tx6e","126rq71","1283bz3","1283e3t","1289wdh","128e46b","129z6gn","12ank17","12awzyd","12c64n3","12cbtmo","12d46v0","12h8hpd","12haq7k","12hmc91","12hn3wk","12ly30l","12ngc1u","12o2jxd","12qfqp6","12sx00c","12tmv24","12vg211","12w63km","12xnxfv","1346ijl","135cwd8","139lqo","13cxw0w","13ftla4","13g4lfk","13gwofr","13hku9k","13i8sht","13iryo7","13o4ati","13o6bi7","13o99lf","13odfc9","13oxt2b","13q3gww","13xcrnt","13xfc13","13y08yu","13y549v","13z29x4","13zebhk","13zopgf","140qezh","141ih14","141wqb3","1421loi","142vocj","1442dlf","1489zof","14bsdkr","14dqdk8","14hdzkt","14hixsr","14icjne","14ji2ga","14jmn13","14li4xg","14m4m07","14wsh99","14xldl3","14zgg16","14zy4y3","153hrvm","155oocv","159xwc1","15cdy27","15f8oa","15h2wzn","15iwhy0","15j0hlv","15jl6b","15kqccr","15m1iga","15nw5hu","15qeo4i","15qk85w","15req7i","15xnc4g","162afq5","163zpxx","167ogau","168mp02","168qkee","169isor","16a77c2","16b4s1d","16bfy98","16hl367","16i4i5a","16ksxfz","16lkluc","16llt17","16n3biz","16nbugn","16rjvb7","16sxk9j","16telns","16x7cce","16xxvxz","16z7c62","171pw19","1726pvq","174vd3a","1750j12","1784s08","178vkuc","179attb","17fxewy","17g9z3c","17hbaym","17i5ya","17jumwc","17nhwq","17psvqv","17sjnlq","17vtkun","17y4st1","17yfegk","1807hkd","1836gh2","1844h6r","187nsm1","188dq1v","18b4sce","18exoa1","18f4oru","18gsy14","18inq8f","18jh38g","18kkg8z","18l3fuv","18mdu4o","18o03ln","18odvv0","18oki4p","18opcvi","18pzsai","18r2f9l","18tdh7u","18te3xh","18tgq0q","18undm7","18v1pkt","193k4hc","193vyoy","194v4m5","195fy7o","19a3ndk","19athyc","19dsxuk","19fk0on","19gzq9o","19hjrt2","19hli8w","19hu2bs","19ix769","19je89y","19jll1d","19jynme","19o1doz","19qc868","19rrb4w","19rxsm2","19sunzu","19vwgzz","19yda2","1a27k3g","1a39msy","1a55ine","1aabjdy","1acgta8","1ad0883","1ad9oip","1aecbk0","1afv70r","1agtpb4","1agymbs","1aj7ii","1ajrgu3","1al3k1i","1amkme9","1apl6rg","1aq4cqu","1arg9eh","1aro1um","1as43k6","1aso781","1at3451","1av85vi","1avof8l","1aw225l","1azjso8","1azme7","1b3w364","1b45n3i","1b6g9ic","1b8wc89","1bbdjca","1bci3gl","1bezaxl","1bjp96a","1bn3heo","1bnjde5","1brhgns","1bs890d","1bu0lvx","1bu1gyg","1bx46ze","1bzhnzf","1c0wv9v","1c5ctcp","1cfsscx","1ckntow","1clcko1","1cmrcp5","1cnn1zj","1ctdg7j","1d0i3wr","1d1uhcf","1d46tm7","1d9reau","1da3o5m","1db58l6","1dbq4tq","1dc7gfw","1dc9eho","1dce4ib","1dh6zvj","1di9ifl","1dkmevz","1dq2td0","1ds6a8c","1dvb75g","1dvyu16","1dxkw0q","1e2c7j6","1e31lyt","1e404ct","1e8sxlu","1eamhk3","1eein6","1eek7of","1ej81bx","1ejexea","1el70pk","1emf2jd","1emlzop","1emovfx","1enwsku","1er4ueo","1er5hhv","1espam9","1etlnny","1evt62t","1ew6uxw","1eysog1","1eysw6j","1ezagyg","1f7fxpw","1fa6mch","1fb4lqy","1fb5ker","1fd4s3h","1feb1yh","1ffebqp","1fj2amq","1fjbwhj","1fk4e09","1fk6yo2","1fmhe1y","1fmkmhm","1fq8w2j","1ft7z2h","1ftc1ys","1fu96ep","1fuaml1","1fullqt","1fuysz","1fv1sh2","1fw73t8","1fyinco","1g06mva","1g1isr9","1g5fbdq","1g6vr9y","1g6ziwb","1g7w9tc","1g93koj","1g954t0","1gd13pn","1gdbfx1","1ghk866","1glf3l6","1goi7l7","1gp3jjv","1gp84na","1gpp0do","1gq6g3j","1gsdor9","1gsw6rd","1gtuuwm","1gtvj93","1guz5k9","1gx194y","1gydh8w","1gyvaq6","1h02nj2","1h04swc","1h1z9vd","1h3125w","1h4h6eq","1h4h6ia","1ha8qfz","1hbnn5m","1hchxjq","1hdjbta","1hf1774","1hheegx","1hj7lr5","1hm4mqk","1hmqli8","1hnc52d","1hoe4ju","1hpduwx","1hr88qc","1huyix1","1hv75tv","1hwftjj","1hwku2l","1hy79n","1hy9os5","1i07qoy","1i0w3o8","1i1d20w","1i1nkv9","1i3jj4f","1i4094","1i5x8k5","1i6eslv","1i7pj4x","1i9hhql","1i9plk9","1id4xom","1idoqpa","1idpw8o","1imomcd","1iou1ha","1isaibz","1itnsne","1iusnju","1ixvwc","1j0pfdo","1j3ibtk","1j4gdpf","1j7fppj","1j7otqn","1j8v1h8","1jcu7a3","1je4rs6","1jequek","1jh2arm","1jhzecs","1jisnk1","1jjatab","1jnw8sf","1joms4y","1jrcetj","1jsxofn","1jw2xcd","1jx0k90","1k0dlis","1k0rco","1k7zst1","1k8l0ap","1kc6jg6","1kgxl4w","1kh6xui","1kib9o0","1kispa","1kjcuib","1kjyxz7","1kk1a7x","1kkiece","1kl6fwo","1klfp82","1kpmjqo","1ksmgy7","1kx58i8","1kxuwnq","1kydkr0","1l18p7c","1l4fs80","1l5r765","1l68tez","1l7jeyl","1l8bush","1l8cdun","1lce13x","1lcy6oa","1leshph","1lglhpf","1li0yfg","1livhae","1lkwmt","1lnq6f3","1lqlz8j","1ltudoo","1luu0xr","1lx29hw","1lxok6e","1lz3a8y","1m1lxka","1m20d80","1m62ouh","1m81d1p","1mbxcsm","1mc9bk0","1megsuz","1mezv75","1mh4ghx","1mhnqwc","1mjtmmy","1mjvy2g","1mno6qj","1mqn89u","1mqnzc9","1mqtddz","1mu62lg","1mulf4o","1mwdca4","1mxpj84","1mzrti","1n03hqq","1n156gz","1n22bhv","1n8j9tj","1n8rqyk","1naj40r","1ners3h","1nfg6pz","1nhajyb","1nhbq9f","1nj6d18","1njoxg0","1nm0cfm","1nmilzn","1nn03k2","1nux5dj","1o0005f","1o1v76i","1o3kcow","1o59qcu","1o5flnb","1odvax5","1oizjjc","1okdpyb","1oks1hy","1ol16gh","1ol8ebc","1olijfg","1olv4wt","1olys7p","1ooy226","1orw0af","1osc7h3","1oth770","1otl1dm","1otxme0","1ou4xay","1ouf88r","1oyyyb0","1p0qjgq","1p0z9sr","1p1fci","1p3t2ig","1p8uoet","1p9306b","1pfg6by","1phcygt","1phtnt7","1phut4c","1pioc0r","1pjpwf4","1pjtlf7","1pszpit","1pv95nf","1pwu262","1q18zue","1q3nblz","1q4jgaq","1qdjs1e","1qdm172","1qdpqgw","1qhlafy","1qhy1k7","1qjiim6","1qjr70i","1qkjw02","1qnnd03","1qomkiu","1qq4ns6","1qqpmk3","1qqrjqa","1qr6w1l","1qrltde","1qrymck","1qshi75","1qtq5nm","1qtzkr","1qym5gs","1r0aebr","1r0ktcq","1r4gzui","1r5hdt","1r5nix8","1r6xaqn","1r8npaq","1rcfocd","1re07pi","1rejxb8","1ri9acu","1ri9wzn","1rkgvyd","1rm483x","1rmjfes","1rmjnz3","1ro4pfn","1roew1f","1rqjq0b","1rr97df","1rs1fbq","1s05hgi","1s659o1","1s77ak2","1sbbz28","1sggvoo","1sh5qti","1shepyw","1smtibx","1snwn2","1spipum","1spl79d","1sr46dv","1ss8m8k","1sssmyz","1syhpdr","1t39s61","1t3ojgi","1t69wjq","1t94khk","1t9d035","1tfyrap","1tj4sth","1tjrjva","1tk75vs","1tsdrys","1tuuoal","1tuyub9","1tv285z","1txrfqp","1u0szcr","1u25sqi","1u29x2z","1u5j7k0","1u5o2mu","1u5ool1","1u8glda","1u9swap","1u9yp6q","1uabzrq","1ucy626","1ugakq","1uihe5a","1ujglh7","1umxna0","1uqg84y","1usy3mv","1ut0nbo","1ut71ds","1ute2a","1utwgfv","1utysta","1uuihou","1uuvh42","1uv1xye","1uzbxjh","1uzeb5t","1uzwgyt","1v2zm2h","1v3r6f7","1v4ai9a","1v637dh","1v63uuh","1v6vx15","1v82k47","1v8zubq","1vcm1p","1vfnbol","1vgin9i","1vgobem","1viehla","1vkb2fz","1vr8z63","1vvgapp","1vwgxg9","1vxjsqx","1vxtzec","1vynqeu","1vzk5qg","1w00vjo","1w20mt6","1w54td1","1w5tsbj","1w7er79","1w81h6m","1w8arq5","1w9295d","1wajmp4","1wdv3ed","1wdzjgj","1whbalz","1wlk3tq","1wm92df","1wn44se","1wo4lv6","1wp9kq","1wpusl9","1wsetti","1wspry7","1wt5r0o","1wwxp9t","1x5mgg9","1x61q8u","1x9q0ea","1xa40ff","1xbc9yr","1xbpi3q","1xbvqp5","1xgo402","1xiv7i2","1xl53wk","1xlca0m","1xnqn7i","1xo4cde","1xpzmpj","1xqbgmk","1xs4e5j","1xu8t5l","1xuifbw","1xy5lle","1xyq58g","1y0ch7f","1y2lvi3","1y2t1vv","1y7ddxy","1y9k7bf","1ybbagx","1ycgqfi","1ygilbo","1yiqnho","1yl26r6","1yn45r2","1yohh6l","1yrgfdl","1yueflc","1ywfra","1yzjuuk","22x2td","2594nd","26jy8h","27w3u0","28rbr7","29wq4","2ccz3s","2e3beo","2ev4ae","2pzoej","2ungtz","2vud1h","2xxh3t","2zh26","2zzdvk","31zies","34rha7","351tz9","38wa8o","3b1zd5","3b9675","3bns7h","3ck40n","3cu9qs","3dic67","3gy8dw","3lbugn","3m3oue","3m86p2","3n4rnx","3vcxpn","3xkv60","3z72wn","3z9dg0","40mdg7","46v4xw","48ush8","49x23g","4crsrs","4idsu8","4iycrd","4jz99u","4l0qhg","4n0rq","4q97g6","4w8dnr","4zp832","52qhms","5455qf","54v0oc","5740vk","57da2b","58ck7k","58zvlv","5929ah","599lrb","59qh45","59r5m7","5b4jwa","5eq9de","5fu1lu","5hogp0","5itn8h","5kl6m0","5o5mgf","5u9320","5uavqd","5w40g6","5xl7c","5z7d0w","5zvdty","613hw3","62x5vt","647r4f","66npo2","679f6b","68ew4j","6bas9i","6bthzj","6cr2h7","6dypnx","6gygwx","6iju9k","6jtsfv","6k2z3t","6kmbfj","6l0w9i","6o3z0i","6pjuwz","6pug1x","6qxstx","6xwdd8","6yeq5k","70sqn6","7128y2","77vj7p","78eqxu","7f9joo","7ml6pf","7qt60w","7snmpb","7tmgzy","7wbilr","7wlee5","7wsza2","7xh1b1","7ytkh","84o7cj","850rpe","85m4zw","879xey","89hgv8","8ar7jn","8eca0a","8fbsv4","8j9j8r","8jiz0j","8johrk","8jxfsv","8lbsw3","8pp2vc","8q1dnv","8qdgd7","8wayfi","8wirmi","8ycs2f","8z1kow","8zshrh","90jnte","91gl8","94j2hr","98279p","9bamyt","9dtix9","9f8wuc","9hpj88","9r5ypl","9srqd1","9t7093","9teu8o","9tgv10","9yb9eu","9ynl17","9yzd7m","9zse5c","a11mug","a3hd09","a5r2pg","a6ngdb","a6s6nd","a8f5e5","akkp8r","altr97","aois3i","ap70ls","apujwg","aqcbxe","aqudzs","atjsae","auchn0","aueuyq","awcl3p","awj61x","ax9zfc","azsnpq","b1lwox","b1wyl3","b2jl57","b32tpe","b4a8ap","b61dsq","b8a9zq","b9ndsi","bcoc4q","bl8y1p","bt1992","buztyb","bxdji4","bzn6r6","c249wm","c4mmqp","c84v8c","c8y9xr","cdn98n","cfa595","ch7n8m","chymnf","cm27h0","cng80a","cpstza","cquq4a","cqxdfr","crt59f","csfcrm","ctbney","cy5tgz","d1zq4k","d4o57a","d5unrt","d85cfe","dauahl","dgzkp2","dhauv6","dhfoln","dhlpb4","dikvz6","dk9hvn","do86my","dr6pu0","dul582","dwj4xa","e16srv","e45i20","e8iuc4","e9wrcj","ea84fe","eas85e","ed9w8q","edufot","edypm1","ej300a","ekdk1a","ekfn24","ekxn98","elgv8l","emaz5w","epx1b1","eqgvoy","erinq","ev8s56","ewb31b","exbgk2","ez56by","ezlr3s","f05x0i","f5g6yd","f9jkzr","fj74mp","fk4dcw","fl6fc1","fm51ae","fo24aq","fo939p","fomz6j","frb64x","fst7oo","fumuym","fuqi9x","fxc6tm","fyix9k","g0ee8","g31ljc","g6ev9d","g6qvss","g9b2dl","gc1iff","gh2m3b","gjrnda","gjzhbx","glb0l0","glewek","gn5999","go164n","goz4bv","gpg8iy","gqge1g","gqzyed","grav71","guhdiz","gviwv1","gwxzpk","gx0oxz","gznnc9","gzz7w3","h36upw","h3p8j0","h9c9zs","hbyxrw","hbzt7j","hcubg","hdkm07","hdtcgv","he86r9","hec9uw","hfb29x","hh62vh","hhhvgy","hhwgqn","hm4zxt","hu3tkf","huvqc8","hxvwzs","hykuk0","i3jfgr","i7j1rf","i8vcg2","i9uc6p","icrxpp","idjfx7","io8k9h","ioi7og","ipz980","iqinxh","ir9z3d","iseggc","ity4gc","j2w04q","j49hel","j4oxfs","j4rmbg","j5rcol","j7q9uo","jbh4zj","jglek9","jic6s1","jk9aim","jkiquy","jl4vme","jniv31","jnylxf","jo4l0e","jqvskh","jrjyr1","jrq5ky","js3fa3","jvkp1","jxi74t","jy7uo8","jyvwtg","jzmam5","k08w6y","k3ujbz","k7bzxz","ka2iov","kfcbps","kg6r5p","kiivax","kj0x3","kjsv4y","knlb9z","ko5a9a","ko64vk","kqxtpu","kr5cdo","krg9g9","kttij7","kycx5d","kyhhgj","kys1oc","kyvqvz","kywj7v","kz3n41","kzjdy7","kzkckd","l0oabe","l44djo","l6ruau","l6t9kv","lazsdu","lbdhuk","ldlsiy","lece24","lhccqd","lhxs0i","lkvmbo","lmlxm9","ltd5ok","lttxxv","lwb2x9","lxgi34","lzhjrd","m6ubhj","m9f3n1","mbfd47","medt6u","mejxyq","mij665","mivwh3","mjb2d5","mjiveu","mk2m5b","mk36xt","mktbrp","ml7x5u","mlbek1","mm243q","mno79y","mvoygg","n0mkma","n130f2","n5j62r","n6pz6x","n8o042","nc7ew1","nc9437","ndb26","nfsk0e","ng2mu","nhbnwh","nhex4l","njnz38","nmug6h","nmupwv","nnsldm","no0m1k","nodzme","npau64","nqslmm","nw0cvr","nx84me","ny2wkq","ny2xhf","o14lyz","o37i7u","o4di0l","o4rvq8","o94rql","oaks3e","obyln3","oc29ce","ocy9wm","oelrzt","ofiroo","ofjbue","ofocju","ogh4tz","ohdyx9","ohlzsp","ohpvpa","ojadvh","ollils","on9568","os7c8g","otnpra","oxbj0e","oxgmca","oxyqqy","oy6wgt","oz63wh","p0rz8j","p25rm9","p4sznz","p55z4w","p63uor","p9snzr","pabeqo","paexxn","pahz4f","pbbvgz","pdn4tz","pdrgfv","pdyz9f","pew7od","pgg14i","phgilq","pi9mba","pmllti","pmzrft","poehph","pwuoh4","pzqnor","q0q7h3","q2a2jl","q5til","qa42i6","qabme6","qbseas","qfo12","qgdnhn","qglsaq","qhby2y","qhsd80","qihbpu","qjg2l1","qkk4o6","ql0b6y","qmxqko","qpadlk","qqwknm","qrxbyu","qt0ruy","qu6m30","qx3p68","r0fpnc","r2byku","r2t00g","r3wm80","r6btmc","r9kucz","rab4au","rcms08","rgzfua","rm5rs7","rtqosb","rxsu5i","ryzw5j","rzmslt","s1l0hh","s5e4gu","s5ppqx","s7iz6c","s8iejm","sa90xk","scqwp0","scvma4","sg4gxp","sg7xmi","sgd5s8","siaohf","sk4ksh","sly3y8","sqdgqo","srjimy","ss1if8","syjvh6","t1o8hd","t4tddb","t5qzsg","t725i8","t7rdg0","t92sql","tamusg","tcjsij","tf7al1","tg0glx","thw4kr","tjs8dm","tkw7zt","tlwhpp","trk2gc","tsl8o5","tznxd7","u03yfs","u1asov","u29gs7","u2bkhc","u5vzju","u6lh2j","u6w6an","u7xa93","u91n96","uaz070","uglljp","uhogg3","umfkbs","un7qxt","up63nb","upj3fn","upx4wm","urqf3f","us8vjd","usomn0","utu3lp","v0ds2v","v17to7","v1d81e","v2wvrd","v7ek5g","v7kdwe","vhs7sa","vjisfu","vkk6d7","vljdg","vm0t8d","vn59mi","vqiara","vrhakw","w1trr4","w3zjh0","w55lt7","w5aem6","w5nhoa","we8ovs","whflp2","whie2c","wkfwoy","wl0n8c","wl1qyi","wl88ko","wm1bz1","wm4i11","wm8vhg","wnnr63","wnzknu","wo86h3","wp4g60","wszty8","wtk601","wuka18","wwqdpq","wy9kip","wyaz","x30fr2","x42u99","x66na4","x6xzug","xaomh5","xbkwkd","xctisx","xdj1xz","xedqwj","xfxjlv","xhaac5","xi5tkg","xiaawj","xjogk0","xmhw00","xnay7r","xpjuav","xpjy1b","xq8a9m","xqfl7f","xu0qvz","xu9fuw","y0tsw6","y6i7uu","y9k26","yaj3oj","yazru3","ybdjr","ybx6lm","ydjmqe","yeu8wg","yfxa0q","yjtqoj","yny96t","you7iu","yqj24t","ywe4ip","yx74b3","z1nom5","z5ylef","z9qd5m","zajene","zaw4fx","zc6od4","zceiht","zfnn9f","zghyk9","zglak7","zgs6tj","zhd2ae","zk97hp","zm6e6a","zp3q6t","zpci9f","zt3gw7","zu0hua","zujnr0","zvw11y","zw8tk7","zxdocv","zy104","zynia7"]);
 // ---------- Music: generated in the browser, quiet, never needed to play. Shared with First Light Fishing. ----------
 // Both games call musicTick() five times a second once their sound has started (it schedules the next notes with tone(),
 // never more than about .6 seconds ahead), and music.mood(name) whenever the scene changes:
@@ -1990,7 +2039,7 @@ const moonWord = (p = moonPhase()) => t('moon' + (p < .04 || p > .96 ? 0 : p < .
 function menuTap(x, y, T) {
   const [lx, ly] = toTree(T, x, y), room = roomAt(lx, ly), [mx, my, mr] = moonAt();
   if (room) { roomT[room] = V.t; [null, sfx.whee, sfx.sizzle, sfx.wish][room](); return true; }
-  if (Math.hypot(x - mx, y - my) < Math.max(34, mr * 1.5)) { winkT = V.t; sfx.chirp(); ui.querySelectorAll('.toast').forEach(n => n.remove()); toast(moonWord(), 3400); return true; }
+  if (Math.hypot(x - mx, y - my) < Math.max(34, mr * 1.5)) { winkT = V.t; sfx.chirp(); toast(moonWord(), 3400); return true; }
   // then the things that live at the tree: today's visitor, the friends, the gifts, the additions, the flag
   return visitTap(lx, ly, T) || palTap(lx, ly, T) || giftTap(lx, ly, T) || growTap(lx, ly, T) || flagTap(lx, ly, T);
 }
@@ -2418,7 +2467,7 @@ let portrait = null, closeDlg = null;
 function owlSay(text, o = {}) {
   if (closeDlg) closeDlg();   // never two dialogs at once
   const before = document.activeElement, others = [...ui.children];
-  const v = add(`<div class="veil"><div class="dlg pop" role="dialog" aria-modal="true" aria-labelledby="owlText">
+  const v = add(`<div class="veil"><div class="dlg pop${text.length > 240 ? ' long' : ''}" role="dialog" aria-modal="true" aria-labelledby="owlText">
     ${o.title ? `<h2>${esc(o.title)}</h2>` : ''}${o.stars !== undefined ? starsHtml(o.stars, 46) : ''}
     <div class="owlrow"><canvas class="owl" style="width:108px;height:100px;flex:none"></canvas><div class="bubble" id="owlText">${esc(text)}</div></div>
     ${o.html || ''}<div class="acts"></div></div></div>`);
@@ -2437,8 +2486,10 @@ function owlSay(text, o = {}) {
   el.width = 108 * d; el.height = 100 * d;   // the owl is drawn at a scale where raised wings fit; the flashlight beam is left out
   portrait = { el, c: el.getContext('2d'), d, mood: o.mood || 'talk', t0: V.t };
   say(text);
-  if (S.voice && !S.mute) speak(text); else if (!o.quiet) sfx.hoot();   // the owl says it, or at least hoots
+  // the owl says it, or at least hoots (o.voice: the owl's recorded words, where the line on the screen carries the player's name)
+  if (S.voice && !S.mute) speak(o.voice || text); else if (!o.quiet) sfx.hoot();
   ($('.btn.go', acts) || acts.firstChild).focus({ preventScroll: true });   // Enter continues; it never restarts or leaves by surprise
+  dlgHome(v);
   return v;
 }
 // A plain modal panel with the same manners as the owl's dialog: the rest is inert, and focus goes back when it closes.
@@ -2451,7 +2502,19 @@ function modal(inner, label, cls = '') {
     v.remove(); closeDlg = null; others.forEach(el => { el.inert = false; });
     if (before && before.isConnected && before !== document.body) before.focus({ preventScroll: true });
   };
+  dlgHome(v);
   return v;
+}
+// Home stays in reach while a dialog is open. The dialog makes the bar under it inert, so its veil carries a home button
+// of its own: exactly over the bar's one, and it does what that one does (in a station: back to the Night menu). A screen
+// without such a bar leads to the title; the title screen itself needs none. The stylesheet keeps dialogs clear of it.
+function dlgHome(v) {
+  if (scene === scenes.home) return;
+  const h = [...ui.querySelectorAll('[data-home]')].find(b => !v.contains(b));
+  const b = add(`<button class="btn round vhome" aria-label="${esc(h ? h.getAttribute('aria-label') : t('home'))}">${ic(h ? h.dataset.home : 'home', 28)}</button>`, v);
+  if (h) { const r = h.getBoundingClientRect(), u = v.getBoundingClientRect(); Object.assign(b.style, { left: r.left - u.left + 'px', top: r.top - u.top + 'px', width: r.width + 'px', height: r.height + 'px' }); }
+  b.onclick = () => { closeDlg(); if (h) h.click(); else { sfx.click(); go('home'); } };
+  v.classList.add('homed');
 }
 function drawPortrait() {
   if (!portrait) return;
@@ -2461,10 +2524,14 @@ function drawPortrait() {
   owl(c, 54, 97, .78, V.t, portrait.mood === 'talk' && V.t - portrait.t0 > 2.2 ? 'idle' : portrait.mood, false);
 }
 const picsHtml = names => `<div class="pics">${names.map(n => ic(n, 40)).join('')}</div>`;
+// The language switch (the title screen, the guide's bar): each language under its own name, with its own bird. A tap
+// draws the screen `back` again in the new language.
+const langsHtml = () => `<div class="langs" role="group" aria-label="${esc(t('lang'))}">${LANGS.map((l, i) => `<button class="btn" data-l="${i}" aria-label="${esc(L.langName[i])}" aria-pressed="${i === lang}">${ic('bird:' + i, 30)}${l.toUpperCase()}</button>`).join('')}</div>`;
+const langsOn = (root, back) => root.querySelectorAll('[data-l]').forEach(b => b.onclick = () => { setLang(+b.dataset.l); sfx.chirp(); go(back); });
 
 // Top bar used by most screens. `slim` bars drop the Night, star and moonbeam pills on low landscape screens.
 function hud(backFn, extra = '', slim = false) {
-  const n = add(`<div class="hud${slim ? ' slim' : ''}"><button class="btn round" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
+  const n = add(`<div class="hud${slim ? ' slim' : ''}"><button class="btn round" data-home="home" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
     <span class="pill extra">${esc(practice ? t('g_practice') : t('night', { n: S.night }))}</span><span class="sp"></span>${extra}
     <span class="pill" id="pStars">${ic('star', 22)}<b>${S.stars}</b></span><span class="pill" id="pBeams">${ic('beam', 22)}<b>${S.beams}</b></span></div>`);
   $('button', n).onclick = () => { sfx.click(); backFn(); };
@@ -2535,7 +2602,7 @@ scenes.home = {
       <button class="btn round" id="bPie" aria-label="${esc(t('s_pie'))}">${ic('pie', 32)}</button>
       <a class="btn round" id="bFish" href="fishing/index.html#day" aria-label="${esc(t('fishing'))}">${ic('fish', 30)}</a>
       <button class="btn round" id="bBadge" aria-label="${esc(t('badgeTitle'))}">${ic('rank:' + rank(), 34)}</button></div>
-      <div class="row"><div class="langs" role="group" aria-label="${esc(t('lang'))}">${LANGS.map((l, i) => `<button class="btn" data-l="${i}" aria-label="${esc(L.langName[i])}" aria-pressed="${i === lang}">${ic('bird:' + i, 30)}${l.toUpperCase()}</button>`).join('')}</div>
+      <div class="row">${langsHtml()}
       <button class="btn round" id="bSnd" aria-label="${esc(t('sound'))}" aria-pressed="${!S.mute}">${ic('snd:' + (S.mute ? 0 : 1), 28)}</button>
       <button class="btn round" id="bVoice" aria-label="${esc(t('voice'))}" aria-pressed="${S.voice}">${ic('talk:' + (S.voice ? 1 : 0), 28)}</button></div>
       <p class="foot">${esc(t('foot'))}</p></div>`);
@@ -2549,7 +2616,7 @@ scenes.home = {
     $('#bFish', n).onclick = e => { if (asleep()) { e.preventDefault(); go('bed'); } else { S.day = 0; save(); } };   // going fishing from here is the day as well: first light does not ask again that evening
     for (const [id, sc] of [['#bAlbum', 'album'], ['#bWear', 'wear'], ['#bPie', 'pie']]) $(id, n).onclick = () => { sfx.pop(); sc === 'pie' && asleep() ? go('bed') : go(sc, { from: 'home' }); };
     this.zz = asleep();
-    n.querySelectorAll('[data-l]').forEach(b => b.onclick = () => { setLang(+b.dataset.l); sfx.chirp(); go('home'); });
+    langsOn(n, 'home');
   },
   update() { snore(this); },
   down(x, y) {
@@ -2582,18 +2649,23 @@ scenes.hub = {
     if (asleep()) return go('bed');                      // enough Nights for one day: the owl says good night
     if (S.day) return go('dawn');                        // first light comes once between two Nights
     if (S.boss === S.night && S.saga < 3 && S.night >= 10 * (S.saga + 1)) return go('saga', { ch: S.saga + 1 });   // a chapter of the Baron's story that a reload or the home button cut short
-    hud(() => go('home'), `<button class="btn round" id="bBadge" aria-label="${esc(t('badgeTitle'))}">${ic('rank:' + rank(), 34)}</button>`);
+    // the Night menu greets the player by name (the owl's own word for the player when there is no name). On a phone held
+    // sideways there is no room for a line of its own, and the greeting stands in the top bar (the stylesheet shows one of the two).
+    const hello = `<span class="pill hello">${esc(S.name ? t('hello', { n: S.name }) : t('helloDef'))}</span>`;
+    hud(() => go('home'), `${hello}<button class="btn round" id="bBadge" aria-label="${esc(t('badgeTitle'))}">${ic('rank:' + rank(), 34)}</button>`);
     $('#bBadge').onclick = () => { sfx.click(); go('badge', { from: 'hub' }); };
     // Three stations open the raid; from Night 2 a fourth, extra one takes turns (dashed card: a bonus, never needed).
     const ready = S.st.cam && S.st.gate && S.st.forge, extra = extraOf(S.night), boss = isBoss(S.night) && S.boss !== S.night;
     const cards = [['cam', 'cam', S.st.cam], ['gate', 'gateI', S.st.gate], ['forge', 'lock', S.st.forge]].concat(extra ? [[extra, EXTRA_ICON[extra], S.st.extra]] : []);
-    const n = add(`<div class="hub"><div class="cards${extra ? ' four' : ''}">${cards.map(([id, i, st]) =>
+    const n = add(`<div class="hub">${hello}<div class="cards${extra ? ' four' : ''}">${cards.map(([id, i, st]) =>
       `<button class="card ${st ? 'done' : ''}${id === extra ? ' bonus' : ''}" data-s="${id}" aria-label="${esc(t('s_' + id))}, ${st}/3">${ic(i, 44)}<span>${esc(t('s_' + id))}</span>${starsHtml(st, 18)}</button>`).join('')}</div>
       <div class="row" style="display:flex;gap:.5em;flex-wrap:wrap;justify-content:center">
       <button class="btn" id="bTinker">${ic('hammer', 28)}${esc(t('s_tinker'))}</button>
+      <button class="btn round" id="bGuide" aria-label="${esc(t('guide'))}">${ic('help', 34)}</button>
       <button class="btn gold ${ready ? 'pulse' : ''}" id="bRaid" ${ready ? '' : 'disabled'}>${ic(boss ? 'stk:m6' : 'jar', 28)}${esc(t(boss ? 'bossGo' : 'raidGo'))}</button></div></div>`);
     n.querySelectorAll('.card').forEach(b => b.onclick = () => { sfx.pop(); go(b.dataset.s); });
     $('#bTinker', n).onclick = () => { sfx.pop(); go('tinker'); };
+    $('#bGuide', n).onclick = () => { sfx.pop(); go('guide', { from: 'hub' }); };   // the same guide as on the title screen; its home button leads back here
     hubHint(n, ready);   // with hints on: what comes next, and the way into the guide (src/53-guide.js)
     $('#bRaid', n).onclick = () => { sfx.alarm(); boss ? go('boss', { then: () => go('raid') }) : go('raid'); };
     // News first (a gift from a Legendary fish, a new friend, an addition to the treehouse), then the day's first words,
@@ -2604,7 +2676,9 @@ scenes.hub = {
     if (S.briefed >= S.night) return;
     const back = S.nest > 0, b = Math.min(S.night, 8), arc = arcBrief(S.night), wx = weatherLine(S.night);   // later Nights bring new tricks; some Nights have weather
     S.briefed = S.night; S.nest = 0; save();
-    owlSay((arc ? arc.text : t('b' + b)) + (isBoss(S.night) ? ' ' + t('bBoss') : '') + (wx ? ' ' + t(wx) : ''), { title: t('night', { n: S.night }),
+    // the first briefing welcomes the player by name on the screen; the owl's voice says its recorded welcome
+    const said = (arc ? arc.text : t('b' + b)) + (isBoss(S.night) ? ' ' + t('bBoss') : '') + (wx ? ' ' + t(wx) : '');
+    owlSay(b === 1 && S.name ? said.replace(t('b1'), () => t('b1n', { n: S.name })) : said, { title: t('night', { n: S.night }), voice: said,
       html: picsHtml((arc ? arc.pics : BRIEF_PICS[b - 1]).concat(isBoss(S.night) ? ['stk:m6'] : [])),
       acts: [{ label: t('go'), cls: 'go', icon: 'play', fn: () => { if (back) { toast(t('jarsBack')); sfx.chirp(); } } }] });
   },
@@ -2752,7 +2826,7 @@ function closeNight(stolen, laughed = 0) {
 function finishNight(stolen, stars = closeNight(stolen)) {
   stolen ? sfx.hoot() : sfx.win();
   // the first lantern comes with a word about what it is for
-  owlSay(stolen ? t('raid1') + ' ' + t('raid2') : t('raid0') + (S.lit === 1 ? ' ' + t('lit1') : ''), { title: t('night', { n: S.night - 1 }), stars, mood: stolen ? 'idle' : 'cheer', quiet: true,
+  owlSay(stolen ? t('raid1') + ' ' + t('raid2') : t('raid0') + (S.lit === 1 ? ' ' + t('lit1') : ''), { title: t('night', { n: nightsDone() }), stars, mood: stolen ? 'idle' : 'cheer', quiet: true,
     html: `<div class="pics"><span class="pill pop">${ic('beam', 22)}<b>+${15 + stars * 10}</b></span>${stolen ? '' : `<span class="pill pop">${ic('lamp', 22)}${esc(t('litNew'))}</span>`}</div>`,
     acts: [{ label: t('ok'), cls: 'go', icon: 'yes', fn: () => S.promo ? go('badge', { promo: true }) : go('tinker') }] });
 }
@@ -2772,7 +2846,7 @@ scenes.badge = {
       ${o.promo ? `<div class="pics"><span class="pill pop got">${ic('room:' + r, 30)}<span>${esc(t('roomNew'))}<br><b>${esc(t('room' + r))}</b></span></span></div>`
         : NAME_FIELD()}
       <div class="pics"><span class="pill">${ic('rank:' + r, 26)}${esc(t('rank' + r))}</span><span class="pill">${ic('star', 22)}<b>${S.stars}</b></span>
-      <span class="pill">${ic('moon', 22)}${esc(t('nights'))}: <b>${S.night - 1}</b></span></div>
+      <span class="pill">${ic('moon', 22)}${esc(t('nights'))}: <b>${nightsDone()}</b></span></div>
       <div class="acts"><button class="btn round" id="bCert" aria-label="${esc(t('cert'))}">${ic('cert', 30)}</button>
       ${o.promo ? '' : `<button class="btn round" id="bWho" aria-label="${esc(t('players'))}">${ic('faces', 30)}</button>`}
       <button class="btn go" id="bOk">${ic('yes', 26)}${esc(t('ok'))}</button></div></div></div>`);
@@ -2814,9 +2888,10 @@ scenes.badge = {
   },
 };
 // ---------- How to play: the guide, practice from the guide, and hints ----------
-// The guide (the "?" beside Play, and the hint line of the Night menu) is a list of topics. Each topic is one card that
-// the owl reads aloud: the goal, one Night, every station, the Tinker Treehouse, the raid, what stars and moonbeams are
-// for, friends, the Baron, the day, the living forest, the big goal, and a word for grown-ups. "All in order" walks
+// The guide (the "?" beside Play and in the Night menu, and the hint line of the Night menu) is a list of topics. Each
+// topic is one card that the owl reads aloud: the goal, one Night, every station, the Tinker Treehouse, the raid, what
+// stars and moonbeams are for, the player's own things (dress-up, album, badge), friends, the Baron, the day, the fishing
+// game, the living forest, the big goal, and a word for grown-ups. Its bar also holds the language switch. "All in order" walks
 // through every card. The card of a mini-game has "Try it": the station opens as practice. While `practice` is set
 // nothing is saved (save() in src/20-core.js) and the first step out of the practised screens leads back to the card
 // with the save exactly as it was (go() in src/20-core.js).
@@ -2833,13 +2908,14 @@ ICON.bulb = (c, on) => {
 };
 
 // A topic: its id (text g_<id>, title g_<id>T or a station's own name), its pictures (the first one stands for the topic
-// in the list, so no two topics share it), and for a mini-game what to try:
-// [scene, what the save looks like meanwhile, the screens that belong to the practice, the scene's argument].
+// in the list, so no two topics share it), for a mini-game what to try:
+// [scene, what the save looks like meanwhile, the screens that belong to the practice, the scene's argument],
+// and the id of a topic that this card points on to (it gets a button of its own).
 const GUIDE = [
   ['goal', ['jar', 'pie', 'rank:3']],
   ['night', ['moon', 'cam', 'gateI', 'lock', 'hammer']],
   ['cam', ['cam', 'pie', 'torch'], ['cam', { night: 1 }]],
-  ['gate', ['gateI', 'badge:leaf:0', 'yes', 'no'], ['gate', { night: 1 }]],
+  ['gate', ['gateI', 'badge:leaf:0', 'yes', 'no', 'eyeI'], ['gate', { night: 1 }]],
   ['forge', ['lock', 'cat', 'rocket', 'star'], ['forge', { night: 1 }]],
   ['flies', ['fliesFly', 'fliesGold', 'jar'], ['flies', { night: 2 }]],
   ['mail', ['mailBox', 'mailSeal:leaf:0:1', 'mailKey', 'mailClock', 'mailGift'], ['mail', { night: 3 }]],
@@ -2848,10 +2924,12 @@ const GUIDE = [
   ['gadgets', ['peel', 'tramp', 'tickle', 'fan', 'honey', 'seesaw', 'drum']],
   ['raid', ['pie', 'jar', 'zipI', 'lamp']],
   ['stars', ['star', 'beam', 'rank:3', 'album', 'hanger', 'flagI']],
+  ['things', ['hanger', 'album', 'pals', 'rank:0', 'cert']],
   ['friends', ['pal:guard', 'pal:baker', 'pal:lamp', 'pals']],
   ['boss', ['stk:m6', 'cake', 'eyeI'], ['boss', { night: 5 }, ['boss'], { then: () => go('hub') }]],
   ['pie', ['pieSuit:0', 'pie', 'pieGrown'], ['pie', {}, ['pie'], { from: 'home' }]],
-  ['day', ['fish', 'fish', 'fish', 'eyeI']],
+  ['day', ['sun', 'fish', 'fish', 'fish', 'eyeI'], null, 'fish'],   // the card points on to the fishing game's own card
+  ['fish', ['fish', 'boat', 'moon']],
   ['world', ['lifeRain', 'lifeSnow', 'moon', 'leaf']],
   ['end', ['rank:3', 'stk:m6', 'star']],
   ['grown', ['faces', 'lifeZz', 'wear:party']],
@@ -2866,25 +2944,31 @@ scenes.guide = {
   enter(o = {}) {
     if (o.from) { guideFrom = o.from; guideTour = false; guideThen = ''; }
     if (o.tour) { guideTour = true; guideThen = o.then || ''; }
-    const bar = add(`<div class="hud"><button class="btn round" id="gBack" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
-      <button class="btn" id="gTour">${ic('play', 24)}${esc(t('g_tour'))}</button><span class="sp"></span>
+    // the bar: home, the walk through every card, the language switch and the bulb for the hints. On a narrow screen the
+    // last two stand in a second row, and the list starts under whatever height the bar has.
+    const bar = add(`<div class="hud gbar"><button class="btn round" id="gBack" data-home="home" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
+      <button class="btn" id="gTour">${ic('play', 24)}${esc(t('g_tour'))}</button>${langsHtml()}
       <button class="btn round" id="gHints" aria-label="${esc(t('g_hints'))}" aria-pressed="${!!S.hints}">${ic('bulb:' + (S.hints ? 1 : 0), 34)}</button></div>`);
     $('#gBack', bar).onclick = () => { sfx.click(); go(guideFrom); };
     $('#gTour', bar).onclick = () => { sfx.pop(); guideTour = true; this.page(0); };
     $('#gHints', bar).onclick = () => { S.hints = S.hints ? 0 : 1; save(); sfx.click(); go('guide'); toast(t(S.hints ? 'g_on' : 'g_off'), 2200); };
+    langsOn(bar, 'guide');   // the guide is drawn again in the new language; where its home button leads stays as it was
     const n = add(`<div class="guide"><div class="dlg gbox" role="group" aria-label="${esc(t('guide'))}"><h2>${esc(t('g_all'))}</h2>
       <div class="gtopics">${GUIDE.map(([id, pics], i) => `<button class="btn" data-g="${i}">${ic(pics[0], 30)}<span>${esc(guideTitle(id))}</span></button>`).join('')}</div></div></div>`);
     n.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { sfx.pop(); guideTour = false; this.page(+b.dataset.g); });
+    this.resize();
     if (!S.toured) { S.toured = 1; save(); }   // the new mark on the home screen's "?" goes out
     const at = typeof o.page === 'number' ? o.page : GUIDE.findIndex(g => g[0] === o.page);
     if (at >= 0) this.page(at, o.tried); else if (o.tour) this.page(0);
   },
+  resize() { const b = $('.gbar'), g = $('.guide'); if (b && g) g.style.top = b.offsetHeight + 'px'; },
   // One card. In a tour: all topics, try it, next. Alone: try it, OK. After its practice the owl says so instead of
   // reading the card again.
   page(i, tried) {
-    const [id, pics, play] = GUIDE[i], last = i === GUIDE.length - 1, acts = [];
+    const [id, pics, play, see] = GUIDE[i], last = i === GUIDE.length - 1, acts = [], seeAt = GUIDE.findIndex(g => g[0] === see);
     if (guideTour) acts.push({ label: t('g_list'), fn: () => { guideTour = false; } });
     if (play) acts.push({ label: t('g_try'), icon: pics[0], fn: () => tryOut(i) });
+    if (seeAt >= 0 && !guideTour) acts.push({ label: guideTitle(see), icon: GUIDE[seeAt][1][0], fn: () => this.page(seeAt) });   // (in a tour that card comes next anyway)
     if (guideTour && !last) acts.push({ label: t('g_next'), cls: 'go', icon: 'play', fn: () => this.page(i + 1) });
     else acts.push({ label: t('ok'), cls: 'go', icon: 'yes', fn: () => { const to = guideTour && guideThen; guideTour = false; if (to) go(to); } });
     owlSay(t(tried ? 'g_tried' : 'g_' + id), { title: `${i + 1}/${GUIDE.length} · ${guideTitle(id)}`, html: picsHtml(pics), mood: tried ? 'cheer' : 'talk', acts });
@@ -2985,19 +3069,20 @@ scenes.album = {
     this.from = o.from || this.from || 'home';
     this.page = o.page === undefined ? Math.max(0, STK_SETS.findIndex(set => set.some(id => S.stk[id] === 1))) : o.page;   // open where something is new
     const have = STK_SETS.flat().filter(id => S.stk[id]).length, set = STK_SETS[this.page];
-    const bar = add(`<div class="hud"><button class="btn round" id="aBack" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
-      <span class="pill">${ic('album', 24)}<span class="extra">${esc(t('album'))}</span></span>
-      <button class="btn round" id="aPals" aria-label="${esc(t('palsT'))}">${ic('pals', 30)}</button><span class="sp"></span>
+    const bar = add(`<div class="hud"><button class="btn round" id="aBack" data-home="home" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
+      <span class="pill">${ic('album', 24)}<span class="extra">${esc(t('album'))}</span></span><span class="sp"></span>
       <span class="pill">${ic('star', 22)}<span><b>${have}</b>/${STK_SETS.flat().length}</span></span></div>`);
     $('#aBack', bar).onclick = () => { sfx.click(); go(this.from); };
-    $('#aPals', bar).onclick = () => { sfx.pop(); go('pals', { from: 'album' }); };   // the friendly magpies have a page of their own
-    // Portrait: three stickers in a row; landscape: six. The pictures take the room that is left.
+    // The tabs: the three sets of stickers, and the friendly magpies, who have a page of their own. On a narrow screen the
+    // tabs stand in two rows, so the pictures take whatever room the tabs leave. Portrait: three stickers in a row; landscape: six.
+    const n = add(`<div class="album"><div class="tabs" role="group" aria-label="${esc(t('album'))}">${STK_SETS.map((s, i) => `<button class="btn" data-p="${i}" aria-pressed="${i === this.page}">${ic('stk:' + s[0], 30)}<span>${esc(t('set' + i))}</span></button>`).join('')}
+      <button class="btn" id="aPals" aria-pressed="false">${ic('pals', 30)}<span>${esc(t('palsT'))}</span></button></div></div>`);
+    $('#aPals', n).onclick = () => { sfx.pop(); go('pals', { from: 'album' }); };
     const cols = wide() ? 6 : 3, rows = Math.ceil(set.length / cols);
-    const px = clamp(Math.min((Math.min(V.w, 720) - 16) / cols - 22, (V.h - 150) / rows - 46), 40, 110) | 0;
-    const n = add(`<div class="album"><div class="tabs" role="group">${STK_SETS.map((s, i) => `<button class="btn" data-p="${i}" aria-pressed="${i === this.page}">${ic('stk:' + s[0], 30)}<span>${esc(t('set' + i))}</span></button>`).join('')}</div>
-      <div class="stks" style="grid-template-columns:repeat(${cols},1fr)">${set.map(id => S.stk[id]
+    const px = clamp(Math.min((Math.min(V.w, 720) - 16) / cols - 22, (V.h - $('.tabs', n).getBoundingClientRect().bottom - 16) / rows - 46), 40, 110) | 0;
+    add(`<div class="stks" style="grid-template-columns:repeat(${cols},1fr)">${set.map(id => S.stk[id]
         ? `<button class="stk${S.stk[id] === 1 ? ' new' : ''}" data-id="${id}">${ic('stk:' + id, px)}<span>${esc(t('k_' + id))}</span></button>`
-        : `<button class="stk none" data-id="" aria-label="?">${ic('stk0', px)}<span>?</span></button>`).join('')}</div></div>`);
+        : `<button class="stk none" data-id="" aria-label="?">${ic('stk0', px)}<span>?</span></button>`).join('')}</div>`, n);
     n.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { sfx.click(); ui.innerHTML = ''; this.enter({ page: +b.dataset.p }); });
     n.querySelectorAll('.stk').forEach(b => b.onclick = () => {
       const id = b.dataset.id;
@@ -3022,7 +3107,7 @@ scenes.wear = {
   enter(o = {}) {
     this.from = o.from || this.from || 'home'; this.who = o.who || this.who || 'owl'; this.sel = '';
     tryOn = null;
-    const bar = add(`<div class="hud"><button class="btn round" id="wBack" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
+    const bar = add(`<div class="hud"><button class="btn round" id="wBack" data-home="home" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
       <span class="pill">${ic('hanger', 24)}<span class="extra">${esc(t('wardrobe'))}</span></span>
       <button class="btn round" id="wFlag" aria-label="${esc(t('flagT'))}">${ic('flagI', 30)}</button><span class="sp"></span>
       <span class="pill" id="pBeams">${ic('beam', 22)}<b>${S.beams}</b></span></div>`);
@@ -3260,7 +3345,6 @@ function palTap(lx, ly, T) {
   if (GIFTS.some(gid => g[gid] === 1 && (p => Math.hypot(p[0] - sx, p[1] - sy) < best * k)(giftAt(gid, T)))) return false;
   palT[id] = V.t;
   speak(t('pal_n_' + id), 'pie');   // magpie chatter
-  ui.querySelectorAll('.toast').forEach(n => n.remove());
   toast(t('pal_n_' + id) + ' · ' + t('pal_j_' + id), 2200, [T.ox + px * k, T.oy + (py - 84 * u) * k]);   // the name goes over the friend it belongs to
   return true;
 }
@@ -3272,7 +3356,7 @@ scenes.pals = {
     // the number shown is the one that brings the next friend not met yet (at the top rank the guard came without any)
     const n = S.caught | 0, next = PAL_AT.find((v, i) => !palMet(PALS[i])), back = this.from === 'album' ? 'album' : 'home';
     // the top bar: back where the page came from, the title, and the kind catches so far with the number for the next friend
-    const bar = add(`<div class="hud"><button class="btn round" id="palBack" aria-label="${esc(t(back))}">${ic(back, 28)}</button>
+    const bar = add(`<div class="hud"><button class="btn round" id="palBack" data-home="${back}" aria-label="${esc(t(back))}">${ic(back, 28)}</button>
       <span class="pill">${ic('pals', 24)}<span class="extra">${esc(t('palsT'))}</span></span><span class="sp"></span>
       <span class="pill" role="img" aria-label="${esc(next ? t('pal_count', { n, m: next }) : t('pal_countAll', { n }))}">${ic('pie', 26)}<b>${n}</b>${next ? `<span>/ ${next}</span>` : ''}</span></div>`);
     $('#palBack', bar).onclick = () => { sfx.click(); go(this.from); };
@@ -3296,7 +3380,7 @@ scenes.pals = {
     b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
     speak(t(id === 'baron' ? 'k_m6' : 'pal_n_' + id), 'pie');
     if (id !== 'baron') { S.helper = id; save(); this.mark(); }
-    later(() => { ui.querySelectorAll('.toast').forEach(n => n.remove()); toast(t(id === 'baron' ? 'pal_baronSay' : 'pal_do_' + id), 3800); }, 350);   // one line at a time, however fast the taps
+    later(() => toast(t(id === 'baron' ? 'pal_baronSay' : 'pal_do_' + id), 3800), 350);   // (one line at a time, however fast the taps: a new line takes the old one's place)
   },
   // The helper's card: pressed, a white rim with a gold ring, and a tick in its corner.
   mark() {
@@ -3328,7 +3412,7 @@ function certCanvas() {
   text(t('certText'), 860, 496, font(600, 34), '#4a3a1a', 700);
   text(t('rank' + r), 860, 584, font(900, 62), '#b07a00', 700);
   drawIcon(c, 'star', 700, 668, 60); c.textAlign = 'left'; text(String(S.stars), 742, 686, font(800, 50), '#2a1c05');
-  drawIcon(c, 'moon', 900, 668, 56); text(`${t('nights')}: ${S.night - 1}`, 940, 686, font(800, 44), '#2a1c05', 230);
+  drawIcon(c, 'moon', 900, 668, 56); text(`${t('nights')}: ${nightsDone()}`, 940, 686, font(800, 44), '#2a1c05', 230);
   c.textAlign = 'center';
   line(c, [520, 850, 1010, 850], '#8a7a5a', 3);
   text(t('certSign'), 765, 894, font(600, 28), '#4a3a1a', 520);
@@ -3339,7 +3423,7 @@ function certCanvas() {
 }
 function showCert() {
   const url = certCanvas().toDataURL('image/png');
-  const v = modal(`<img class="cert" alt="${esc(t('certTitle'))}: ${esc(playerName())}, ${esc(t('rank' + rank()))}" src="${url}">
+  const v = modal(`<img class="cert" alt="${esc(t('certTitle'))}: ${esc(playerName())}, ${esc(t('rank' + rank()))}, ${esc(t('nights'))}: ${nightsDone()}" src="${url}">
     <div class="acts"><a class="btn" id="cSave" download="night-watch-certificate.png" href="${url}">${ic('saveI', 26)}${esc(t('saveImg'))}</a>
     <button class="btn" id="cPrint">${ic('printI', 26)}${esc(t('print'))}</button>
     <button class="btn go" id="cOk">${ic('yes', 26)}${esc(t('ok'))}</button></div>`, t('cert'), 'certdlg');
@@ -3487,7 +3571,7 @@ scenes.flag = {
   enter(o = {}) {
     Object.assign(this, { from: o.from || 'home', col: this.col >= 0 ? this.col : 2, drag: false, dirty: false, kb: false, cx: 0, cy: 0 });
     if (S.flag !== flagCode()) S.flag = '';   // a damaged value counts as no painting yet: the owl's first word comes as well
-    this.bar = add(`<div class="hud"><button class="btn round" id="flagBack" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
+    this.bar = add(`<div class="hud"><button class="btn round" id="flagBack" data-home="home" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
       <span class="pill">${ic('flagI', 24)}<span>${esc(t('flagT'))}</span></span><span class="sp"></span>
       <button class="btn" id="flagNew">${ic('retry', 24)}<span>${esc(t('flag_new'))}</span></button></div>`);
     $('#flagBack', this.bar).onclick = () => { sfx.click(); go(this.from); };
@@ -3598,8 +3682,10 @@ let scanPat = null;
 scenes.cam = {
   enter() {
     const n = S.night, cams = Math.min(count('cam'), 4), lamps = Math.min(count('lamp'), 3);
-    // Difficulty creeps up gently with the Night; Tinker cameras slow magpies, lanterns brighten the feeds.
-    this.P = { feeds: n <= 2 ? 4 : n <= 5 ? 6 : 9, need: Math.min(4 + n, 12), speed: Math.min(.12 + .012 * n, .25) * (1 - .05 * cams),
+    // Difficulty creeps up gently with the Night; Tinker cameras slow magpies, lanterns brighten the feeds. On the very
+    // first Night the magpies walk at half speed: each one is in view about twice as long as on the second Night, long
+    // enough for a six-year-old to spot it and tap it (the round's time below grows with it).
+    this.P = { feeds: n <= 2 ? 4 : n <= 5 ? 6 : 9, need: Math.min(4 + n, 12), speed: Math.min(.12 + .012 * n, .25) * (n === 1 ? .5 : 1) * (1 - .05 * cams),
       gap: Math.max(2, 4.6 - .32 * n), live: n >= 8 ? 3 : n >= 5 ? 2 : 1, hide: (1.5 - Math.min(n, 8) * .07) * (1 - .12 * lamps),
       friendGap: n === 1 ? 6 : Math.max(2.2, 4.5 - .25 * n), decoy: n >= 4 ? .2 : 0, statics: n >= 6, dark: .18 - .05 * lamps };
     this.fav = n >= 3 ? shuffle([...Array(this.P.feeds).keys()]).slice(0, 2) : [];
@@ -3810,15 +3896,25 @@ function gateVisitor(c, v, s, t, o = {}) {
   if (v.friend || v.costume !== undefined && !o.off) return critter(c, 0, 0, s, t, v.friend ? v.kind : v.costume, o.sad);
   magpie(c, 0, 0, s, t, { dir: o.dir || -1, pose: o.pose, face: o.face, disguise: o.off ? 0 : v.disguise });
 }
+// A round that is left by the home button waits here until the player comes back: the same password, badge and queue,
+// the same score. It belongs to its Night. A finished round starts afresh, and so does a practice round from the guide.
+// ponytail: kept in memory only, so a reload starts a fresh round; put it into the save if that ever matters.
+let gateKept = null;
 scenes.gate = {
   enter() {
-    const n = S.night;
-    this.pass = shuffle([...GSYM]).slice(0, 3);
-    this.badge = { shape: pick(SHAPE_KEYS), style: Math.random() * 4 | 0 };
-    this.q = gateQueue(n, this.pass, this.badge);
-    Object.assign(this, { i: 0, state: 'in', at: V.t, correct: 0, wrong: 0, let: 0, streak: 0, noT: 0, cut: 0, run: false, won: false,
+    const n = S.night, kept = !practice && gateKept && gateKept.n === n ? gateKept.round : null;
+    if (!practice) gateKept = null;
+    this.prac = !!practice;
+    if (kept) Object.assign(this, kept);
+    else {
+      this.pass = shuffle([...GSYM]).slice(0, 3);
+      this.badge = { shape: pick(SHAPE_KEYS), style: Math.random() * 4 | 0 };
+      this.q = gateQueue(n, this.pass, this.badge);
+      Object.assign(this, { i: 0, correct: 0, wrong: 0, let: 0, streak: 0 });
+    }
+    Object.assign(this, { state: 'in', at: V.t, noT: 0, cut: 0, run: false, won: false, why: '',
       patience: n >= 3 ? (15 - Math.min(n, 8) * .8) * (count('bell') ? 1.35 : 1) : 1e9 });
-    hud(() => go('hub'), `<span class="pill" id="pGate">${ic('yes', 20)}<span><b>0</b>/${this.q.length}</span></span>`);
+    hud(() => go('hub'), `<span class="pill" id="pGate">${ic('yes', 20)}<span><b>${this.correct}</b>/${this.q.length}</span></span>`);
     const lab = s => `<span class="lab">${ic(s, 34)}${esc(t(s))}</span>`;
     this.ref = add(`<div class="ref"><span class="lab">${esc(t('pass'))}</span>${this.pass.map(lab).join('')}<span class="sep"></span>
       <span class="lab">${ic(`badge:${this.badge.shape}:${this.badge.style}`, 40)}${esc(t('badge'))}</span></div>`);
@@ -3832,7 +3928,28 @@ scenes.gate = {
     if (this.eyeB) { this.eyeB.onclick = () => this.eyeUse(); this.resize(); }
     owlSay(t('gateIntro'), { html: picsHtml([`badge:${this.badge.shape}:${this.badge.style}`, ...this.pass]), acts: [{ label: t('go'), cls: 'go', icon: 'play', fn: () => { this.run = true; this.at = V.t; } }] });
   },
+  // Leaving in the middle of a round keeps it (see gateKept); a visitor who has been answered is not asked again.
+  exit() {
+    const i = this.i + (this.state === 'out' ? 1 : 0);
+    if (this.prac || this.cut || this.state === 'end' || i >= this.q.length) return;
+    gateKept = { n: S.night, round: { pass: this.pass, badge: this.badge, q: this.q, i, correct: this.correct, wrong: this.wrong, let: this.let, streak: this.streak } };
+  },
   key(e) { if (e.key === 'ArrowLeft') this.decide(true); if (e.key === 'ArrowRight') this.decide(false); },
+  // What was wrong with a trickster, in the owl's words: the badge first, then the password. A word that differs is named:
+  // the right one, and the one this visitor said.
+  whyNot(v) {
+    const out = [], b = v.badge, sorted = p => [...p].sort().join();
+    if (!b) out.push(t('gateWhyNone'));
+    else if (b.shape !== this.badge.shape) out.push(t('gateWhyShape'));
+    else if (b.style !== this.badge.style) out.push(t('gateWhyStyle'));
+    if (v.pass.length < this.pass.length) out.push(t('gateWhyShort'));
+    else if (v.pass.join() !== this.pass.join()) {
+      const j = v.pass.findIndex((p, i) => p !== this.pass[i]);
+      if (sorted(v.pass) === sorted(this.pass)) out.push(t('gateWhyOrder'));
+      else out.push(t('gateWhyWord', { w: t(this.pass[j]) }), t('gateWhySaid', { w: t(v.pass[j]) }));
+    }
+    return out.join(' ');
+  },
   // One close look of the owl's at the visitor who waits: the wrong thing gets a ring (the badge first), a friend gets two ticks.
   // The owl only points; the Chief still decides. Between visitors a tap does nothing and costs nothing; a second tap repeats the words.
   eyeUse() {
@@ -3869,9 +3986,9 @@ scenes.gate = {
     } else {
       this.streak = 0; sfx.oops(); this.noT = V.t + 1.2;
       if (letIn) {
-        this.let++;
+        this.let++; this.why = this.whyNot(v);
         if (this.let >= 2) { this.cut = V.t; later(() => { toast(t('alarm')); sfx.alarm(); }, 900); }
-        else later(() => toast(t('gateTip')), 500);   // the first slip gets its tip at once
+        else { const why = this.why; later(() => toast(why, 1800 + why.length * 45), 500); }   // the first slip is explained at once: what was wrong (a longer line stays longer)
       } else { this.wrong++; later(() => toast(t('gateOops')), 200); }
     }
     $('#pGate b').textContent = this.correct;
@@ -3883,7 +4000,7 @@ scenes.gate = {
     }
   },
   next() {
-    if (this.cut) { this.run = false; return stationFail('gate', t('soft') + ' ' + t('gateTip')); }
+    if (this.cut) { this.run = false; return stationFail('gate', t('soft') + ' ' + this.why + ' ' + t('gateTip')); }
     if (++this.i < this.q.length) { this.state = 'in'; this.at = V.t; return; }
     this.run = false; this.state = 'end';
     if (this.won) stationWin('gate', this.stars, this.gain);
@@ -3914,11 +4031,24 @@ scenes.gate = {
     owl(ctx, gx, gy, g * .62, t0, t0 < this.noT ? 'no' : 'idle');
     zip(ctx, gx + 44 * g + (this.cut ? Math.sin(t0 * 14) * 30 : Math.sin(t0) * 12), gy - gh - 70 * g + Math.sin(t0 * 2) * 6, Math.max(.7, g * .8), t0, 1);
     if (this.cut) jar(ctx, gx + 62 * g, gy - 14 * g, 15 * g, t0, 1);   // the jar the trickster is after, just outside the gate
-    // the waiting queue: always on screen, between the visitor and the right edge
+    // The waiting queue: always on screen, and always clear of the visitor in question (a magpie's tail reaches 63 units to
+    // the right of its feet, a cap 52 to the left). Beside that visitor where the screen has the room. On a phone held
+    // upright it has none: there the next ones wait on the slope behind, smaller and higher, on their way down to the gate.
     const wob = this.state === 'ask' && dt > this.patience && !still() ? Math.sin(t0 * 9) * .07 : 0;
-    const step = Math.min((V.w - 8 - (cx + 30 * s)) / 3, 32 * s), qs = step / 52;
+    const q0 = cx + 68 * s, edge = land && V.h <= 520 ? this.ref.getBoundingClientRect().left - 6 : V.w - 8, beside = Math.min(32 * s / 52, (edge - q0) / 219);
+    const hx = cx + 40 * s, hr = V.w + 12 - hx, hh = 46 * s, qh = clamp((V.w - 4 - hx) / 120, .34, .62);
+    if (beside < .45) {   // the slope: the left flank of a round hill whose top lies just off the screen, with a rim of moonlight
+      ctx.beginPath(); ctx.ellipse(V.w + 12, gy + 6, hr, hh + 4, 0, Math.PI, Math.PI * 1.5); ctx.lineTo(V.w + 12, gy + 6); ctx.closePath(); ctx.fillStyle = '#1a2c6e'; ctx.fill();
+      ctx.beginPath(); ctx.ellipse(V.w + 12, gy + 6, hr, hh + 4, 0, Math.PI, Math.PI * 1.5); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(150,180,255,.4)'; ctx.stroke();
+    }
+    const spot = beside >= .45 ? j => [q0 + 52 * j * beside, gy, beside]
+      : j => { const x = hx + 50 * qh + (j - 1) * 40 * qh, k = (V.w + 12 - x) / hr; return [x, gy + 2 - hh * Math.sqrt(Math.max(0, 1 - k * k)), qh]; };
+    this.queue = [];   // where the waiting ones stand; with `front` (the visitor in question) it is read by the layout audit
     for (let j = Math.min(3, this.q.length - 1 - this.i); j >= 1; j--) {
-      ctx.save(); ctx.translate(cx + 30 * s + (j - .5) * step, gy); ctx.rotate(wob * .7); ctx.globalAlpha = .75;
+      const [qx, qy, qs] = spot(j);
+      if (qx + 63 * qs > V.w - 2) continue;   // no room for this one: it is still on its way
+      this.queue.push([qx, qy, qs, this.q[this.i + j]]);
+      ctx.save(); ctx.translate(qx, qy); ctx.rotate(wob * .7); ctx.globalAlpha = .75;
       gateVisitor(ctx, this.q[this.i + j], qs, t0 + j);
       ctx.restore();
     }
@@ -3936,6 +4066,7 @@ scenes.gate = {
     }
     // a shooed trickster loses the disguise at once; one who slipped in drops the costume a moment later
     const off = this.state === 'out' && (v.letIn ? v.costume !== undefined && dt > .3 : dt > .15);
+    this.front = [x, gy, sc];
     ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, gy); ctx.rotate(this.state === 'ask' ? wob : 0);
     gateVisitor(ctx, v, sc, t0, { dir, pose, face, sad, off });
     ctx.restore();
@@ -4803,8 +4934,8 @@ scenes.flies = {
     this.spawnT = Math.max(this.spawnT, rnd(.5, 1));
     $('#pFlies b').textContent = this.pts;
     const k = this.P.goals.findIndex(v => before < v && this.pts >= v);
-    // a new star wins over any other message (two notes at once would sit on top of each other)
-    if (k >= 0) later(() => { sfx.sparkle(); ui.querySelectorAll('.toast').forEach(n => n.remove()); toast(t('fl_star')); burst(G.mx - G.mw / 2 - G.ms * .7, this.markY(k, G), 10, { kind: 'star', speed: 90, g: 0, size: 6, life: .8 }); }, 250);
+    // (a new star wins over any other message: a new line takes the old one's place)
+    if (k >= 0) later(() => { sfx.sparkle(); toast(t('fl_star')); burst(G.mx - G.mw / 2 - G.ms * .7, this.markY(k, G), 10, { kind: 'star', speed: 90, g: 0, size: 6, life: .8 }); }, 250);
   },
   finish() {
     this.run = false; this.time = 0; this.endT = V.t;
@@ -5478,15 +5609,28 @@ scenes.raid = {
     const st = this.test ? { cam: S.st.cam || 2, gate: S.st.gate || 2, forge: S.st.forge || 2 } : S.st;
     this.n = S.night; this.plan = raidPlan(this.n, st); this.holds = st.forge - 1;
     this.R = makeRaid(this.plan, this.holds, this.n);
-    add(`<div class="hud">${this.test ? `<button class="btn round" id="rBack" aria-label="${esc(t('done'))}">${ic('no', 24)}</button>` : ''}
-      <span class="pill">${ic('pie', 24)}${esc(t(this.test ? 'testRaid' : 'raidGo'))}</span><span class="sp"></span>${palPill()}</div>`);
+    // How long this raid will take: the same raid is run once without sound (a raid is the same every time), for the bar in
+    // the top bar that shows how far it is. A raid only wants watching, and nothing on the screen should look frozen.
+    const pre = makeRaid(this.plan, this.holds, this.n);
+    quiet = true; while (!pre.done && pre.t < 600) stepRaid(pre, STEP); quiet = false;
+    this.len = pre.t; this.pct = -1;
+    const label = esc(t(this.test ? 'testRaid' : 'raidGo'));
+    add(`<div class="hud tbar">${this.test ? `<button class="btn round" id="rBack" aria-label="${esc(t('done'))}">${ic('no', 24)}</button>` : ''}
+      <span class="pill">${ic('pie', 24)}<span>${label}</span><span class="prog" role="progressbar" aria-label="${label}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></span></span><span class="sp"></span>${palPill()}</div>`);
     if (this.test) $('#rBack').onclick = () => { sfx.click(); go('tinker'); };   // a practice raid can be left at any time
-    if (!this.test) later(() => toast(t('raidGo')), 100);
+    // what the player does in a raid: watch (the defences work on their own; a tap does nothing)
+    later(() => toast((this.test ? '' : t('raidGo') + ' ') + t('raidHow'), 3600), 100);
+  },
+  // The bar follows the raid's own clock; the page is touched only when the whole number changes.
+  bar() {
+    const p = this.R.done ? 100 : Math.min(99, Math.floor(this.R.t / this.len * 100)), b = $('.prog');
+    if (p === this.pct || !b) return;
+    this.pct = p; b.firstChild.style.width = p + '%'; b.setAttribute('aria-valuenow', p);
   },
   update(dt) {
     if (this.rp) return this.replay(dt);
     const R = this.R;
-    if (!R.done) { for (this.acc += dt; this.acc >= STEP && !R.done; this.acc -= STEP) stepRaid(R, STEP); return; }
+    if (!R.done) { for (this.acc += dt; this.acc >= STEP && !R.done; this.acc -= STEP) stepRaid(R, STEP); this.bar(); return; }
     if (this.endT) return;
     this.endT = V.t;
     // What the raid earned is counted and saved now; the replay and the owl's word come after.
@@ -5789,8 +5933,8 @@ function bossWrap(text, w) {
   for (const word of text.split(' ')) { const s = out.length ? out[out.length - 1] + ' ' + word : word; if (out.length && ctx.measureText(s).width <= w) out[out.length - 1] = s; else out.push(word); }
   return out;
 }
-// The owl's short lines: a new one replaces one still showing, so two never sit on top of each other.
-function bossToast(key) { ui.querySelectorAll('.toast').forEach(n => n.remove()); toast(t(key)); }
+// The owl's short lines.
+function bossToast(key) { toast(t(key)); }
 
 // ----- Pieces of the stage. All are drawn in stage units: the ground is y = 0 and the gate stands at x = 12..80 -----
 
@@ -6772,7 +6916,7 @@ scenes.pie = {
     this.fake = { dis: 0, shape: pick(SHAPE_KEYS.filter(k => k !== this.badge.shape)), style: (this.badge.style + 1 + (Math.random() * 3 | 0)) % 4, pass: [null, null, null] };
     Object.assign(this, { kind: Math.random() * 5 | 0, looks: 2, back: '', n: 0, ev: 0, over: false, letIn: false, panel: null, spyBar: null,
       line: null, mark: null, spots: null, result: null, popT: -9, pv: null });
-    this.hudEl = add(`<div class="hud"><button class="btn round" id="pieHome" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
+    this.hudEl = add(`<div class="hud"><button class="btn round" id="pieHome" data-home="home" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
       <span class="pill">${ic('pie', 26)}<span>${esc(t('s_pie'))}</span></span><span class="sp"></span>
       <button class="btn" id="pieLook" style="display:none;padding:.2em .8em">${ic('scope', 28)}<b></b></button></div>`);
     $('#pieHome', this.hudEl).onclick = () => { sfx.click(); go('home'); };

@@ -29,11 +29,13 @@ const sentences = new Function(audio.match(/const sentences = [^\n]+/)[0] + '; r
 // Which rows are spoken: every row whose English text ends like a sentence, the rows in ALSO, and every name (k_ rows),
 // but not the rows in SKIP (labels, lines of the magpies, lines that carry a free value such as the player's name).
 const SKIP = new Set(['foot', 'go', 'cracked', 'finale', 'eraseAsk', 'bedAsk', 'giveUp', 'roomNew', 'stkNew', 'bossGo', 'code_done', 'pie_ready',   // labels, titles, questions for grown-ups
+  'hello', 'helloDef', 'b1n',                                                                                                              // the Night menu's greeting (a label), and the first briefing with the player's name (the owl says b1)
   'please', 'lost', 'mail_hehe', 'pie_mIn', 'pie_mSulk', 'boss_say1', 'boss_say2', 'boss_say3', 'boss_say4']);                             // magpies and the Baron: bubbles and babble
 const ALSO = new Set(['poor']);
 // Rows with a placeholder that only takes a few known values are recorded once for each value.
 const ROUTES = ['r_lt', 'r_rt', 'r_lb', 'r_rb', 'r_lad', 'r_sky'];
-const FILL = { o_route: ['r', ROUTES], o_busy: ['r', ROUTES], promo: ['r', ['rank1', 'rank2', 'rank3']], streak: ['n', [3, 5, 8]] };
+const WORDS = new Function(read('src/70-gate.js').match(/const GSYM = [^\n]+/)[0] + '; return GSYM;')();   // the password's picture words, from the game's own list
+const FILL = { o_route: ['r', ROUTES], o_busy: ['r', ROUTES], promo: ['r', ['rank1', 'rank2', 'rank3']], streak: ['n', [3, 5, 8]], gateWhyWord: ['w', WORDS], gateWhySaid: ['w', WORDS] };
 // What the voice is given can differ from what the screen shows (a clip is named after the shown sentence):
 // - a number is written out: "3 di fila!" was read in another language;
 // - the Russian word for magpie carries a stress mark: without it some lines sounded like the number forty;

@@ -50,7 +50,8 @@
     // the newer things start quiet: no news of a friend (a Chief already has the guard), no visitor's wish today, the day's
     // first words already said, no hints (a reminder would speak into other checks) and the guide already seen
     caught: 0, pals: n > 7 ? { guard: 1 } : {}, helper: '', lit: 0, grow: 0, visit: { d: today(), done: 1, n: 0 }, mem: { d: '', k: '' }, memD: today(), eye: 0, flag: '', bday: '', bdayY: 0, sup: '', saga: 0, hints: 0, toured: 1 });
-    tryOn = null; scenes.tinker.page = 0; practice = null; };
+    // (a reset is a new start: a Gate Check round that is waiting, or on the screen, is not kept for the next visit)
+    tryOn = null; scenes.tinker.page = 0; practice = null; gateKept = null; scenes.gate.state = 'end'; };
   const worth = () => S.beams + S.items.reduce((a, i) => a + ITEMS[i.t].cost, 0);   // moonbeams in hand plus moonbeams built into the tree
   const key = (k, target = document.body) => target.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
   const ptr = (type, x, y, target = cv) => target.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, bubbles: true, cancelable: true, pointerId: 1 }));
@@ -217,6 +218,159 @@
     check(scene.id === 'hub', 'the tour of a new player ends at the Night menu, now at ' + scene.id); clickDlg();
     novice(0); $('#bPlay').click(); clickDlg(); check(scene.id === 'hub', 'without hints nobody is asked'); clickDlg();
     go('guide', { from: 'home' }); check(S.toured === 1, 'opening the guide takes the mark away'); reset(1);
+  };
+
+  // The second QA list (2026-11-16): the guide's patches (A1 to A8) and the game's fixes (B1 to B10; B11 is checked in the
+  // fishing game's own driver).
+  const round2Checks = async () => {
+    // A1: the Night menu has the guide's button; the guide leads back, and nothing of the Night has changed
+    where = 'round 2: the guide from the Night menu';
+    reset(3); Object.assign(S, { stars: 12, beams: 77, st: { cam: 2, gate: 1, forge: 0, extra: 3 } }); save(); go('hub');
+    const night = () => JSON.stringify([S.night, S.stars, S.beams, S.st]), was = night();
+    check(!!$('.hub #bGuide') && $('.hub #bGuide').getAttribute('aria-label') === t('guide'), 'the Night menu has the guide\'s button');
+    $('.hub #bGuide').click(); check(scene.id === 'guide' && document.querySelectorAll('.gtopics .btn').length === GUIDE.length, 'which opens the same guide as the title screen');
+    $('[data-g="1"]').click(); clickDlg(); $('#gBack').click();
+    check(scene.id === 'hub' && !$('.veil') && night() === was && JSON.stringify(JSON.parse(localStorage.getItem(SAVE)).st) === JSON.stringify(S.st), `back at the Night menu the Night, the stars, the moonbeams and the stations are as they were: ${night()}`);
+
+    // A2 to A7: what the cards say, in every language. The names are the game's own rows, so a renamed button cannot leave the guide behind.
+    where = 'round 2: the cards';
+    const first = id => { let n = 2; while (extraOf(n) !== id) n++; return n; }, ORD = { 2: ['second', 'вторую', 'seconda'], 3: ['third', 'третью', 'terza'], 4: ['fourth', 'четвёртую', 'quarta'] };
+    for (let l = 0; l < 3; l++) {
+      setLang(l);
+      const has = (k, ...words) => words.every(w => t(k).toLowerCase().includes(w.toLowerCase())), says = (k, ...rows) => has(k, ...rows.map(r => t(r)));   // words as written, or the game's own rows
+      check(says('g_things', 'wardrobe', 'album', 'set0', 'set1', 'set2', 'palsT', 'badgeTitle', 'rank0') && guideTitle('things') === t('g_thingsT'), `"Your things" names dress-up, the album with its four pages, the badge and the first rank (${LANGS[l]})`);
+      check(guideTitle('fish') === t('fishing') && says('g_day', 'fishing') && t('g_fish').length > 200, `the fishing game has a card under its own name, and "By day" points to it (${LANGS[l]})`);
+      check(says('g_tinker', 'testRaid'), `the Tinker Treehouse card names the test raid as its button does (${LANGS[l]})`);
+      for (const id of EXTRAS) check(has('g_' + id, ORD[first(id)][l]) && extraOf(first(id) + 3) === id && extraOf(first(id) + 1) !== id, `the card of ${id} says when it opens: Night ${first(id)}, then every third Night (${LANGS[l]})`);
+      check(has('g_night', ['bonus', 'бонус', 'bonus'][l], ['second', 'второй', 'seconda'][l]), `"One Night" explains the bonus station (${LANGS[l]})`);
+      check(has('g_gate', ['eye', 'глаз', 'occhio'][l]), `the Gate Check card tells of the owl's eye (${LANGS[l]})`);
+    }
+    setLang(0);
+    check(GUIDE.find(g => g[0] === 'gate')[1].includes('eyeI'), 'the Gate Check card shows the eye');
+    reset(3); go('guide', { from: 'home' }); $(`[data-g="${GUIDE.findIndex(g => g[0] === 'day')}"]`).click();
+    const see = [...document.querySelectorAll('.veil .acts .btn')].find(b => b.textContent === t('fishing'));
+    check(!!see, 'the card "By day" has a button to the fishing card'); if (see) see.click();
+    check(!!$('.veil') && $('#owlText').textContent === t('g_fish'), 'which opens that card'); clickDlg();
+
+    // A8: a language switch leaves nothing of the old language behind; the Russian title; the switch in the guide's bar
+    where = 'round 2: a language switch';
+    const clean = () => !document.querySelector('.toast') && $('#live').textContent === '';
+    reset(3); go('home'); toast(t('raidGo'));
+    $('[data-l="1"]').click();
+    check(clean() && $('.title').textContent === 'Ночной дозор' && document.title === 'Ночной дозор' && document.documentElement.lang === 'ru', `from English to Russian with a line on the screen: nothing English is left, and the title reads «${$('.title').textContent}»`);
+    toast(t('raidGo')); $('[data-l="2"]').click();
+    check(clean() && $('.title').textContent === L.title[2] && document.documentElement.lang === 'it', 'from Russian to Italian: nothing Russian is left');
+    check(!Object.keys(L).some(k => /патрул/i.test(L[k][1])), 'no Russian row carries the old title');
+    go('guide', { from: 'hub' }); $('#gHints').click();   // a line on the screen: the hints are on
+    check(!!$('.toast') && !!$('.gbar .langs'), 'the guide\'s bar has the language switch');
+    $('.gbar [data-l="0"]').click();
+    check(scene.id === 'guide' && clean() && $('#gTour').textContent === L.g_tour[0] && $('.gbox h2').textContent === L.g_all[0] && $('[data-g="0"]').textContent === L.g_goalT[0], 'a switch inside the guide draws the guide again in the new language, with no line left over');
+    $('#gBack').click(); check(scene.id === 'hub', 'and the guide still leads back to where it was opened');
+
+    // B1: Gate Check keeps a round that is left in the middle
+    where = 'round 2: Gate Check keeps its round';
+    const answer3 = () => { for (let k = 0; k < 3; k++) { sim(1); scene.decide(scene.q[scene.i].friend); sim(1.3); } };
+    const shape = () => JSON.stringify([scene.pass, scene.badge, scene.q.map(v => [v.friend, v.pass, v.badge, v.kind])]);
+    reset(2); go('gate'); clickDlg(); answer3();   // the second Night has seven visitors: 3 of 7, as in the QA list
+    const N = scene.q.length, kept = shape(), fourth = scene.q[3];
+    check(N === 7 && scene.correct === 3 && scene.i === 3 && $('#pGate').textContent === '3/7', `three right answers: ${$('#pGate').textContent}`);
+    $('.hud button').click(); check(scene.id === 'hub', 'the home button leaves the round');
+    go('gate');
+    check(scene.correct === 3 && scene.i === 3 && $('#pGate').textContent === '3/' + N && shape() === kept, `coming back, the round goes on at ${$('#pGate').textContent} with the same password, badge and queue`);
+    clickDlg(); sim(1); check(scene.state === 'ask' && scene.q[scene.i] === fourth, 'and the fourth visitor is the one who was next');
+    scene.decide(fourth.friend); $('.hud button').click(); go('gate');
+    check(scene.correct === 4 && scene.i === 4, `a visitor who has been answered is not asked again (${scene.correct} right, visitor ${scene.i + 1})`);
+    clickDlg(); sim(200, () => { if (scene.state === 'ask') scene.decide(scene.q[scene.i].friend); return scene.run; }); await waitDlg('gate round 2 win'); clickDlg();
+    go('gate'); check(scene.correct === 0 && scene.i === 0 && $('#pGate').textContent === '0/' + scene.q.length, 'a finished round starts afresh');
+    clickDlg(); answer3(); const old = shape(); go('hub'); S.night++; go('gate'); check(scene.correct === 0 && shape() !== old, 'and so does a new Night'); S.night--;
+    reset(3); go('gate'); clickDlg(); answer3(); go('hub');   // a round is waiting
+    go('guide', { from: 'home' }); $(`[data-g="${GUIDE.findIndex(g => g[0] === 'gate')}"]`).click(); clickDlg(0);   // "Try it"
+    check(scene.id === 'gate' && !!practice && scene.correct === 0, 'a practice round from the guide is a round of its own'); if (closeDlg) closeDlg(); go('hub'); clickDlg();
+    go('gate'); check(scene.correct === 3 && scene.i === 3, 'and the round that was waiting is still there afterwards');
+
+    // B2: a wrong call is explained: the word that was wrong, or the badge
+    where = 'round 2: Gate Check says what was wrong';
+    const G = scenes.gate; reset(3); go('gate'); clickDlg();
+    Object.assign(G, { pass: ['moon', 'berry', 'star'], badge: { shape: 'leaf', style: 0 } });
+    const why = (pass, badge) => G.whyNot({ pass, badge }), fine = { shape: 'leaf', style: 0 };
+    check(why(['moon', 'leaf', 'star'], fine) === t('gateWhyWord', { w: t('berry') }) + ' ' + t('gateWhySaid', { w: t('leaf') }), 'a wrong word: the right one and the one said are named: ' + why(['moon', 'leaf', 'star'], fine));
+    check(why(['berry', 'moon', 'star'], fine) === t('gateWhyOrder') && why(['moon', 'berry'], fine) === t('gateWhyShort'), 'a wrong order and a missing word are told apart');
+    check(why(G.pass, { shape: 'star', style: 0 }) === t('gateWhyShape') && why(G.pass, { shape: 'leaf', style: 2 }) === t('gateWhyStyle') && why(G.pass, null) === t('gateWhyNone'), 'a wrong badge: its shape, its pattern, or none at all');
+    check(why(['moon', 'leaf', 'star'], { shape: 'star', style: 0 }).startsWith(t('gateWhyShape') + ' ' + t('gateWhyWord', { w: t('berry') })), 'both wrong: both are told, the badge first');
+    // in play: the first slip is explained in a line on the screen; after the second one the owl says it in its dialog
+    reset(3); go('gate'); clickDlg(); sim(1);
+    const right = scene.pass[1], said = GSYM.find(s => !scene.pass.includes(s));
+    Object.assign(scene.q[scene.i], { friend: false, badge: { ...scene.badge }, pass: [scene.pass[0], said, scene.pass[2]] });
+    scene.decide(true); await sleep(700);
+    const line = $('.toast') ? $('.toast').textContent : '';
+    check(line.includes(t(right)) && line.includes(t(said)) && line === scene.why, `letting in a visitor with a wrong word names that word: "${line}"`);
+    sim(1.3); sim(1);
+    Object.assign(scene.q[scene.i], { friend: false, pass: [...scene.pass], badge: { shape: SHAPE_KEYS.find(s => s !== scene.badge.shape), style: scene.badge.style } });
+    scene.decide(true); sim(3.2); await waitDlg('gate alarm');
+    check($('#owlText').textContent.includes(t('gateWhyShape')), `letting in a visitor with a wrong badge says that the badge was wrong: "${$('#owlText').textContent}"`); clickDlg(0);
+    for (let l = 0; l < 3; l++) {
+      setLang(l);
+      const lines = ['gateWhyShape', 'gateWhyStyle', 'gateWhyNone', 'gateWhyOrder', 'gateWhyShort', 'raidHow'].map(k => t(k)).concat(GSYM.flatMap(w => [t('gateWhyWord', { w: t(w) }), t('gateWhySaid', { w: t(w) })]));
+      check(lines.every(s => !!clipOf(s)), `the owl has a clip for every explanation at the gate and for the raid's line (${LANGS[l]}): ${lines.filter(s => !clipOf(s)).length} missing`);
+    }
+    setLang(0);
+
+    // B4: the Night menu greets the player by name
+    where = 'round 2: the Night menu greets by name';
+    const hello = () => [...document.querySelectorAll('.hello')].filter(e => e.getClientRects().length).map(e => e.textContent);
+    reset(3); S.name = 'Marco'; go('hub'); check(hello().length === 1 && hello()[0] === t('hello', { n: 'Marco' }) && hello()[0].includes('Marco'), `the Night menu greets the player by name: ${JSON.stringify(hello())}`);
+    S.name = ''; go('hub'); check(hello().length === 1 && hello()[0] === t('helloDef'), `without a name the owl's own word stands in: ${JSON.stringify(hello())}`);
+    S.name = '<b>x'; go('hub'); check(!$('.hello b') && hello()[0].includes('<b>x'), 'a name is shown as text, never as markup');
+    reset(1); Object.assign(S, { name: 'Marco', briefed: 0 }); go('hub'); check($('#owlText').textContent === t('b1n', { n: 'Marco' }), 'and the first briefing welcomes the player by name: ' + $('#owlText').textContent); clickDlg();
+
+    // B5: on the first Night a magpie is in view about twice as long
+    where = 'round 2: Camera Watch on the first Night';
+    const seen = n => {
+      reset(n); go('cam'); clickDlg(); Object.assign(scene, { spawnT: 1e9, friendT: 1e9 });
+      const f = scene.feeds[0]; let s = 0;
+      f.bushes = [.3, .7]; f.mag = { x: -.14, dir: 1, phase: 'in', state: 'walk', hideT: 0, stops: [.3], decoy: false, carry: false };
+      sim(60, () => { const m = f.mag; if (!m || m.state !== 'walk') return false; if (m.x > .03 && m.x < .97) s += 1 / 30; });
+      return s;
+    };
+    const s1 = seen(1), s2 = seen(2);
+    check(s1 / s2 > 1.8 && s1 / s2 < 2.6 && s1 > 3, `on the first Night a magpie is in view about twice as long as on the second: ${s1.toFixed(1)} s against ${s2.toFixed(1)} s before its first hiding place`);
+
+    // B6 and B7: a raid says what to do, and shows how far it is
+    where = 'round 2: the raid';
+    reset(3); S.st = { cam: 1, gate: 1, forge: 1, extra: 0 }; go('raid', { test: true });
+    const bar = () => +$('.prog').getAttribute('aria-valuenow');
+    check(!!$('.prog[role="progressbar"]') && bar() === 0, 'a test raid has a progress bar');
+    await sleep(250); check(!!$('.toast') && $('.toast').textContent === t('raidHow'), 'and says in one line what to do: ' + ($('.toast') || {}).textContent);
+    sim(3); const mid = bar(); sim(200, () => !scene.R.done);
+    check(mid > 0 && mid < 100 && bar() === 100 && Math.abs(scene.len - scene.R.t) < .1, `the bar moves with the raid and is full at its end: ${mid}, then ${bar()}; foreseen ${scene.len.toFixed(1)} s, took ${scene.R.t.toFixed(1)} s`);
+    await waitDlg('test raid result'); clickDlg();
+    reset(3); S.st = { cam: 1, gate: 1, forge: 1, extra: 0 }; go('raid'); await sleep(250);
+    check(!!$('.prog') && !!$('.toast') && $('.toast').textContent === t('raidGo') + ' ' + t('raidHow'), 'a real raid says it too, after its call: ' + ($('.toast') || {}).textContent);
+
+    // B8: home is in reach from every dialog
+    where = 'round 2: home from a dialog';
+    reset(3); go('cam'); check(!!$('.veil .vhome'), 'a station\'s first word carries a home button'); $('.veil .vhome').click();
+    check(scene.id === 'hub' && !$('.veil') && closeDlg === null, 'which leaves the dialog and leads where the bar\'s home button leads');
+    reset(2); S.briefed = 0; go('hub'); $('.veil .vhome').click(); check(scene.id === 'home' && S.briefed === 2, 'the briefing can be left for the title screen, and is not given twice');
+    reset(1); Object.assign(S, { name: '', briefed: 0 }); go('home'); $('#bPlay').click(); check(!!$('.veil') && !$('.veil .vhome'), 'the title screen is home already: its dialogs carry no home button'); clickDlg(); if (closeDlg) closeDlg();
+    reset(3); go('guide', { from: 'hub' }); $('[data-g="0"]').click(); $('.veil .vhome').click(); check(scene.id === 'hub', 'a card of the guide can be left for the screen the guide came from');
+    reset(3); S.day = 1; go('hub'); check(scene.id === 'dawn' && !!$('.veil .vhome'), 'first light has no bar, and its dialog a home button all the same'); $('.veil .vhome').click();
+    check(scene.id === 'home' && S.day === 1, 'it leads to the title screen, and the morning still waits'); S.day = 0;
+
+    // B9: the badge and the certificate count the Nights that are finished
+    where = 'round 2: the certificate\'s Nights';
+    reset(1); for (let k = 0; k < 4; k++) closeNight(k % 2); S.promo = false; S.day = 0;
+    go('badge'); const pill = [...document.querySelectorAll('.badgebar .pill')].map(p => p.textContent).find(s => s.startsWith(t('nights')));
+    $('#bCert').click(); const alt = $('.veil img.cert').alt;
+    check(nightsDone() === 4 && S.night === 5 && pill === t('nights') + ': 4' && alt.endsWith(t('nights') + ': 4'), `after four finished Nights the badge and the certificate say four: "${pill}", "${alt}"`); $('#cOk').click();
+
+    // B10: the album's tabs, Friends among them
+    where = 'round 2: the album\'s tabs';
+    reset(3); go('album', { from: 'home' });
+    const tabs = [...document.querySelectorAll('.tabs .btn')];
+    check(tabs.length === 4 && tabs[3].id === 'aPals' && tabs[3].textContent === t('palsT') && tabs.every(b => { const r = b.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.width >= 47.5 && r.height >= 47.5; }), 'the album has four tabs, the last one Friends, each whole on the screen');
+    $('#aPals').click(); check(scene.id === 'pals', 'the Friends tab opens the friends\' page'); $('#palBack').click(); check(scene.id === 'album', 'which leads back to the album');
+    reset(1);
   };
 
   if (mode[0] === 'shot') {
@@ -624,6 +778,7 @@
     where = 'owl\'s eye'; eyeChecks();
     where = 'friends'; palChecks();
     await guideChecks();
+    await round2Checks();
     // --- full Nights 1..8 ---
     for (let n = 1; n <= 8; n++) {
       reset(n); setLang(n % 3);
@@ -786,9 +941,15 @@
         if (el.matches('.btn, .card, .tile, .pal, .stk') && (r.width < 47.5 || r.height < 47.5)) flag(screen, el, `tap target is only ${Math.round(r.width)}x${Math.round(r.height)}`);
         if (el.matches('.btn, .pill, .tile, .pal, .card') && el.scrollWidth > el.clientWidth + 2) flag(screen, el, `text is clipped (${el.scrollWidth} > ${el.clientWidth})`);
       }
-      const d = $('#ui .dlg');
-      if (d && d.scrollHeight > d.clientHeight + 2) flag(screen, d, `dialog needs scrolling (${d.scrollHeight} > ${d.clientHeight})`);
-      const blocks = [...document.querySelectorAll('#ui .hud > *:not(.sp), #ui .ref, #ui #bEye, #ui .hub .cards, #ui .hub .row, #ui .gatebtns .btn, #ui .forge > *, #ui .palette, #ui .home > .title, #ui .home > .row, #ui .home > .foot, #ui .album > *, #ui .side > *, #ui .replay')].filter(e => e.getBoundingClientRect().width);
+      for (const d of document.querySelectorAll('#ui .dlg')) if (d.scrollHeight > d.clientHeight + 2) flag(screen, d, `dialog needs scrolling (${d.scrollHeight} > ${d.clientHeight})`);
+      // home stays in reach under every dialog (the title screen is home already): the veil's own home button is there, it
+      // takes a tap (the loop above), and the dialog keeps clear of it
+      if (veil && scene !== scenes.home) {
+        const h = $('.vhome', veil), a = h && h.getBoundingClientRect(), b = $('.dlg', veil).getBoundingClientRect();
+        if (!h) flag(screen, veil, 'dialog without a home button');
+        else if (Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2) flag(screen, h, 'home button lies on the dialog');
+      }
+      const blocks = [...document.querySelectorAll('#ui .hud > *:not(.sp), #ui .ref, #ui #bEye, #ui .hub > .hello, #ui .hub .cards, #ui .hub .row, #ui .hub .hintline, #ui .guide .gbox, #ui .gatebtns .btn, #ui .forge > *, #ui .palette, #ui .home > .title, #ui .home > .row, #ui .home > .foot, #ui .album > *, #ui .side > *, #ui .replay')].filter(e => e.getBoundingClientRect().width);
       for (let i = 0; i < blocks.length; i++) for (let j = i + 1; j < blocks.length; j++) {
         const a = blocks[i].getBoundingClientRect(), b = blocks[j].getBoundingClientRect();
         const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left), oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
@@ -864,6 +1025,9 @@
       reset(3); S.hints = 1; go('hub'); look('hub with its hint'); S.st = { cam: 1, gate: 1, forge: 1, extra: 0 }; go('hub'); look('hub ready, with its hint');
       go('guide', { from: 'home' }); $('[data-g="2"]').click(); clickDlg(0); look('practice, first word'); clickDlg(); sim(1); look('practice'); $('.hud button').click(); look('guide card after its practice'); clickDlg();
       reset(1); Object.assign(S, { name: '', briefed: 0, hints: 1, toured: 0 }); go('home'); sim(.2); look('home of a new player'); tourAsk(() => {}); look('the tour is offered'); clickDlg(0); reset(1);
+      // the Night menu's greeting with the longest name there can be (16 letters), on the tallest menu
+      reset(5); Object.assign(S, { hints: 1, name: 'Maximilian Alexe', st: { cam: 1, gate: 1, forge: 1, extra: 1 } }); go('hub'); look('hub with a long name');
+      reset(3); go('album', { from: 'home' }); look('album with its four tabs'); $('#aPals').click(); look('friends, from the album');
       // Be the Magpie
       go('pie'); look('magpie intro'); clickDlg(); sim(7); look('magpie, after spying'); scene.shop(); sim(.3); look('magpie workshop');
       Object.assign(scene.fake, { dis: 5, pass: [...scene.pass] }); scene.marks(); look('magpie workshop, ready'); $('#pieReady').click(); look('magpie, who checks');
@@ -888,6 +1052,16 @@
           const r = el.getBoundingClientRect(), [bx, by, bw, bh] = scene.bubble;
           if (Math.min(r.right, bx + bw) - Math.max(r.left, bx) > 2 && Math.min(r.bottom, by + bh) - Math.max(r.top, by) > 2) flag(`gate n${n}`, el, 'covers the visitor\'s password bubble');
         }
+        {   // the visitor in question and the waiting ones never share a pixel, whatever the screen (seen in a screenshot: on
+            // a phone the queue stood under a magpie's tail). The widest visitor there is: a magpie in the big cap.
+          Object.assign(scene.q[scene.i], { friend: false, disguise: 4, costume: undefined, puppy: false }); scene.draw();
+          const mk = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; return c.getContext('2d'); }, a = mk(), b = mk(), [fx, fy, fs] = scene.front;
+          a.translate(fx, fy); gateVisitor(a, scene.q[scene.i], fs, 0, { pose: 'stand', face: 'sly' });
+          for (const [x, y, s, w] of scene.queue) { b.save(); b.translate(x, y); gateVisitor(b, w, s, 0); b.restore(); }
+          const A = a.getImageData(0, 0, W, H).data, B = b.getImageData(0, 0, W, H).data; let both = 0;
+          for (let i = 3; i < A.length; i += 4) if (A[i] > 40 && B[i] > 40) both++;
+          if (both || !scene.queue.length || scene.queue.some(([x, , s]) => x + 63 * s > W || x - 52 * s < 0)) flag(`gate n${n}`, $('#pGate'), `the waiting visitors must be on the screen and clear of the visitor in question (${both} shared pixels, ${scene.queue.length} waiting)`);
+        }
         toast(t('gateOops')); look(`gate toast n${n}`);
         stationFail('gate', t('soft') + ' ' + t('gateTip')); look(`gate soft fail n${n}`); clickDlg(0);
         go('forge'); look(`forge intro n${n}`); clickDlg();
@@ -898,6 +1072,7 @@
         stationWin('forge', 3, 3, t('forgeWin'), scene.goalsHtml([true, true, false])); look(`forge win n${n}`); clickDlg();
         S.tinkered = 0; go('tinker'); look(`tinker intro n${n}`); clickDlg(); sim(.3); look(`tinker n${n}`);
         toast(t('poor')); look(`tinker toast n${n}`);
+        go('raid', { test: true }); await sleep(180); look(`test raid with its line n${n}`); sim(2); look(`test raid n${n}`);
         go('raid', { test: true }); sim(200, () => !scene.endT); await sleep(1100); look(`test raid result n${n}`); clickDlg();
         S.items = [{ t: 'cam', m: 1 }, { t: 'cam', m: 4 }, { t: 'cam', m: 7 }, { t: 'cam', m: 10 }, { t: 'cam', m: 17 }, { t: 'bell', m: 15 }, { t: 'lamp', m: 12 }];
         go('raid', { test: true }); sim(200, () => !scene.endT); await sleep(1100); look(`clean test raid result n${n}`); clickDlg();

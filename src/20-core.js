@@ -43,10 +43,14 @@ let practice = null;
 function save() { if (practice) return; try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 const rankAt = night => night > 7 ? 3 : night > 4 ? 2 : night > 2 ? 1 : 0;
 const rank = () => rankAt(S.night);
+const nightsDone = () => S.night - 1;   // Nights finished (the Night is counted when its raid ends): the badge and the certificate show this number
+// Nothing in the old language stays behind: a line still on the screen is taken away and the line kept for screen readers
+// is emptied. The caller then draws its screen again, which takes an open dialog with it.
 function setLang(i) {
   lang = S.lang = i; save();
   document.documentElement.lang = LANGS[i];
   document.title = t('title');
+  document.querySelectorAll('.toast').forEach(n => n.remove()); $('#live').textContent = '';
 }
 // (a whole number only: in a damaged save, LANGS['length'] and LANGS['1'] would pass as languages too)
 setLang(Number.isInteger(S.lang) && LANGS[S.lang] ? S.lang : Math.max(0, LANGS.indexOf((navigator.language || 'en').slice(0, 2))));
@@ -63,7 +67,9 @@ function add(html, parent = ui) {
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function say(text) { $('#live').textContent = text; }
 // `at`: a point on the screen that the line belongs to (a friend's name goes over that friend); it stays inside the screen.
+// One line at a time: a new one takes the place of the one before it.
 function toast(text, ms = 1600, at) {
+  ui.querySelectorAll('.toast').forEach(n => n.remove());
   const n = add(`<div class="toast">${esc(text)}</div>`);
   n.style.animationDuration = ms + 'ms';   // a longer line stays longer
   if (at) { const r = ui.getBoundingClientRect(), w = n.offsetWidth / 2 + 6; n.style.left = clamp(at[0] - r.left, w, Math.max(w, r.width - w)) + 'px'; n.style.top = Math.max(6, at[1] - r.top - n.offsetHeight) + 'px'; }

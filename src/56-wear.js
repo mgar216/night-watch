@@ -9,7 +9,7 @@ scenes.wear = {
   enter(o = {}) {
     this.from = o.from || this.from || 'home'; this.who = o.who || this.who || 'owl'; this.sel = '';
     tryOn = null;
-    const bar = add(`<div class="hud"><button class="btn round" id="wBack" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
+    const bar = add(`<div class="hud"><button class="btn round" id="wBack" data-home="home" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
       <span class="pill">${ic('hanger', 24)}<span class="extra">${esc(t('wardrobe'))}</span></span>
       <button class="btn round" id="wFlag" aria-label="${esc(t('flagT'))}">${ic('flagI', 30)}</button><span class="sp"></span>
       <span class="pill" id="pBeams">${ic('beam', 22)}<b>${S.beams}</b></span></div>`);

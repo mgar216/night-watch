@@ -157,8 +157,8 @@ scenes.flies = {
     this.spawnT = Math.max(this.spawnT, rnd(.5, 1));
     $('#pFlies b').textContent = this.pts;
     const k = this.P.goals.findIndex(v => before < v && this.pts >= v);
-    // a new star wins over any other message (two notes at once would sit on top of each other)
-    if (k >= 0) later(() => { sfx.sparkle(); ui.querySelectorAll('.toast').forEach(n => n.remove()); toast(t('fl_star')); burst(G.mx - G.mw / 2 - G.ms * .7, this.markY(k, G), 10, { kind: 'star', speed: 90, g: 0, size: 6, life: .8 }); }, 250);
+    // (a new star wins over any other message: a new line takes the old one's place)
+    if (k >= 0) later(() => { sfx.sparkle(); toast(t('fl_star')); burst(G.mx - G.mw / 2 - G.ms * .7, this.markY(k, G), 10, { kind: 'star', speed: 90, g: 0, size: 6, life: .8 }); }, 250);
   },
   finish() {
     this.run = false; this.time = 0; this.endT = V.t;

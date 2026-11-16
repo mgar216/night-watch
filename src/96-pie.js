@@ -139,7 +139,7 @@ scenes.pie = {
     this.fake = { dis: 0, shape: pick(SHAPE_KEYS.filter(k => k !== this.badge.shape)), style: (this.badge.style + 1 + (Math.random() * 3 | 0)) % 4, pass: [null, null, null] };
     Object.assign(this, { kind: Math.random() * 5 | 0, looks: 2, back: '', n: 0, ev: 0, over: false, letIn: false, panel: null, spyBar: null,
       line: null, mark: null, spots: null, result: null, popT: -9, pv: null });
-    this.hudEl = add(`<div class="hud"><button class="btn round" id="pieHome" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
+    this.hudEl = add(`<div class="hud"><button class="btn round" id="pieHome" data-home="home" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
       <span class="pill">${ic('pie', 26)}<span>${esc(t('s_pie'))}</span></span><span class="sp"></span>
       <button class="btn" id="pieLook" style="display:none;padding:.2em .8em">${ic('scope', 28)}<b></b></button></div>`);
     $('#pieHome', this.hudEl).onclick = () => { sfx.click(); go('home'); };

@@ -49,19 +49,20 @@ scenes.album = {
     this.from = o.from || this.from || 'home';
     this.page = o.page === undefined ? Math.max(0, STK_SETS.findIndex(set => set.some(id => S.stk[id] === 1))) : o.page;   // open where something is new
     const have = STK_SETS.flat().filter(id => S.stk[id]).length, set = STK_SETS[this.page];
-    const bar = add(`<div class="hud"><button class="btn round" id="aBack" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
-      <span class="pill">${ic('album', 24)}<span class="extra">${esc(t('album'))}</span></span>
-      <button class="btn round" id="aPals" aria-label="${esc(t('palsT'))}">${ic('pals', 30)}</button><span class="sp"></span>
+    const bar = add(`<div class="hud"><button class="btn round" id="aBack" data-home="home" aria-label="${esc(t('home'))}">${ic('home', 28)}</button>
+      <span class="pill">${ic('album', 24)}<span class="extra">${esc(t('album'))}</span></span><span class="sp"></span>
       <span class="pill">${ic('star', 22)}<span><b>${have}</b>/${STK_SETS.flat().length}</span></span></div>`);
     $('#aBack', bar).onclick = () => { sfx.click(); go(this.from); };
-    $('#aPals', bar).onclick = () => { sfx.pop(); go('pals', { from: 'album' }); };   // the friendly magpies have a page of their own
-    // Portrait: three stickers in a row; landscape: six. The pictures take the room that is left.
+    // The tabs: the three sets of stickers, and the friendly magpies, who have a page of their own. On a narrow screen the
+    // tabs stand in two rows, so the pictures take whatever room the tabs leave. Portrait: three stickers in a row; landscape: six.
+    const n = add(`<div class="album"><div class="tabs" role="group" aria-label="${esc(t('album'))}">${STK_SETS.map((s, i) => `<button class="btn" data-p="${i}" aria-pressed="${i === this.page}">${ic('stk:' + s[0], 30)}<span>${esc(t('set' + i))}</span></button>`).join('')}
+      <button class="btn" id="aPals" aria-pressed="false">${ic('pals', 30)}<span>${esc(t('palsT'))}</span></button></div></div>`);
+    $('#aPals', n).onclick = () => { sfx.pop(); go('pals', { from: 'album' }); };
     const cols = wide() ? 6 : 3, rows = Math.ceil(set.length / cols);
-    const px = clamp(Math.min((Math.min(V.w, 720) - 16) / cols - 22, (V.h - 150) / rows - 46), 40, 110) | 0;
-    const n = add(`<div class="album"><div class="tabs" role="group">${STK_SETS.map((s, i) => `<button class="btn" data-p="${i}" aria-pressed="${i === this.page}">${ic('stk:' + s[0], 30)}<span>${esc(t('set' + i))}</span></button>`).join('')}</div>
-      <div class="stks" style="grid-template-columns:repeat(${cols},1fr)">${set.map(id => S.stk[id]
+    const px = clamp(Math.min((Math.min(V.w, 720) - 16) / cols - 22, (V.h - $('.tabs', n).getBoundingClientRect().bottom - 16) / rows - 46), 40, 110) | 0;
+    add(`<div class="stks" style="grid-template-columns:repeat(${cols},1fr)">${set.map(id => S.stk[id]
         ? `<button class="stk${S.stk[id] === 1 ? ' new' : ''}" data-id="${id}">${ic('stk:' + id, px)}<span>${esc(t('k_' + id))}</span></button>`
-        : `<button class="stk none" data-id="" aria-label="?">${ic('stk0', px)}<span>?</span></button>`).join('')}</div></div>`);
+        : `<button class="stk none" data-id="" aria-label="?">${ic('stk0', px)}<span>?</span></button>`).join('')}</div>`, n);
     n.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { sfx.click(); ui.innerHTML = ''; this.enter({ page: +b.dataset.p }); });
     n.querySelectorAll('.stk').forEach(b => b.onclick = () => {
       const id = b.dataset.id;
